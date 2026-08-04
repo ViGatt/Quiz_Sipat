@@ -14,8 +14,7 @@ export function Navbar() {
         {/* 2. USANDO A VARIÁVEL DA IMAGEM AQUI: */}
         <img src={logoRic} alt="Logo SIPAT RIC Ambiental" className={styles.logo} />
         
-        {/* Como a logo já tem o nome da empresa, você pode remover ou deixar este texto abaixo */}
-        {/* <span className={styles.logoText}>SIPAT RIC AMBIENTAL</span> */}
+         <span className={styles.logoText}>SIPAT RIC AMBIENTAL</span> 
       </div>
 
       {/* Navegação Desktop */}

@@ -40,7 +40,7 @@ export function Footer() {
 
         {/* Coluna 4: Contatos */}
         <div className={styles.contactCol}>
-          <h4 className={styles.colTitle}>Contact us</h4>
+          <h4 className={styles.colTitle}>Contatos </h4>
           <div className={styles.contactItem}>
             <Mail size={16} color="var(--color-primary)" />
             <span>sac@ricambiental.com.br</span>
