@@ -136,3 +136,22 @@ class SupabaseQuizRepository:
                 resposta_correta=q["resposta_correta"]
             ) for q in response.data
         ]
+class SupabaseRelatorioRepository:
+    def __init__(self, supabase_client: Client):
+        self.db = supabase_client
+
+    def obter_resumo_geral(self) -> dict:
+        response = self.db.table("view_relatorio_geral").select("*").execute()
+        return response.data[0] if response.data else {}
+
+    def obter_participacao_por_dia(self) -> list[dict]:
+        response = self.db.table("view_relatorio_por_dia").select("*").execute()
+        return response.data
+
+    def obter_numeros_sorte(self) -> list[dict]:
+        response = self.db.table("view_relatorio_numeros_sorte").select("*").execute()
+        return response.data
+
+    def obter_desempenho_online(self) -> list[dict]:
+        response = self.db.table("view_relatorio_desempenho").select("*").execute()
+        return response.data
