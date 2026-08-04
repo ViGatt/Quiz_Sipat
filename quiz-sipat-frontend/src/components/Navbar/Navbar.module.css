@@ -17,8 +17,6 @@
 .logo {
   height: 50px;
   width: auto;
-  /* Fundo provisório para visualização */
-  background-color: var(--color-black);
   object-fit: contain;
   border-radius: 50%;
 }
