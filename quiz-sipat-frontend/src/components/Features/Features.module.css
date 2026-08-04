@@ -1,0 +1,99 @@
+.featuresSection {
+  padding: 4rem 5%;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 3rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.badge {
+  background-color: var(--color-surface);
+  color: var(--color-text-muted);
+  padding: 0.35rem 1rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+}
+
+.title {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+.highlight {
+  color: var(--color-secondary);
+}
+
+.subtitle {
+  color: var(--color-text-dark);
+  font-size: 0.95rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr; /* Mobile: 1 coluna */
+  gap: 1.5rem;
+}
+
+.card {
+  background-color: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 2.5rem 2rem;
+  min-height: 280px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; /* Mantém ícone e texto alinhados à esquerda */
+  transition: background-color 0.2s, transform 0.2s;
+}
+
+.card:hover {
+  background-color: var(--color-bg-secondary);
+  transform: translateY(-5px);
+}
+
+.iconWrapper {
+  width: 48px;
+  height: 48px;
+  background-color: var(--color-surface);
+  border-radius: 8px; /* Quadrado com cantos arredondados como no design */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.2rem;
+}
+
+.cardTitle {
+  font-size: 1.1rem;
+  margin-bottom: 0.8rem;
+}
+
+.cardDesc {
+  color: var(--color-text-dark);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+/* Responsividade: Tablet */
+@media (min-width: 768px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr); /* 2 colunas */
+  }
+}
+
+/* Responsividade: Desktop (Layout Lado a Lado de 3 colunas) */
+@media (min-width: 1024px) {
+  .title { font-size: 2.5rem; }
+  .grid {
+    grid-template-columns: repeat(3, 1fr); /* 3 colunas */
+  }
+}
