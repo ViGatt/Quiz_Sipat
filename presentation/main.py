@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from presentation.routers import recepcao_router, quiz_router
+from presentation.routers import recepcao_router, quiz_router, relatorio_router # <-- relatorio adicionado
 
 app = FastAPI(
     title="Quiz SIPAT API - RIC Ambiental",
@@ -8,9 +8,9 @@ app = FastAPI(
 )
 
 app.include_router(recepcao_router.router)
-app.include_router(quiz_router.router)  # <-- NOVO ROTEADOR INCLUÍDO AQUI
+app.include_router(quiz_router.router)
+app.include_router(relatorio_router.router)
 
 @app.get("/")
 def health_check():
-    """Rota raiz apenas para verificar se a API está no ar."""
     return {"status": "API do Quiz SIPAT está online e operando!"}
