@@ -46,7 +46,7 @@
 
 .card {
   background-color: transparent;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border2);
   border-radius: 8px;
   padding: 2.5rem 2rem;
   min-height: 280px;
@@ -62,24 +62,24 @@
 }
 
 .iconWrapper {
-  width: 48px;
-  height: 48px;
+  width: 64px;
+  height: 64px;
   background-color: var(--color-surface);
-  border-radius: 8px; /* Quadrado com cantos arredondados como no design */
+  border-radius: 40px; /* Quadrado com cantos arredondados como no design */
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 1.2rem;
+  margin-bottom: 1.5rem;
 }
 
 .cardTitle {
-  font-size: 1.1rem;
+  font-size: 2.1rem;
   margin-bottom: 0.8rem;
 }
 
 .cardDesc {
   color: var(--color-text-dark);
-  font-size: 0.9rem;
+  font-size: 1.3rem;
   line-height: 1.5;
 }
 

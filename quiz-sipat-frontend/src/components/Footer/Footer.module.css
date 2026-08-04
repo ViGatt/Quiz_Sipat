@@ -1,5 +1,5 @@
 .footer {
-  background-color: var(--color-black); /* Fundo bem escuro como no design */
+  background-color: var(--color-black); 
   padding: 4rem 5% 1rem 5%;
   border-top: 1px solid var(--color-border);
 }

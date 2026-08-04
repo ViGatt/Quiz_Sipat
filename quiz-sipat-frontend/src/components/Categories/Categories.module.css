@@ -25,7 +25,7 @@
 }
 
 .title {
-  font-size: 2rem;
+  font-size: 1rem;
   margin-bottom: 1rem;
 }
 
@@ -35,7 +35,7 @@
 
 .subtitle {
   color: var(--color-text-dark);
-  font-size: 0.95rem;
+  font-size: 1.95rem;
 }
 
 .grid {
@@ -79,13 +79,13 @@
 }
 
 .cardTitle {
-  font-size: 1.1rem;
+  font-size: 2.1rem;
   margin-bottom: 0.5rem;
 }
 
 .cardDesc {
   color: var(--color-text-dark);
-  font-size: 0.85rem;
+  font-size: 1.30rem;
   line-height: 1.4;
   margin-bottom: 1.2rem;
 }
