@@ -2,15 +2,20 @@ import { useState } from 'react';
 import { Menu, X } from 'lucide-react';
 import styles from './Navbar.module.css';
 
+// 1. IMPORTANDO A IMAGEM AQUI:
+import logoRic from '../../assets/Ricambiental_logo-30 A.png';
+
 export function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
     <header className={styles.header}>
-      <div className={styles.logoContainer}> 
-        {/* Substitua o src abaixo pelo caminho da sua logo quando colocar no projeto, ex: /assets/logo.png */}
-        <img src="quiz-sipat-frontend\src\assets\Ricambiental_logo-09.png" className={styles.logo} />
-        <span className={styles.logoText}>SIPAT RIC AMBIENTAL</span>
+      <div className={styles.logoContainer}>
+        {/* 2. USANDO A VARIÁVEL DA IMAGEM AQUI: */}
+        <img src={logoRic} alt="Logo SIPAT RIC Ambiental" className={styles.logo} />
+        
+        {/* Como a logo já tem o nome da empresa, você pode remover ou deixar este texto abaixo */}
+        {/* <span className={styles.logoText}>SIPAT RIC AMBIENTAL</span> */}
       </div>
 
       {/* Navegação Desktop */}
