@@ -1,7 +1,6 @@
 from fastapi import FastAPI
-from presentation.routers import recepcao_router
+from presentation.routers import recepcao_router, quiz_router
 
-# Inicializa a aplicação FastAPI
 app = FastAPI(
     title="Quiz SIPAT API - RIC Ambiental",
     description="Plataforma digital para acompanhamento da SIPAT e gamificação",
@@ -9,6 +8,7 @@ app = FastAPI(
 )
 
 app.include_router(recepcao_router.router)
+app.include_router(quiz_router.router)  # <-- NOVO ROTEADOR INCLUÍDO AQUI
 
 @app.get("/")
 def health_check():
