@@ -6,9 +6,10 @@ from domain.exceptions import ParticipacaoDuplicadaError, ColaboradorNaoEncontra
 
 router = APIRouter(prefix="/recepcao", tags=["Recepção Presencial"])
 
-# DTO (Data Transfer Object) - Define como o Front-end deve enviar os dados
+# DTO Atualizado com o nome completo
 class RegistroPresencaRequest(BaseModel):
     cpf: str
+    nome_completo: str 
     dia_sipat_id: int
 
 @router.post("/registrar")
@@ -20,10 +21,11 @@ def registrar_presenca(
     Registra a presença física do colaborador e gera o Número da Sorte.
     """
     try:
-        numero_sorte = use_case.executar(request.cpf, request.dia_sipat_id)
+        # Passando o nome_completo para o Caso de Uso
+        numero_sorte = use_case.executar(request.cpf, request.nome_completo, request.dia_sipat_id)
         
         return {
-            "mensagem": "Presença registrada com sucesso.",
+            "mensagem": f"Presença de {request.nome_completo} registrada com sucesso.",
             "numero_sorte": numero_sorte.numero
         }
         

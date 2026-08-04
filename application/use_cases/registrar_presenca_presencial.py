@@ -14,11 +14,14 @@ class RegistrarPresencaPresencialUseCase:
         self.participacao_repo = participacao_repo
         self.colaborador_repo = colaborador_repo
 
-    def executar(self, cpf: str, dia_sipat_id: int) -> NumeroSorte:
-        # 1. Buscar colaborador
+    # Atualizado para receber o nome_completo
+    def executar(self, cpf: str, nome_completo: str, dia_sipat_id: int) -> NumeroSorte:
+        
+        # 1. Buscar colaborador (No futuro, se ele não existir, podemos até criá-lo aqui usando o nome_completo!)
         colaborador = self.colaborador_repo.buscar_por_cpf(cpf)
         if not colaborador:
-            raise ColaboradorNaoEncontradoError("CPF não cadastrado na base.")
+            # Mensagem de erro melhorada usando o nome enviado
+            raise ColaboradorNaoEncontradoError(f"Colaborador {nome_completo} (CPF: {cpf}) não encontrado na base importada.")
 
         # 2. Verificar se já existe participação (presencial ou online) neste dia
         participacao_existente = self.participacao_repo.buscar_por_colaborador_e_dia(
@@ -28,8 +31,6 @@ class RegistrarPresencaPresencialUseCase:
             raise ParticipacaoDuplicadaError("Colaborador já possui participação registrada neste dia.")
 
         # 3. Criar a nova participação presencial
-        # Ao registrar presencialmente, o acesso online fica automaticamente bloqueado
-        # pelo fato de que já existe uma participação com este CPF e DIA.
         nova_participacao = Participacao(
             id=uuid.uuid4(),
             colaborador_id=colaborador.id,
