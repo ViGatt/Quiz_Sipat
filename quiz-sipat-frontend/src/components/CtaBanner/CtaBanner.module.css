@@ -1,6 +1,6 @@
 .ctaSection {
   padding: 2rem 5% 4rem 5%;
-  max-width: 2440px; 
+  max-width: 1440px;
   margin: 0 auto;
   width: 100%;
 }
@@ -9,26 +9,29 @@
   background: linear-gradient(90deg, var(--color-green-dark) 0%, var(--color-primary) 100%);
   border-radius: 24px;
   display: flex;
-  flex-direction: column;
+  flex-direction: column; /* Por padrão, empilha tudo para mobile e tablet */
   position: relative;
-  padding: 3rem;
+  padding: 3rem 2rem; /* Padding um pouco menor no mobile para não espremer */
   gap: 2rem;
+  overflow: hidden; /* Evita que o fundo branco vaze a tela no celular */
 }
 
 .content {
-  flex: 1.2;
   display: flex;
   flex-direction: column;
   justify-content: center;
   z-index: 2;
+  text-align: left;
 }
 
 .title {
-  font-size: 3.2rem;
+  /* A mágica acontece aqui: A fonte cresce e encolhe dependendo da tela! */
+  font-size: clamp(2rem, 5vw, 2.8rem); 
   color: var(--color-white);
   margin-bottom: 1rem;
   font-weight: 800;
   line-height: 1.2;
+  max-width: 600px; /* Isso força a quebra de linha natural no Desktop */
 }
 
 .subtitle {
@@ -46,12 +49,16 @@
 }
 
 .btnPrimary, .btnSecondary {
-  padding: 1.5rem 1.5rem;
+  padding: 0.8rem 1.5rem;
   border-radius: 8px;
   font-weight: 600;
   font-size: 1rem;
   cursor: pointer;
   transition: transform 0.2s;
+  /* Faz os botões se ajustarem melhor em telas pequenas */
+  flex: 1; 
+  min-width: 140px;
+  text-align: center;
 }
 
 .btnPrimary {
@@ -70,22 +77,25 @@
   transform: scale(0.98);
 }
 
-/* --- Mobile --- */
+/* --- Mobile / Tablet Image Side --- */
 .imageSide {
   position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 250px;
+  min-height: 280px; /* Altura de segurança para a mascote no mobile */
+  width: 100%;
   z-index: 2;
+  margin-top: 1rem;
 }
 
 .whiteBackdrop {
   position: absolute;
   background-color: var(--color-white);
   border-radius: 16px;
-  width: 90%;
-  height: 90%;
+  width: 100%;
+  max-width: 320px;
+  height: 240px;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%); 
@@ -95,35 +105,41 @@
 .mascot {
   position: relative;
   z-index: 2; 
-  width: 100%;
-  max-width: 200px;
+  width: 120%;
+  max-width: 310px; /* Tamanho seguro para o celular */
   object-fit: contain;
+  transform: translateY(-10px);
 }
 
-/* --- Desktop Layout (Esticado/Widescreen) --- */
-@media (min-width: 768px) {
+/* --- Desktop Layout (Efeito Widescreen) --- */
+/* Mudamos para 1024px para evitar que amasse no Tablet */
+@media (min-width: 1024px) { 
   .container {
-    flex-direction: row;
+    flex-direction: row; /* Fica lado a lado */
     align-items: center;
     padding: 4rem 6rem; 
+    overflow: visible; /* Permite que a mascote saia do limite da caixa se precisar */
   }
   
-  .title {
-    font-size: 2.8rem;
-    max-width: 600px;
+  .content {
+    flex: 1.2;
+  }
+
+  .btnPrimary, .btnSecondary {
+    flex: none; /* Tira o esticamento dos botões no desktop */
   }
 
   .imageSide {
     flex: 1;
     min-height: auto;
     justify-content: flex-end; 
+    margin-top: 0;
   }
 
   .whiteBackdrop {
-    /* Retângulo branco bem mais comprido e imponente */
     width: 100%;
     max-width: 550px;
-    height: 380px; 
+    height: 280px; 
     top: 50%;
     left: auto;
     right: 0;
@@ -132,9 +148,8 @@
   }
 
   .mascot {
-    max-width: 420px; /* Mascote maior acompanhando a proporção */
-    margin-right: 1rem; /* Afasta da borda */
-    transform: scale(1.25) translateY(15px); /* Ajuste fino de posicionamento */
-    
+    max-width: 320px; 
+    margin-right: 2rem; 
+    transform: scale(1.25) translateY(-24px); 
   }
 }

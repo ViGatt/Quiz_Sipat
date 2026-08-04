@@ -7,7 +7,7 @@ export function CtaBanner() {
       <div className={styles.container}>
         <div className={styles.content}>
           <h2 className={styles.title}>
-            Pronto para começar sua <br /> jornada nesse evento?
+            Pronto para começar sua jornada nesse evento?
           </h2>
           <p className={styles.subtitle}>
             Junte-se a nós nessa jornada. Realize o cadastro e comece a exploração.
