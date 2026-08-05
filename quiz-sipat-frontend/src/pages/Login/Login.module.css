@@ -1,0 +1,162 @@
+.container {
+  display: flex;
+  min-height: 100vh;
+  width: 100vw;
+  background-color: var(--color-bg-main);
+}
+
+/* Lado Escuro */
+.brandSide {
+  display: none; /* Esconde no mobile para focar no formulário */
+}
+
+/* Lado Claro */
+.formSide {
+  flex: 1;
+  background-color: var(--color-white);
+  color: var(--color-black); /* Força texto escuro na área branca */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.formContainer {
+  width: 100%;
+  max-width: 450px;
+}
+
+.formTitle {
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+}
+
+.formSubtitle {
+  color: #666666;
+  font-size: 0.95rem;
+  margin-bottom: 2.5rem;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.inputGroup label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #333333;
+}
+
+.inputWrapper {
+  display: flex;
+  align-items: center;
+  border: 1px solid #E0E0E0;
+  border-radius: 8px;
+  padding: 0 1rem;
+  background-color: #FAFAFA;
+  transition: border-color 0.2s;
+}
+
+.inputWrapper:focus-within {
+  border-color: var(--color-primary);
+}
+
+.inputIcon {
+  color: #999999;
+  margin-right: 0.8rem;
+}
+
+.inputWrapper input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 0.8rem 0;
+  font-size: 1rem;
+  color: var(--color-black);
+  outline: none;
+}
+
+.submitBtn {
+  background-color: var(--color-primary);
+  color: var(--color-white);
+  border: none;
+  border-radius: 8px;
+  padding: 1rem;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 1rem;
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.submitBtn:hover {
+  opacity: 0.9;
+}
+
+.submitBtn:active {
+  transform: scale(0.98);
+}
+
+.registerPrompt {
+  text-align: center;
+  margin-top: 2rem;
+  font-size: 0.9rem;
+  color: #666666;
+}
+
+.registerLink {
+  color: var(--color-primary);
+  font-weight: bold;
+}
+
+/* Desktop Layout (Split Screen) */
+@media (min-width: 900px) {
+  .brandSide {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .brandContent {
+    z-index: 2;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+  }
+
+  .title {
+    font-size: 3.5rem;
+    line-height: 1.1;
+    letter-spacing: 2px;
+    color: var(--color-secondary); /* Verde */
+  }
+
+  .titleHighlight {
+    color: var(--color-primary); /* Ciano */
+  }
+
+  .mascot {
+    width: 100%;
+    max-width: 900px;
+    object-fit: contain;
+  }
+
+  .formSide {
+    flex: 1;
+  }
+}

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Menu, X } from 'lucide-react';
 import styles from './Navbar.module.css';
+import { Link } from 'react-router-dom';
 
 // 1. IMPORTANDO A IMAGEM AQUI:
 import logoRic from '../../assets/Ricambiental_logo-30 A.png';
@@ -27,8 +28,8 @@ export function Navbar() {
 
       {/* Botões Desktop */}
       <div className={styles.authButtons}>
-        <button className={styles.btnLogin}>Login</button>
-        <button className={styles.btnRegister}>Registre</button>
+        <Link to="/login" className={styles.btnLogin}>Login</Link>
+        <Link to="/register" className={styles.btnRegister}>Registre</Link>
       </div>
 
       {/* Botão Hambúrguer Mobile */}
@@ -47,8 +48,8 @@ export function Navbar() {
           <a href="#premios" className={styles.navLink}>Prêmios</a>
           <a href="#sobre" className={styles.navLink}>Sobre</a>
           <div className={styles.mobileAuthButtons}>
-            <button className={styles.btnLogin}>Login</button>
-            <button className={styles.btnRegister}>Registre</button>
+            <Link to="/login" className={styles.btnLogin}>Login</Link>
+            <Link to="/register" className={styles.btnRegister}>Registre</Link>
           </div>
         </div>
       )}
