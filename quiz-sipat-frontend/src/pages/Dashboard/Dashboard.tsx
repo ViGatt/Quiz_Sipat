@@ -1,6 +1,7 @@
 import { Plus, BookOpen, Calendar, Users, BarChart2, Medal, ChevronRight } from 'lucide-react';
 import { Sidebar } from '../../components/Sidebar/Sidebar';
 import styles from './Dashboard.module.css';
+import { Link } from 'react-router-dom';
 
 export function Dashboard() {
   return (
@@ -14,10 +15,10 @@ export function Dashboard() {
             <h1 className={styles.title}>Dashboard</h1>
             <p className={styles.subtitle}>Bem vindo(a) de volta! Veja o que está acontecendo nos Quizzes</p>
           </div>
-          <button className={styles.btnPrimary}>
+          <Link to="/create-quiz" className={styles.btnPrimary}>
             <Plus size={18} />
             Criar Novo Quiz
-          </button>
+          </Link>
         </header>
 
         {/* Cards de Estatísticas */}
@@ -194,13 +195,17 @@ export function Dashboard() {
             </div>
 
             {/* Cartão de Criar Novo Quiz (Tracejado) */}
-            <div className={`${styles.quizCard} ${styles.createQuizCard}`}>
+            <Link 
+              to="/create-quiz" 
+              className={`${styles.quizCard} ${styles.createQuizCard}`}
+              style={{ textDecoration: 'none' }} 
+            >
               <div className={styles.createIconWrapper}>
                 <Plus size={20} />
               </div>
               <h4>Criar Novo Quiz</h4>
               <p>Adicione questões, limite de tempo, entre outros</p>
-            </div>
+            </Link>
 
           </div>
         </div>
