@@ -1,4 +1,4 @@
-import { Plus, BookOpen, Calendar, Users, BarChart2, Medal } from 'lucide-react';
+import { Plus, BookOpen, Calendar, Users, BarChart2, Medal, ChevronRight } from 'lucide-react';
 import { Sidebar } from '../../components/Sidebar/Sidebar';
 import styles from './Dashboard.module.css';
 
@@ -101,6 +101,107 @@ export function Dashboard() {
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+
+        {/* NOVA SECÇÃO: Quizzes Recentes */}
+        <div className={styles.bottomSection}>
+          <div className={styles.sectionHeader}>
+            <h3 className={styles.panelTitle}>Quizzes Recentes</h3>
+            <p className={styles.panelSubtitle}>Seus Quizzes recentemente criados</p>
+          </div>
+
+          <div className={styles.quizzesGrid}>
+            {/* Cartão de Quiz 1 */}
+            <div className={styles.quizCard}>
+              <div className={styles.quizHeader}>
+                <h4>Quiz Dia 01</h4>
+                <ChevronRight size={18} className={styles.arrowIcon} />
+              </div>
+              <div className={styles.quizDetails}>
+                <div className={styles.quizDetailItem}>
+                  <BookOpen size={14} />
+                  <span>15 perguntas</span>
+                </div>
+                <div className={styles.quizDetailItem}>
+                  <Users size={14} />
+                  <span>28 complementos</span>
+                </div>
+              </div>
+              <div className={styles.progressSection}>
+                <div className={styles.progressLabels}>
+                  <span>Taxa de conclusão</span>
+                  <span>75%</span>
+                </div>
+                <div className={styles.progressBarBg}>
+                  <div className={styles.progressBarFill} style={{ width: '75%' }}></div>
+                </div>
+              </div>
+            </div>
+
+            {/* Cartão de Quiz 2 */}
+            <div className={styles.quizCard}>
+              <div className={styles.quizHeader}>
+                <h4>Quiz Dia 02</h4>
+                <ChevronRight size={18} className={styles.arrowIcon} />
+              </div>
+              <div className={styles.quizDetails}>
+                <div className={styles.quizDetailItem}>
+                  <BookOpen size={14} />
+                  <span>15 perguntas</span>
+                </div>
+                <div className={styles.quizDetailItem}>
+                  <Users size={14} />
+                  <span>12 complementos</span>
+                </div>
+              </div>
+              <div className={styles.progressSection}>
+                <div className={styles.progressLabels}>
+                  <span>Taxa de conclusão</span>
+                  <span>40%</span>
+                </div>
+                <div className={styles.progressBarBg}>
+                  <div className={styles.progressBarFill} style={{ width: '40%' }}></div>
+                </div>
+              </div>
+            </div>
+
+            {/* Cartão de Quiz 3 */}
+            <div className={styles.quizCard}>
+              <div className={styles.quizHeader}>
+                <h4>Quiz Dia 03</h4>
+                <ChevronRight size={18} className={styles.arrowIcon} />
+              </div>
+              <div className={styles.quizDetails}>
+                <div className={styles.quizDetailItem}>
+                  <BookOpen size={14} />
+                  <span>15 perguntas</span>
+                </div>
+                <div className={styles.quizDetailItem}>
+                  <Users size={14} />
+                  <span>45 complementos</span>
+                </div>
+              </div>
+              <div className={styles.progressSection}>
+                <div className={styles.progressLabels}>
+                  <span>Taxa de conclusão</span>
+                  <span>90%</span>
+                </div>
+                <div className={styles.progressBarBg}>
+                  <div className={styles.progressBarFill} style={{ width: '90%' }}></div>
+                </div>
+              </div>
+            </div>
+
+            {/* Cartão de Criar Novo Quiz (Tracejado) */}
+            <div className={`${styles.quizCard} ${styles.createQuizCard}`}>
+              <div className={styles.createIconWrapper}>
+                <Plus size={20} />
+              </div>
+              <h4>Criar Novo Quiz</h4>
+              <p>Adicione questões, limite de tempo, entre outros</p>
+            </div>
+
           </div>
         </div>
       </main>

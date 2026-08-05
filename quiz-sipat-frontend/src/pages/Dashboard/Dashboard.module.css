@@ -230,3 +230,133 @@
   color: #FF9800;
   font-weight: bold;
 }
+
+/* --- Bottom Section: Quizzes Recentes --- */
+.bottomSection {
+  background-color: var(--color-bg-main);
+  border: 1px solid var(--color-surface);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-top: 1.5rem; /* Dá espaço abaixo dos eventos/participantes */
+}
+
+.sectionHeader {
+  margin-bottom: 1.5rem;
+}
+
+.quizzesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.5rem;
+}
+
+.quizCard {
+  border: 1px solid var(--color-surface);
+  border-radius: 8px;
+  padding: 1.2rem;
+  background-color: transparent;
+  transition: border-color 0.2s, transform 0.2s;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+}
+
+.quizCard:hover {
+  border-color: var(--color-primary); /* Fica Ciano ao passar o rato */
+  transform: translateY(-2px);
+}
+
+.quizHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.quizHeader h4 {
+  color: var(--color-white);
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.arrowIcon {
+  color: var(--color-text-muted);
+}
+
+.quizDetails {
+  display: flex;
+  gap: 1.2rem;
+  margin-bottom: 1.5rem;
+}
+
+.quizDetailItem {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--color-text-dark);
+  font-size: 0.85rem;
+}
+
+/* Barra de Progresso */
+.progressSection {
+  margin-top: auto; /* Empurra para o fundo do cartão */
+}
+
+.progressLabels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.progressBarBg {
+  height: 4px;
+  background-color: var(--color-surface);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progressBarFill {
+  height: 100%;
+  background-color: var(--color-primary); /* Barra preenchida a Ciano */
+  border-radius: 2px;
+  transition: width 0.5s ease-out;
+}
+
+/* Cartão Tracejado (Criar Novo Quiz) */
+.createQuizCard {
+  border: 1px dashed var(--color-text-dark);
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 0.8rem;
+  padding: 2rem 1.2rem;
+}
+
+.createQuizCard:hover {
+  border-style: solid; /* Fica sólido ao passar o rato */
+}
+
+.createIconWrapper {
+  width: 40px;
+  height: 40px;
+  background-color: var(--color-surface);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-white);
+  margin-bottom: 0.5rem;
+}
+
+.createQuizCard h4 {
+  color: var(--color-white);
+  font-size: 1.05rem;
+}
+
+.createQuizCard p {
+  color: var(--color-text-dark);
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
