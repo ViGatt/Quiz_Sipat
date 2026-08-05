@@ -19,6 +19,7 @@
   align-items: center;
   justify-content: center;
   padding: 2rem;
+  position: relative;
 }
 
 .formContainer {
@@ -267,4 +268,29 @@
 .dropdownItem:hover {
   background-color: var(--color-primary); /* Fica ciano ao passar o mouse */
   color: var(--color-white); /* Texto fica branco */
+}
+
+/* --- BOTÃO HOME (Voltar) --- */
+.homeButton {
+  position: absolute;
+  top: 2rem;
+  right: 2.5rem;
+  color: #CCCCCC; /* Cor neutra para não chamar mais atenção que o formulário */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.3s, transform 0.2s;
+}
+
+.homeButton:hover {
+  color: var(--color-primary); /* Fica Ciano ao passar o mouse */
+  transform: scale(1.1); /* Dá um pequeno efeito de pulo */
+}
+
+/* Ajuste para o mobile: colar o botão mais no cantinho para não encavalar no texto */
+@media (max-width: 768px) {
+  .homeButton {
+    top: 1.5rem;
+    right: 1.5rem;
+  }
 }

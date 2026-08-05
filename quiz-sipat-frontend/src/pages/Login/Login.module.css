@@ -14,11 +14,12 @@
 .formSide {
   flex: 1;
   background-color: var(--color-white);
-  color: var(--color-black); /* Força texto escuro na área branca */
+  color: var(--color-black);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 2rem;
+  position: relative; 
 }
 
 .formContainer {
@@ -158,5 +159,30 @@
 
   .formSide {
     flex: 1;
+  }
+}
+
+/* --- BOTÃO HOME (Voltar) --- */
+.homeButton {
+  position: absolute;
+  top: 2rem;
+  right: 2.5rem;
+  color: #CCCCCC; /* Cor neutra para não chamar mais atenção que o formulário */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.3s, transform 0.2s;
+}
+
+.homeButton:hover {
+  color: var(--color-primary); /* Fica Ciano ao passar o mouse */
+  transform: scale(1.1); /* Dá um pequeno efeito de pulo */
+}
+
+/* Ajuste para o mobile: colar o botão mais no cantinho para não encavalar no texto */
+@media (max-width: 768px) {
+  .homeButton {
+    top: 1.5rem;
+    right: 1.5rem;
   }
 }

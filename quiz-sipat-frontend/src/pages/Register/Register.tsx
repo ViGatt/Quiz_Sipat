@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Mail, Lock, User, Building, Contact, Eye, EyeOff, ChevronDown } from 'lucide-react';
+import { Mail, Lock, User, Building, Contact, Eye, EyeOff, ChevronDown, Home } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import styles from './Register.module.css';
 import mascotImg from '../../assets/MASCOTE-CIPA-MARI_2.png'; 
@@ -28,7 +28,10 @@ export function Register() {
       </div>
 
       {/* Lado Direito - Formulário Claro */}
-      <div className={styles.formSide}>
+          <div className={styles.formSide}>
+              <Link to="/" className={styles.homeButton} title="Voltar ao Início">
+          <Home size={28} />
+        </Link>
         <div className={styles.formContainer}>
           <h2 className={styles.formTitle}>Criar Conta</h2>
           <p className={styles.formSubtitle}>Crie sua conta e comece sua jornada conosco</p>

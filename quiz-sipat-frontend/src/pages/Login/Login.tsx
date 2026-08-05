@@ -1,4 +1,4 @@
-import { Mail, Lock } from 'lucide-react';
+import { Mail, Lock, Home} from 'lucide-react';
 import { Link } from 'react-router-dom';
 import styles from './Login.module.css';
 import mascotImg from '../../assets/MASCOTE-CIPA-MARI_2.png';
@@ -18,7 +18,10 @@ export function Login() {
       </div>
 
       {/* Lado Direito - Formulário Claro */}
-      <div className={styles.formSide}>
+          <div className={styles.formSide}>
+              <Link to="/" className={styles.homeButton} title="Voltar ao Início">
+          <Home size={28} />
+        </Link>
         <div className={styles.formContainer}>
           <h2 className={styles.formTitle}>Bem Vindo</h2>
           <p className={styles.formSubtitle}>Coloque suas credenciais para acesso</p>
