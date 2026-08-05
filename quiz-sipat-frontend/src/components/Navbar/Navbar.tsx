@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Menu, X } from 'lucide-react';
+import { Menu, X ,BarChart2 } from 'lucide-react';
 import styles from './Navbar.module.css';
 import { Link } from 'react-router-dom';
 
@@ -28,6 +28,9 @@ export function Navbar() {
 
       {/* Botões Desktop */}
       <div className={styles.authButtons}>
+        <Link to="/dashboard" className={styles.dashboardIcon} title="Acessar Dashboard">
+          <BarChart2 size={24} />
+        </Link>
         <Link to="/login" className={styles.btnLogin}>Login</Link>
         <Link to="/register" className={styles.btnRegister}>Registre</Link>
       </div>
@@ -47,6 +50,7 @@ export function Navbar() {
           <a href="#diario" className={styles.navLink}>Quiz Diário</a>
           <a href="#premios" className={styles.navLink}>Prêmios</a>
           <a href="#sobre" className={styles.navLink}>Sobre</a>
+          
           <div className={styles.mobileAuthButtons}>
             <Link to="/login" className={styles.btnLogin}>Login</Link>
             <Link to="/register" className={styles.btnRegister}>Registre</Link>

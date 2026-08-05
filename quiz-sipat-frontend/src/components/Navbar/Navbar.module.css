@@ -107,3 +107,38 @@
     display: none;
   }
 }
+
+/* --- ÍCONE DO DASHBOARD NA NAVBAR --- */
+
+/* Estilo Desktop */
+.dashboardIcon {
+  color: var(--color-text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 1rem;
+  transition: color 0.3s, transform 0.2s;
+}
+
+.dashboardIcon:hover {
+  color: var(--color-primary); /* Fica ciano ao passar o mouse */
+  transform: scale(1.1); /* Dá um pequeno efeito de destaque */
+}
+
+/* Estilo Mobile */
+.dashboardIconMobile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: var(--color-text-muted);
+  text-decoration: none;
+  font-weight: 500;
+  margin-bottom: 1.5rem;
+  padding: 0.5rem;
+  transition: color 0.3s;
+}
+
+.dashboardIconMobile:hover {
+  color: var(--color-primary);
+}
