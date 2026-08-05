@@ -1,4 +1,4 @@
-import { Search, LayoutDashboard, BookOpen, Calendar, Users, Settings, Plus } from 'lucide-react';
+import { Search, LayoutDashboard, BookOpen, Calendar, Users, Settings } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import styles from './Sidebar.module.css';
 
