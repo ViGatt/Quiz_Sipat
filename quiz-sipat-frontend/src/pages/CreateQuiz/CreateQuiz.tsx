@@ -4,6 +4,7 @@ import { Link,useNavigate } from 'react-router-dom';
 import styles from './CreateQuiz.module.css';
 
 export function CreateQuiz() {
+  const [showSuccess, setShowSuccess] = useState(false);
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [randomize, setRandomize] = useState(true);
@@ -25,6 +26,15 @@ export function CreateQuiz() {
       ]
     }
   ]);
+
+  const handlePublish = () => {
+    // Aqui no futuro entrará a função de salvar no Supabase!
+    setShowSuccess(true); 
+    
+    setTimeout(() => {
+      navigate('/quizzes');
+    }, 3000);
+  };
 
   // Função para adicionar nova questão em branco
   const handleAddQuestion = () => {
@@ -64,6 +74,21 @@ export function CreateQuiz() {
 
   // Pega a questão que está visível no momento
   const currentQuestion = questions[currentQuestionIndex];
+
+  if (showSuccess) {
+    return (
+      <div className={styles.successContainer}>
+        <div className={styles.successContent}>
+          <div className={styles.iconPulse}>
+            {/* Usamos o CheckCircle que já estava importado e a sua cor verde */}
+            <CheckCircle size={80} color="var(--color-secondary)" />
+          </div>
+          <h2 className={styles.successTitle}>Quiz Criado com Sucesso!</h2>
+          <p className={styles.successSubtitle}>Redirecionando para a biblioteca...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.layout}>
@@ -295,7 +320,7 @@ export function CreateQuiz() {
           ) : (
             <button 
               className={styles.btnPrimary} 
-              onClick={() => navigate('/quizzes')} /* Adicionado o redirecionamento aqui! */
+              onClick={handlePublish}
             >
               Prévia e Publicar
             </button>

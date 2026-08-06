@@ -470,3 +470,55 @@
   min-width: 60px;
   text-align: center;
 }
+
+/* --- TELA DE SUCESSO TEMPORÁRIA --- */
+.successContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background-color: var(--color-bg-secondary); /* Usa o fundo escuro padrão */
+}
+
+.successContent {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  animation: fadeIn 0.5s ease-out; /* Animação suave ao aparecer */
+}
+
+/* Bolha com efeito de pulso verde */
+.iconPulse {
+  background-color: rgba(94, 194, 105, 0.1); /* Fundo verde translúcido */
+  padding: 2rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: pulseGreen 2s infinite;
+}
+
+.successTitle {
+  font-size: 2.2rem;
+  color: var(--color-white);
+  font-weight: 800;
+}
+
+.successSubtitle {
+  color: var(--color-text-dark);
+  font-size: 1.1rem;
+}
+
+/* Animações Keyframes */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulseGreen {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(94, 194, 105, 0.4); }
+  70% { transform: scale(1); box-shadow: 0 0 0 20px rgba(94, 194, 105, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(94, 194, 105, 0); }
+}
