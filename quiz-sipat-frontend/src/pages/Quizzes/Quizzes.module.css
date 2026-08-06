@@ -1,0 +1,302 @@
+.layout {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--color-bg-secondary);
+}
+
+.mainContent {
+  flex: 1;
+  padding: 2.5rem 3rem;
+  overflow-y: auto;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* --- HEADER --- */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2.5rem;
+}
+
+.title {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--color-white);
+  margin-bottom: 0.5rem;
+}
+
+.subtitle {
+  color: var(--color-text-dark);
+  font-size: 0.95rem;
+}
+
+.btnPrimary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: var(--color-primary);
+  color: var(--color-white);
+  border: none;
+  padding: 0.8rem 1.2rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+
+.btnPrimary:hover {
+  opacity: 0.9;
+}
+
+/* --- BIBLIOTECA CARD --- */
+.libraryCard {
+  background-color: var(--color-bg-main);
+  border: 1px solid var(--color-surface);
+  border-radius: 12px;
+  padding: 2rem;
+}
+
+.libraryHeader {
+  margin-bottom: 2rem;
+}
+
+.libraryTitle {
+  font-size: 1.3rem;
+  color: var(--color-white);
+  margin-bottom: 0.3rem;
+}
+
+.librarySubtitle {
+  color: var(--color-text-dark);
+  font-size: 0.9rem;
+}
+
+/* --- CONTROLES (Abas, Busca, Filtro) --- */
+.controlsRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid var(--color-surface);
+  padding-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.tabs {
+  display: flex;
+  gap: 2rem;
+}
+
+.tabBtn {
+  background: transparent;
+  border: none;
+  color: var(--color-text-dark);
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0.5rem 0;
+  position: relative;
+  transition: color 0.2s;
+}
+
+.tabBtn:hover {
+  color: var(--color-text-muted);
+}
+
+.activeTab {
+  color: var(--color-white);
+}
+
+.activeTab::after {
+  content: '';
+  position: absolute;
+  bottom: -1rem;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: var(--color-white);
+}
+
+.filters {
+  display: flex;
+  gap: 1rem;
+}
+
+.searchWrapper {
+  display: flex;
+  align-items: center;
+  background-color: var(--color-surface-light);
+  border: 1px solid var(--color-surface);
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  width: 250px;
+}
+
+.iconMuted {
+  color: var(--color-text-dark);
+  margin-right: 0.5rem;
+}
+
+.searchInput {
+  background: transparent;
+  border: none;
+  color: var(--color-white);
+  width: 100%;
+  outline: none;
+  font-size: 0.9rem;
+}
+
+.filterBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: var(--color-surface-light);
+  border: 1px solid var(--color-surface);
+  color: var(--color-white);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: border-color 0.2s;
+}
+
+.filterBtn:hover {
+  border-color: var(--color-text-muted);
+}
+
+/* --- LISTA DE QUIZZES --- */
+.quizList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.quizItem {
+  display: flex;
+  align-items: center;
+  background-color: var(--color-surface-light);
+  border: 1px solid var(--color-surface);
+  border-radius: 12px;
+  padding: 1.5rem;
+  gap: 1.5rem;
+  transition: border-color 0.2s;
+}
+
+.quizItem:hover {
+  border-color: var(--color-primary);
+}
+
+.quizIconWrapper {
+  width: 50px;
+  height: 50px;
+  background-color: rgba(157, 89, 239, 0.1); /* Fundo roxo suave */
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.quizIcon {
+  color: var(--color-accent-purple);
+}
+
+.quizInfo {
+  flex: 1;
+}
+
+.quizTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.3rem;
+}
+
+.quizTitleRow h3 {
+  color: var(--color-white);
+  font-size: 1.1rem;
+}
+
+/* Badges */
+.badge {
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.badgePublished {
+  background-color: rgba(94, 194, 105, 0.2);
+  color: var(--color-secondary); /* Verde */
+}
+
+.badgeDraft {
+  background-color: rgba(255, 152, 0, 0.2);
+  color: #FF9800; /* Laranja */
+}
+
+.quizDesc {
+  color: var(--color-text-dark);
+  font-size: 0.9rem;
+  margin-bottom: 0.8rem;
+}
+
+.quizMeta {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
+.quizMeta span {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* Ações */
+.quizActions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.btnOutline {
+  background-color: transparent;
+  color: var(--color-white);
+  border: 1px solid var(--color-surface);
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.btnOutline:hover {
+  border-color: var(--color-text-muted);
+}
+
+.btnIcon {
+  background: transparent;
+  border: 1px solid var(--color-surface);
+  color: var(--color-text-muted);
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btnIcon:hover {
+  border-color: var(--color-white);
+  color: var(--color-white);
+}
