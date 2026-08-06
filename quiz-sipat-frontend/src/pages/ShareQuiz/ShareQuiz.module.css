@@ -1,0 +1,145 @@
+.layout {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--color-bg-secondary);
+  justify-content: center;
+  padding: 3rem 1rem;
+}
+
+.mainContent {
+  width: 100%;
+  max-width: 600px; /* Mantém a tela estreita e focada como um painel de ação */
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+/* --- CABEÇALHO --- */
+.header {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.backButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--color-surface);
+  border-radius: 12px;
+  color: var(--color-white);
+  background: transparent;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.backButton:hover {
+  background-color: var(--color-surface);
+  border-color: var(--color-text-muted);
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-white);
+  margin-bottom: 0.2rem;
+}
+
+.subtitle {
+  color: var(--color-text-dark);
+  font-size: 0.95rem;
+}
+
+/* --- SEÇÕES & LABELS --- */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.label {
+  color: var(--color-white);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* --- ÁREA DO LINK --- */
+.linkWrapper {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.linkInput {
+  flex: 1;
+  background-color: var(--color-bg-main);
+  border: 1px solid var(--color-surface);
+  border-radius: 8px;
+  padding: 1rem 1.2rem;
+  color: var(--color-white);
+  font-size: 0.95rem;
+  outline: none;
+}
+
+.copyButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  background-color: transparent;
+  border: 1px solid var(--color-surface);
+  border-radius: 8px;
+  color: var(--color-white);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.copyButton:hover {
+  background-color: var(--color-surface);
+  border-color: var(--color-text-muted);
+}
+
+/* --- ÁREA DO QR CODE --- */
+.qrCard {
+  background-color: var(--color-white);
+  border-radius: 12px;
+  padding: 3rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.qrWrapper {
+  /* Protege o tamanho do canvas do gerador */
+  display: flex;
+  background: white;
+}
+
+.actionRow {
+  display: flex;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.btnOutline {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: transparent;
+  color: var(--color-white);
+  border: 1px solid var(--color-surface);
+  padding: 0.8rem 1.5rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btnOutline:hover {
+  background-color: var(--color-surface);
+  border-color: var(--color-text-muted);
+}
