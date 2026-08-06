@@ -62,15 +62,13 @@ export function QuizDetails() {
               {hasData ? "Simular Banco Vazio" : "Voltar Dados"}
             </button>
 
-            {/* MELHORIA 1: Botão de Exportação */}
-            <button className={styles.btnOutline}>
-              <Download size={16} /> Exportar Dados
-            </button>
-
             <button className={styles.btnOutline} onClick={() => navigate(`/share-quiz/${id || '1'}`)}>
               <Share2 size={16} /> Compartilhar
             </button>
-            <button className={styles.btnPrimary}>Prévia</button>
+            
+            <button className={styles.btnPrimary}>
+              <Download size={16} /> Exportar Dados
+            </button>
           </div>
         </header>
 
