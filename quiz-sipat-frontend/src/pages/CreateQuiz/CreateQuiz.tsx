@@ -7,7 +7,62 @@ export function CreateQuiz() {
   const [step, setStep] = useState(1);
   const [randomize, setRandomize] = useState(true);
   const [immediateResult, setImmediateResult] = useState(true);
-  const [correctOption, setCorrectOption] = useState(2); // Simula a opção correta selecionada no Passo 2
+
+  // --- LÓGICA DO CARROSSEL DE QUESTÕES ---
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [questions, setQuestions] = useState([
+    {
+      id: 1,
+      text: "Colocar sacola na geladeira pode causar....",
+      points: 10,
+      type: "Multipla",
+      options: [
+        { text: "Nada, só enfeita", isCorrect: false },
+        { text: "Ocupar espaço", isCorrect: false },
+        { text: "Contaminação Cruzada", isCorrect: true },
+        { text: "Conter umidade", isCorrect: false },
+      ]
+    }
+  ]);
+
+  // Função para adicionar nova questão em branco
+  const handleAddQuestion = () => {
+    const newQuestion = {
+      id: Date.now(),
+      text: "",
+      points: 10,
+      type: "Multipla",
+      options: [
+        { text: "", isCorrect: true }, // A primeira nasce correta por padrão
+        { text: "", isCorrect: false },
+        { text: "", isCorrect: false },
+        { text: "", isCorrect: false },
+      ]
+    };
+    setQuestions([...questions, newQuestion]);
+    setCurrentQuestionIndex(questions.length); // Pula para a nova questão criada
+  };
+
+  // Funções de navegação do carrossel
+  const handlePrev = () => {
+    if (currentQuestionIndex > 0) setCurrentQuestionIndex(prev => prev - 1);
+  };
+
+  const handleNext = () => {
+    if (currentQuestionIndex < questions.length - 1) setCurrentQuestionIndex(prev => prev + 1);
+  };
+
+  // Função para deletar a questão atual
+  const handleDelete = () => {
+    if (questions.length === 1) return; // Impede deletar se só tiver 1
+    const updatedQuestions = questions.filter((_, idx) => idx !== currentQuestionIndex);
+    setQuestions(updatedQuestions);
+    // Ajusta o índice para não bugar a tela
+    setCurrentQuestionIndex(prev => Math.max(0, prev - 1));
+  };
+
+  // Pega a questão que está visível no momento
+  const currentQuestion = questions[currentQuestionIndex];
 
   return (
     <div className={styles.layout}>
@@ -29,7 +84,7 @@ export function CreateQuiz() {
       </header>
 
       <main className={styles.mainContent}>
-        {/* CONTEÚDO DO PASSO 1 */}
+        {/* --- PASSO 1 --- */}
         {step === 1 && (
           <div className={styles.step1Grid}>
             {/* Coluna Esquerda: Detalhes */}
@@ -127,27 +182,57 @@ export function CreateQuiz() {
           </div>
         )}
 
-        {/* CONTEÚDO DO PASSO 2 */}
+        {/* --- PASSO 2 (COM CARROSSEL) --- */}
         {step === 2 && (
           <div className={styles.step2Container}>
             <div className={styles.card}>
-              <div className={styles.cardHeader}>
-                <h2>Perguntas do Quiz</h2>
-                <p>Crie e Gerencie as perguntas</p>
+              
+              {/* Header do Card + Controles do Carrossel */}
+              <div className={styles.cardHeaderWithCarousel}>
+                <div>
+                  <h2>Perguntas do Quiz</h2>
+                  <p>Crie e Gerencie as perguntas</p>
+                </div>
+                
+                {/* Controles do Carrossel (< >) */}
+                <div className={styles.carouselControls}>
+                  <button 
+                    className={styles.btnCarousel} 
+                    onClick={handlePrev}
+                    disabled={currentQuestionIndex === 0}
+                  >
+                    <ChevronLeft size={20} />
+                  </button>
+                  <span className={styles.questionCounter}>
+                    {currentQuestionIndex + 1} de {questions.length}
+                  </span>
+                  <button 
+                    className={styles.btnCarousel} 
+                    onClick={handleNext}
+                    disabled={currentQuestionIndex === questions.length - 1}
+                  >
+                    <ChevronRight size={20} />
+                  </button>
+                </div>
               </div>
 
-              {/* Bloco de Pergunta */}
+              {/* Bloco de Pergunta (Exibe apenas a questão atual) */}
               <div className={styles.questionBlock}>
                 <div className={styles.questionHeader}>
-                  <h3>Pergunta 01</h3>
+                  <h3>Pergunta {String(currentQuestionIndex + 1).padStart(2, '0')}</h3>
                   <div className={styles.questionSettings}>
                     <label>Pontos:</label>
-                    <input type="number" defaultValue="10" className={styles.pointsInput} />
-                    <select className={styles.selectFieldSmall} defaultValue="Multipla">
+                    <input type="number" defaultValue={currentQuestion.points} className={styles.pointsInput} />
+                    <select className={styles.selectFieldSmall} defaultValue={currentQuestion.type}>
                       <option value="Multipla">Múltipla Escolha</option>
                       <option value="VF">Verdadeiro/Falso</option>
                     </select>
-                    <button className={styles.btnIconDanger}>
+                    <button 
+                      className={styles.btnIconDanger} 
+                      onClick={handleDelete}
+                      disabled={questions.length === 1}
+                      title={questions.length === 1 ? "Não é possível deletar a única questão" : "Deletar questão"}
+                    >
                       <Trash2 size={20} />
                     </button>
                   </div>
@@ -155,32 +240,37 @@ export function CreateQuiz() {
 
                 <div className={styles.formGroup}>
                   <label>Texto da Pergunta</label>
+                  {/* O "key" força o React a limpar o campo quando mudamos de questão */}
                   <textarea 
+                    key={`text-${currentQuestion.id}`}
                     className={styles.textareaField} 
                     rows={2}
-                    defaultValue="Colocar sacola na geladeira pode causar...."
+                    defaultValue={currentQuestion.text}
+                    placeholder="Digite sua pergunta aqui..."
                   />
                 </div>
 
                 <div className={styles.optionsSection}>
                   <label>Opções de Resposta</label>
                   
-                  {/* Lista de Opções (Simulando 4 opções) */}
-                  {['Nada, só enfeita', 'Ocupar espaço', 'Contaminação Cruzada', 'Conter umidade'].map((opt, index) => (
-                    <div key={index} className={`${styles.optionRow} ${correctOption === index ? styles.optionCorrect : ''}`}>
-                      <button 
-                        className={styles.radioBtn} 
-                        onClick={() => setCorrectOption(index)}
-                      >
-                        {correctOption === index ? <CheckCircle size={20} className={styles.iconCyan} /> : <Circle size={20} className={styles.iconMuted} />}
+                  {/* Lista de Opções da questão atual */}
+                  {currentQuestion.options.map((opt, index) => (
+                    <div key={`opt-${currentQuestion.id}-${index}`} className={`${styles.optionRow} ${opt.isCorrect ? styles.optionCorrect : ''}`}>
+                      <button className={styles.radioBtn}>
+                        {opt.isCorrect ? <CheckCircle size={20} className={styles.iconCyan} /> : <Circle size={20} className={styles.iconMuted} />}
                       </button>
-                      <input type="text" defaultValue={opt} className={styles.optionInput} />
+                      <input 
+                        type="text" 
+                        defaultValue={opt.text} 
+                        className={styles.optionInput} 
+                        placeholder={`Opção ${index + 1}`}
+                      />
                     </div>
                   ))}
                 </div>
 
-                <button className={styles.btnAddQuestion}>
-                  <Plus size={18} /> Adicionar Questão
+                <button className={styles.btnAddQuestion} onClick={handleAddQuestion}>
+                  <Plus size={18} /> Adicionar Nova Questão
                 </button>
               </div>
             </div>
@@ -194,7 +284,7 @@ export function CreateQuiz() {
               <ChevronLeft size={18} /> Prev
             </button>
           ) : (
-            <div style={{ width: '85px' }}></div> /* Espaçador para manter o botão "Prox" à direita */
+            <div style={{ width: '85px' }}></div>
           )}
           
           {step === 1 ? (
