@@ -48,7 +48,7 @@ export function Login() {
       if (data.is_comissao) {
         navigate('/dashboard');
       } else {
-        navigate('/take-quiz/1');
+        navigate('/meus-quizzes'); 
       }
 
     } catch (err) {
