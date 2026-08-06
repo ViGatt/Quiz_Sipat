@@ -10,15 +10,19 @@ import { Quizzes } from './pages/Quizzes/Quizzes';
 
 function AppRoutes() {
   const location = useLocation();
+  const isCreateQuiz = location.pathname === '/create-quiz';
 
   return (
     <AnimatePresence mode="wait">
       <motion.div
         key={location.pathname}
-        initial={{ opacity: 0, y: 15 }}    /* Como a tela nasce (invisível e um pouco pra baixo) */
+        initial={{ opacity: 0, y: isCreateQuiz ? 200 : 15 }}    /* Como a tela nasce (invisível e um pouco pra baixo) */
         animate={{ opacity: 1, y: 0 }}     /* Estado final da tela (visível e no lugar certo) */
-        exit={{ opacity: 0, y: -15 }}      /* Como a tela morre (fica invisível e sobe um pouco) */
-        transition={{ duration: 0.3, ease: "easeOut" }} /* Duração da transição */
+        exit={{ opacity: 0, y: isCreateQuiz ? 200 : -15 }}      /* Como a tela morre (fica invisível e sobe um pouco) */
+        transition={{ 
+          duration: isCreateQuiz ? 0.5 : 0.3, 
+          ease: "easeOut" 
+        }}
         style={{ width: '100%', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}
       >
         <Routes location={location}>
