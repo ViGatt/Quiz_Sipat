@@ -360,3 +360,32 @@
   font-size: 0.85rem;
   line-height: 1.4;
 }
+
+/* --- BOTÃO HOME NO CABEÇALHO DO DASHBOARD --- */
+.homeIconBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted, #999999);
+  background: transparent;
+  border: 1px solid var(--color-surface, #333333);
+  border-radius: 8px;
+  padding: 0.6rem 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.homeIconBtn:hover {
+  color: var(--color-primary); /* Fica Ciano ao passar o mouse */
+  border-color: var(--color-primary);
+  background-color: rgba(0, 195, 255, 0.05); /* Fundo sutil ciano */
+  transform: translateY(-2px); /* Efeito suave de levantar */
+}
+
+/* --- CONTAINER DOS BOTÕES DO CABEÇALHO --- */
+.headerActions {
+  display: flex;
+  flex-direction: row; /* Força os botões a ficarem lado a lado (horizontal) */
+  align-items: center;
+  gap: 0.8rem; /* Cria o espaçamento perfeito entre a casinha e o botão */
+}

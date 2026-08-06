@@ -1,4 +1,4 @@
-import { Plus, BookOpen, Calendar, Users, BarChart2, Medal, ChevronRight } from 'lucide-react';
+import { Plus, BookOpen, Calendar, Users, BarChart2, Medal, ChevronRight, Home } from 'lucide-react';
 import { Sidebar } from '../../components/Sidebar/Sidebar';
 import styles from './Dashboard.module.css';
 import { Link } from 'react-router-dom';
@@ -15,10 +15,17 @@ export function Dashboard() {
             <h1 className={styles.title}>Dashboard</h1>
             <p className={styles.subtitle}>Bem vindo(a) de volta! Veja o que está acontecendo nos Quizzes</p>
           </div>
-          <Link to="/create-quiz" className={styles.btnPrimary}>
-            <Plus size={18} />
-            Criar Novo Quiz
-          </Link>
+          
+          <div className={styles.headerActions}>
+            {/* NOVO: Botão Home adicionado antes do botão de Criar Quiz */}
+            <Link to="/" className={styles.homeIconBtn} title="Voltar à Landing Page">
+              <Home size={20} />
+            </Link>
+            
+            <Link to="/create-quiz" className={styles.btnPrimary}>
+              <Plus size={20} /> Criar Novo Quiz
+            </Link>
+          </div>
         </header>
 
         {/* Cards de Estatísticas */}
