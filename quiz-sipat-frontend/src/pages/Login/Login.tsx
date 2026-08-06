@@ -1,12 +1,64 @@
-import { Mail, Lock, Home} from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { Mail, Home } from 'lucide-react'; // Removemos o Lock e os ícones de olho
+import { Link, useNavigate } from 'react-router-dom';
 import styles from './Login.module.css';
 import mascotImg from '../../assets/MASCOTE-CIPA-MARI_2.png';
+import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../context/AuthContext';
 
 export function Login() {
+  const navigate = useNavigate();
+  const { login } = useAuth();
+
+  const [cpf, setCpf] = useState('');
+  const [erro, setErro] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErro('');
+    setLoading(true);
+
+    try {
+      // Limpa pontos e traços do CPF
+      const cpfLimpo = cpf.replace(/\D/g, '');
+
+      // Consulta APENAS o CPF no Supabase
+      const { data, error } = await supabase
+        .from('colaboradores')
+        .select('*')
+        .eq('cpf', cpfLimpo)
+        .single();
+
+      if (error || !data) {
+        
+        setErro('Colaborador não encontrado ou CPF inválido.');
+        setLoading(false);
+        return;
+      }
+
+      login({
+        id: data.id,
+        cpf: data.cpf,
+        nome: data.nome,
+        is_comissao: data.is_comissao
+      });
+
+      if (data.is_comissao) {
+        navigate('/dashboard');
+      } else {
+        navigate('/take-quiz/1');
+      }
+
+    } catch (err) {
+      setErro('Erro de conexão com o banco de dados.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className={styles.container}>
-      {/* Lado Esquerdo - Branding Escuro */}
       <div className={styles.brandSide}>
         <div className={styles.brandContent}>
           <h1 className={styles.title}>
@@ -17,33 +69,38 @@ export function Login() {
         </div>
       </div>
 
-      {/* Lado Direito - Formulário Claro */}
-          <div className={styles.formSide}>
-              <Link to="/" className={styles.homeButton} title="Voltar ao Início">
+      <div className={styles.formSide}>
+        <Link to="/" className={styles.homeButton} title="Voltar ao Início">
           <Home size={28} />
         </Link>
         <div className={styles.formContainer}>
           <h2 className={styles.formTitle}>Bem Vindo</h2>
-          <p className={styles.formSubtitle}>Coloque suas credenciais para acesso</p>
+          {/* Subtítulo atualizado para refletir o novo fluxo */}
+          <p className={styles.formSubtitle}>Insira seu CPF para acessar a SIPAT</p>
 
-          <form className={styles.form}>
+          <form className={styles.form} onSubmit={handleLogin}>
+            
+            {erro && <div className={styles.errorMessage} style={{ color: '#ef4444', marginBottom: '1rem', fontSize: '0.9rem', fontWeight: '500' }}>{erro}</div>}
+
             <div className={styles.inputGroup}>
-              <label>E-mail ou CPF</label>
+              <label>CPF</label>
               <div className={styles.inputWrapper}>
                 <Mail size={20} className={styles.inputIcon} />
-                <input type="text" placeholder="nome@exemplo.com ou 000.000.000-00" />
+                <input 
+                  type="text" 
+                  placeholder="Ex: 123.456.7898-00" 
+                  value={cpf}
+                  onChange={(e) => setCpf(e.target.value)}
+                  required
+                />
               </div>
             </div>
 
-            <div className={styles.inputGroup}>
-              <label>Senha</label>
-              <div className={styles.inputWrapper}>
-                <Lock size={20} className={styles.inputIcon} />
-                <input type="password" placeholder="********" />
-              </div>
-            </div>
+            {/* O campo de senha foi completamente removido  */}
 
-            <button type="button" className={styles.submitBtn}>Login</button>
+            <button type="submit" className={styles.submitBtn} disabled={loading}>
+              {loading ? 'Verificando...' : 'Acessar SIPAT'}
+            </button>
           </form>
 
           <p className={styles.registerPrompt}>

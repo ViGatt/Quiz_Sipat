@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-
+import { ProtectedRoute } from './components/ProtectedRoute/ProtectedRoute';
+import { AuthProvider } from './context/AuthContext';
 import { QuizDetails } from './pages/QuizDetails/QuizDetails';
 import { LandingPage } from './pages/LandingPage';
 import { Login } from './pages/Login/Login';
@@ -32,12 +33,15 @@ function AppRoutes() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/take-quiz/:id" element={<TakeQuiz />} />
+
+          <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/create-quiz" element={<CreateQuiz />} />
           <Route path="/quizzes" element={<Quizzes />} />
           <Route path="/quizzes/:id" element={<QuizDetails />} />
           <Route path="/share-quiz/:id" element={<ShareQuiz />} />
-          <Route path="/take-quiz/:id" element={<TakeQuiz />} />
+            </Route>
         </Routes>
       </motion.div>
     </AnimatePresence>
@@ -46,9 +50,11 @@ function AppRoutes() {
 
 function App() {
   return (
+    <AuthProvider>
     <BrowserRouter>
       <AppRoutes />
-    </BrowserRouter>
+      </BrowserRouter>
+      </AuthProvider>
   );
 }
 
