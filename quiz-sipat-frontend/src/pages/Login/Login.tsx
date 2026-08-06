@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Mail, Home } from 'lucide-react'; // Removemos o Lock e os ícones de olho
+import { Mail, Lock, Home, Eye, EyeOff } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import styles from './Login.module.css';
 import mascotImg from '../../assets/MASCOTE-CIPA-MARI_2.png';
@@ -11,6 +11,8 @@ export function Login() {
   const { login } = useAuth();
 
   const [cpf, setCpf] = useState('');
+  const [senha, setSenha] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [erro, setErro] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -20,19 +22,18 @@ export function Login() {
     setLoading(true);
 
     try {
-      // Limpa pontos e traços do CPF
       const cpfLimpo = cpf.replace(/\D/g, '');
 
-      // Consulta APENAS o CPF no Supabase
+      // Agora o sistema verifica o CPF E a Senha simultaneamente
       const { data, error } = await supabase
         .from('colaboradores')
         .select('*')
         .eq('cpf', cpfLimpo)
+        .eq('senha', senha)
         .single();
 
       if (error || !data) {
-        
-        setErro('Colaborador não encontrado ou CPF inválido.');
+        setErro('CPF não encontrado ou senha incorreta.');
         setLoading(false);
         return;
       }
@@ -75,11 +76,9 @@ export function Login() {
         </Link>
         <div className={styles.formContainer}>
           <h2 className={styles.formTitle}>Bem Vindo</h2>
-          {/* Subtítulo atualizado para refletir o novo fluxo */}
-          <p className={styles.formSubtitle}>Insira seu CPF para acessar a SIPAT</p>
+          <p className={styles.formSubtitle}>Coloque suas credenciais para acesso</p>
 
           <form className={styles.form} onSubmit={handleLogin}>
-            
             {erro && <div className={styles.errorMessage} style={{ color: '#ef4444', marginBottom: '1rem', fontSize: '0.9rem', fontWeight: '500' }}>{erro}</div>}
 
             <div className={styles.inputGroup}>
@@ -88,7 +87,7 @@ export function Login() {
                 <Mail size={20} className={styles.inputIcon} />
                 <input 
                   type="text" 
-                  placeholder="Ex: 123.456.7898-00" 
+                  placeholder="Ex: 123.456.789-00" 
                   value={cpf}
                   onChange={(e) => setCpf(e.target.value)}
                   required
@@ -96,7 +95,27 @@ export function Login() {
               </div>
             </div>
 
-            {/* O campo de senha foi completamente removido  */}
+            {/* O Campo de Senha Voltou! */}
+            <div className={styles.inputGroup}>
+              <label>Senha</label>
+              <div className={styles.inputWrapper}>
+                <Lock size={20} className={styles.inputIcon} />
+                <input 
+                  type={showPassword ? "text" : "password"} 
+                  placeholder="********" 
+                  value={senha}
+                  onChange={(e) => setSenha(e.target.value)}
+                  required
+                />
+                <button 
+                  type="button" 
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{ background: 'transparent', border: 'none', color: 'var(--color-text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
+            </div>
 
             <button type="submit" className={styles.submitBtn} disabled={loading}>
               {loading ? 'Verificando...' : 'Acessar SIPAT'}
@@ -104,7 +123,7 @@ export function Login() {
           </form>
 
           <p className={styles.registerPrompt}>
-            Não possui uma conta? <Link to="/register" className={styles.registerLink}>Registre</Link>
+            Primeiro acesso? <Link to="/register" className={styles.registerLink}>Ative sua conta</Link>
           </p>
         </div>
       </div>

@@ -217,7 +217,6 @@
   font-weight: bold;
 }
 
-/* Responsividade: Empilha os campos em telas de celular muito pequenas */
 @media (max-width: 480px) {
   .inputRow {
     grid-template-columns: 1fr; 
@@ -237,26 +236,38 @@
   font-size: 1rem;
   padding: 0.8rem 0;
 }
+
+/* CORREÇÃO DO DROPDOWN: O CONTEINER PAI (PONTO DE ANCORAGEM) */
+.customDropdownContainer {
+  position: relative; 
+  width: 100%;
+}
+
+.customDropdownContainer .inputWrapper {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* A LISTA DE OPÇÕES FLUTUANTE */
 .dropdownList {
   position: absolute;
-  top: 100%; /* Faz a lista nascer exatamente abaixo do input */
+  top: 100%; 
   left: 0;
   width: 100%;
   margin-top: 0.5rem;
   background-color: var(--color-white);
   border: 1px solid #E0E0E0;
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Dá um sombreado elegante */
-  z-index: 10; /* Garante que fique por cima do campo de E-mail que vem logo abaixo */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); 
+  z-index: 10; 
   
-  /* Configuração para não ficar gigante e ter barra de rolagem se necessário */
   max-height: 200px;
   overflow-y: auto;
   
-  /* Tira os pontinhos e espaçamentos padrão de listas HTML */
   list-style: none;
   padding: 0.5rem 0;
 }
+
 .dropdownItem {
   padding: 0.8rem 1.2rem;
   font-size: 0.95rem;
@@ -266,8 +277,8 @@
 }
 
 .dropdownItem:hover {
-  background-color: var(--color-primary); /* Fica ciano ao passar o mouse */
-  color: var(--color-white); /* Texto fica branco */
+  background-color: var(--color-primary);
+  color: var(--color-white); 
 }
 
 /* --- BOTÃO HOME (Voltar) --- */
@@ -275,7 +286,7 @@
   position: absolute;
   top: 2rem;
   right: 2.5rem;
-  color: #CCCCCC; /* Cor neutra para não chamar mais atenção que o formulário */
+  color: #CCCCCC; 
   display: flex;
   align-items: center;
   justify-content: center;
@@ -283,8 +294,8 @@
 }
 
 .homeButton:hover {
-  color: var(--color-primary); /* Fica Ciano ao passar o mouse */
-  transform: scale(1.1); /* Dá um pequeno efeito de pulo */
+  color: var(--color-primary); 
+  transform: scale(1.1); 
 }
 
 /* Ajuste para o mobile: colar o botão mais no cantinho para não encavalar no texto */
@@ -293,4 +304,11 @@
     top: 1.5rem;
     right: 1.5rem;
   }
+}
+
+/* Devolve a altura exata ao texto do Dropdown para igualar aos inputs normais */
+.dropdownSelectedText {
+  padding: 0.8rem 0;
+  font-size: 1rem;
+  text-align: left;
 }
