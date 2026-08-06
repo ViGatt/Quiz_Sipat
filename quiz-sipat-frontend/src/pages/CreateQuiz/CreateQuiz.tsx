@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { ChevronLeft, ChevronRight, Clock, CheckCircle2, Trash2, Plus, Circle, CheckCircle } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link,useNavigate } from 'react-router-dom';
 import styles from './CreateQuiz.module.css';
 
 export function CreateQuiz() {
+  const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [randomize, setRandomize] = useState(true);
   const [immediateResult, setImmediateResult] = useState(true);
@@ -292,7 +293,10 @@ export function CreateQuiz() {
               Prox. <ChevronRight size={18} />
             </button>
           ) : (
-            <button className={styles.btnPrimary}>
+            <button 
+              className={styles.btnPrimary} 
+              onClick={() => navigate('/quizzes')} /* Adicionado o redirecionamento aqui! */
+            >
               Prévia e Publicar
             </button>
           )}
