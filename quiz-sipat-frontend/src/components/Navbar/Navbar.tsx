@@ -1,13 +1,30 @@
 import { useState } from 'react';
-import { Menu, X ,BarChart2 } from 'lucide-react';
+import { Menu, X, BarChart2, User, LogOut, ChevronDown } from 'lucide-react';
 import styles from './Navbar.module.css';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
-// 1. IMPORTANDO A IMAGEM AQUI:
 import logoRic from '../../assets/Ricambiental_logo-30 A.png';
+
+// Importando a Memória Global do nosso sistema
+import { useAuth } from '../../context/AuthContext';
 
 export function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+
+  const { usuario, logout } = useAuth();
+  const navigate = useNavigate();
+
+  // Função disparada ao clicar em "Sair"
+  const handleLogout = () => {
+    logout();
+    setIsProfileOpen(false);
+    setIsMobileMenuOpen(false);
+    navigate('/'); // Redireciona para a home
+  };
+
+  // Pega o primeiro nome para não estourar o layout
+  const primeiroNome = usuario?.nome.split(' ')[0] || 'Usuário';
 
   return (
     <header className={styles.header}>
@@ -15,7 +32,7 @@ export function Navbar() {
         {/* 2. USANDO A VARIÁVEL DA IMAGEM AQUI: */}
         <img src={logoRic} alt="Logo SIPAT RIC Ambiental" className={styles.logo} />
         
-         <span className={styles.logoText}>SIPAT RIC AMBIENTAL</span> 
+        <span className={styles.logoText}>SIPAT RIC AMBIENTAL</span> 
       </div>
 
       {/* Navegação Desktop */}
@@ -28,11 +45,40 @@ export function Navbar() {
 
       {/* Botões Desktop */}
       <div className={styles.authButtons}>
-        <Link to="/dashboard" className={styles.dashboardIcon} title="Acessar Dashboard">
-          <BarChart2 size={24} />
-        </Link>
-        <Link to="/login" className={styles.btnLogin}>Login</Link>
-        <Link to="/register" className={styles.btnRegister}>Registre</Link>
+        {/* O botão do Dashboard agora só aparece SE a pessoa for da comissão */}
+        {usuario?.is_comissao && (
+          <Link to="/dashboard" className={styles.dashboardIcon} title="Acessar Dashboard">
+            <BarChart2 size={24} />
+          </Link>
+        )}
+
+        {/* Lógica Inteligente: Mostra Perfil se logado, ou Login/Registro se deslogado */}
+        {usuario ? (
+          <div className={styles.profileContainer}>
+            <button 
+              className={styles.profileBtn}
+              onClick={() => setIsProfileOpen(!isProfileOpen)}
+            >
+              <User size={20} />
+              <span>{primeiroNome}</span>
+              <ChevronDown size={16} style={{ transform: isProfileOpen ? 'rotate(180deg)' : 'none', transition: '0.2s' }} />
+            </button>
+
+            {/* Dropdown de Deslogar */}
+            {isProfileOpen && (
+              <div className={styles.profileDropdown}>
+                <button onClick={handleLogout} className={styles.logoutBtn}>
+                  <LogOut size={18} /> Sair
+                </button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <>
+            <Link to="/login" className={styles.btnLogin}>Login</Link>
+            <Link to="/register" className={styles.btnRegister}>Registre</Link>
+          </>
+        )}
       </div>
 
       {/* Botão Hambúrguer Mobile */}
@@ -52,8 +98,17 @@ export function Navbar() {
           <a href="#sobre" className={styles.navLink}>Sobre</a>
           
           <div className={styles.mobileAuthButtons}>
-            <Link to="/login" className={styles.btnLogin}>Login</Link>
-            <Link to="/register" className={styles.btnRegister}>Registre</Link>
+            {/* Mesma Lógica Inteligente para o Mobile */}
+            {usuario ? (
+              <button onClick={handleLogout} className={styles.btnRegister} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', width: '100%', background: '#ef4444' }}>
+                <LogOut size={20} /> Sair ({primeiroNome})
+              </button>
+            ) : (
+              <>
+                <Link to="/login" className={styles.btnLogin}>Login</Link>
+                <Link to="/register" className={styles.btnRegister}>Registre</Link>
+              </>
+            )}
           </div>
         </div>
       )}

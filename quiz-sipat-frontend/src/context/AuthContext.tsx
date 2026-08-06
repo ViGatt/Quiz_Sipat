@@ -1,27 +1,41 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 
-// Define o formato do nosso colaborador logado
-type Colaborador = {
+type Usuario = {
   id: string;
   cpf: string;
   nome: string;
   is_comissao: boolean;
 };
 
-type AuthContextType = {
-  usuario: Colaborador | null;
-  login: (dadosUsuario: Colaborador) => void;
+interface AuthContextData {
+  usuario: Usuario | null;
+  login: (dadosUsuario: Usuario) => void;
   logout: () => void;
-};
+}
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextData>({} as AuthContextData);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [usuario, setUsuario] = useState<Colaborador | null>(null);
+  // Inicializa o estado lendo o localStorage (se houver alguém salvo, ele já começa logado)
+  const [usuario, setUsuario] = useState<Usuario | null>(() => {
+    const usuarioSalvo = localStorage.getItem('@sipat:usuario');
+    if (usuarioSalvo) {
+      return JSON.parse(usuarioSalvo);
+    }
+    return null;
+  });
 
-  const login = (dadosUsuario: Colaborador) => setUsuario(dadosUsuario);
-  const logout = () => setUsuario(null);
+  const login = (dadosUsuario: Usuario) => {
+    setUsuario(dadosUsuario);
+    localStorage.setItem('@sipat:usuario', JSON.stringify(dadosUsuario));
+  };
+
+  // Função para deslogar e limpar a memória
+  const logout = () => {
+    setUsuario(null);
+    localStorage.removeItem('@sipat:usuario');
+  };
 
   return (
     <AuthContext.Provider value={{ usuario, login, logout }}>
@@ -30,9 +44,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
-// Hook personalizado para usar a memória em qualquer lugar
-export const useAuth = () => {
+export function useAuth() {
   const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth deve ser usado dentro de um AuthProvider');
+  if (!context) {
+    throw new Error('useAuth deve ser usado dentro de um AuthProvider');
+  }
   return context;
-};
+}
