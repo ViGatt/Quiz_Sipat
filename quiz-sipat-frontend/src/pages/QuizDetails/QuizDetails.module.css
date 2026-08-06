@@ -311,3 +311,72 @@
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* --- MELHORIA 2: Barra de Busca no Modal --- */
+.modalSearchArea {
+  padding: 1.5rem 2rem 0 2rem; /* Espaço no topo, dentro do modal */
+}
+
+.searchWrapper {
+  display: flex;
+  align-items: center;
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-surface);
+  border-radius: 8px;
+  padding: 0.8rem 1.2rem;
+  transition: border-color 0.2s;
+}
+
+.searchWrapper:focus-within {
+  border-color: var(--color-primary); /* Acende em ciano quando clica */
+}
+
+.searchIcon {
+  color: var(--color-text-dark);
+  margin-right: 0.8rem;
+}
+
+.searchInput {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--color-white);
+  font-size: 0.95rem;
+  outline: none;
+}
+
+.searchInput::placeholder {
+  color: var(--color-text-dark);
+}
+
+/* --- MELHORIA 3: Empty States (Estados Vazios) --- */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 3rem 1rem;
+  background-color: rgba(255, 255, 255, 0.02);
+  border: 1px dashed var(--color-surface);
+  border-radius: 8px;
+  margin-top: 1rem;
+}
+
+.emptyIcon {
+  color: var(--color-surface);
+  margin-bottom: 1rem;
+}
+
+.emptyTitle {
+  color: var(--color-white);
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+}
+
+.emptyDesc {
+  color: var(--color-text-dark);
+  font-size: 0.9rem;
+  max-width: 250px;
+}
