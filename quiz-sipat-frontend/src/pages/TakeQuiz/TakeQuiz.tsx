@@ -65,7 +65,7 @@ export function TakeQuiz() {
         // Verifica se perdeu a última vida (Game Over)
         if (lives - 1 === 0) {
           alert("Fim de Jogo! Você perdeu todas as vidas.");
-          navigate('/dashboard');
+          navigate('/');
           return; // Para a função aqui
         }
       }
@@ -78,7 +78,7 @@ export function TakeQuiz() {
       setTimeLeft(60); 
     } else {
       alert("Quiz finalizado! Você marcou " + points + " pontos.");
-      navigate('/dashboard');
+      navigate('/');
     }
   };
 
