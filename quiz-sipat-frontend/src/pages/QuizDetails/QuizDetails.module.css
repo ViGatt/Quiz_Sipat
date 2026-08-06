@@ -223,3 +223,91 @@
   justify-content: space-between;
   align-items: center;
 }
+
+/* --- ESTILOS DOS MODAIS (POP-UPS) --- */
+
+/* Fundo escuro e embaçado */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100; /* Garante que fique por cima de tudo */
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* O cartão do Modal */
+.modalContent {
+  background-color: var(--color-bg-main);
+  border: 1px solid var(--color-surface);
+  border-radius: 12px;
+  width: 90%;
+  max-width: 650px;
+  max-height: 85vh; /* Se passar disso, o conteúdo ganha scroll */
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease-out;
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid var(--color-surface);
+}
+
+.modalHeader h2 {
+  color: var(--color-white);
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+/* Botão de Fechar */
+.closeBtn {
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+  padding: 0.5rem;
+  margin: -0.5rem;
+  border-radius: 50%;
+}
+
+.closeBtn:hover {
+  color: var(--color-white);
+  background-color: var(--color-surface-light);
+}
+
+/* Corpo do Modal onde acontece a rolagem (scroll) */
+.modalBody {
+  padding: 2rem;
+  overflow-y: auto; /* Adiciona a barra de rolagem se o conteúdo for longo */
+}
+
+/* Ajusta o espaçamento das barras dentro do modal */
+.modalBody .performanceList {
+  margin-top: 0;
+}
+
+/* Animações suaves para o Modal */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
