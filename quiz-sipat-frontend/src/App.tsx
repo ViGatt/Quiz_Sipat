@@ -1,12 +1,14 @@
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 
+import { QuizDetails } from './pages/QuizDetails/QuizDetails';
 import { LandingPage } from './pages/LandingPage';
 import { Login } from './pages/Login/Login';
 import { Register } from './pages/Register/Register';
 import { Dashboard } from './pages/Dashboard/Dashboard';
 import { CreateQuiz } from './pages/CreateQuiz/CreateQuiz';
 import { Quizzes } from './pages/Quizzes/Quizzes';
+import { ShareQuiz } from './pages/ShareQuiz/ShareQuiz';
 
 function AppRoutes() {
   const location = useLocation();
@@ -32,6 +34,8 @@ function AppRoutes() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/create-quiz" element={<CreateQuiz />} />
           <Route path="/quizzes" element={<Quizzes />} />
+          <Route path="/quizzes/:id" element={<QuizDetails />} />
+          <Route path="/share-quiz/:id" element={<ShareQuiz />} />
         </Routes>
       </motion.div>
     </AnimatePresence>

@@ -1,0 +1,225 @@
+.layout {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--color-bg-secondary);
+}
+
+.mainContent {
+  flex: 1;
+  padding: 2.5rem 3rem;
+  overflow-y: auto;
+  max-width: 1300px;
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* --- HEADER --- */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.backButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--color-surface);
+  border-radius: 8px;
+  color: var(--color-white);
+  background: transparent;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.backButton:hover {
+  background-color: var(--color-surface);
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-white);
+  margin-bottom: 0.2rem;
+}
+
+.subtitle {
+  color: var(--color-text-dark);
+  font-size: 0.9rem;
+}
+
+.headerActions {
+  display: flex;
+  gap: 1rem;
+}
+
+/* --- BOTÕES GERAIS --- */
+.btnOutline, .btnOutlineSmall {
+  background-color: transparent;
+  color: var(--color-white);
+  border: 1px solid var(--color-surface);
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+}
+
+.btnOutline { padding: 0.6rem 1.2rem; }
+.btnOutlineSmall { padding: 0.4rem 1rem; font-size: 0.85rem; }
+
+.btnOutline:hover, .btnOutlineSmall:hover { border-color: var(--color-text-muted); }
+
+.btnPrimary, .btnPrimaryShare {
+  background-color: var(--color-primary);
+  color: var(--color-white);
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: opacity 0.2s;
+}
+
+.btnPrimary { padding: 0.6rem 1.5rem; }
+.btnPrimaryShare { padding: 0.8rem 1.5rem; }
+.btnPrimary:hover, .btnPrimaryShare:hover { opacity: 0.9; }
+
+/* --- STATS GRID --- */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+}
+
+.statCard {
+  background-color: var(--color-bg-main);
+  border: 1px solid var(--color-surface);
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.statHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.statLabel { color: var(--color-text-dark); font-size: 0.9rem; font-weight: 500; }
+.statValue { font-size: 2rem; font-weight: 700; color: var(--color-white); }
+
+.iconPurple { color: var(--color-accent-purple); }
+.iconGreen { color: var(--color-secondary); }
+.iconBlue { color: var(--color-accent-blue); }
+.iconOrange { color: #FF9800; }
+
+/* --- MIDDLE GRID --- */
+.middleGrid {
+  display: grid;
+  grid-template-columns: 3fr 2fr; /* Tabela um pouco mais larga que as barras */
+  gap: 1.5rem;
+}
+
+.panel {
+  background-color: var(--color-bg-main);
+  border: 1px solid var(--color-surface);
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.panelHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+}
+
+.panelTitle { font-size: 1.2rem; font-weight: 600; color: var(--color-white); margin-bottom: 0.3rem; }
+.panelSubtitle { color: var(--color-text-dark); font-size: 0.85rem; }
+
+/* Tabela */
+.tableContainer {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.table th {
+  color: var(--color-white);
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--color-surface);
+}
+
+.table td {
+  padding: 1rem 0;
+  color: var(--color-white);
+  font-size: 0.9rem;
+}
+
+.userName { font-weight: 500; }
+.textMuted { color: var(--color-text-dark); }
+
+/* Barras de Desempenho */
+.performanceList {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  margin-top: 1.5rem;
+}
+
+.performanceItem { display: flex; flex-direction: column; gap: 0.5rem; }
+
+.performanceLabel {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.questionText { color: var(--color-white); font-size: 0.9rem; font-weight: 500; }
+.percentageText { color: var(--color-white); font-size: 0.9rem; font-weight: 600; }
+
+.progressBarBg {
+  height: 6px;
+  background-color: var(--color-surface);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progressBarFill {
+  height: 100%;
+  background-color: var(--color-primary);
+  border-radius: 3px;
+}
+
+/* --- BANNER DE COMPARTILHAMENTO --- */
+.shareBanner {
+  background-color: var(--color-bg-main);
+  border: 1px solid var(--color-surface);
+  border-radius: 12px;
+  padding: 1.5rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}

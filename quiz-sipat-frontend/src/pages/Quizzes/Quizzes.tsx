@@ -1,9 +1,11 @@
 import { Search, Plus, BookOpen, Clock, Users, MoreVertical, ChevronDown } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Sidebar } from '../../components/Sidebar/Sidebar';
 import styles from './Quizzes.module.css';
 
+
 export function Quizzes() {
+  const navigate = useNavigate();
   // Simulando os dados que virão da API Python no futuro
   const quizzesList = [
     { 
@@ -108,8 +110,14 @@ export function Quizzes() {
                 </div>
 
                 <div className={styles.quizActions}>
-                  <button className={styles.btnOutline}>Visualizar</button>
-                  <button className={styles.btnIcon}>
+                  <button 
+                    className={styles.btnOutline}
+                    onClick={() => navigate(`/quizzes/${quiz.id}`)}
+                  >
+                    Visualizar
+                  </button>
+                  
+                  <button className={styles.btnIcon} onClick={() => navigate(`/share-quiz/${quiz.id}`)}>
                     <MoreVertical size={20} />
                   </button>
                 </div>
