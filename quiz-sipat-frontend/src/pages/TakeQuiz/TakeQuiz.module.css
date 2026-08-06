@@ -1,0 +1,310 @@
+.layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: var(--color-bg-main); /* Fundo escuro principal */
+  padding: 2rem;
+  align-items: center;
+}
+
+/* --- CABEÇALHO --- */
+.header {
+  width: 100%;
+  max-width: 1200px;
+  display: flex;
+  align-items: center;
+  margin-bottom: 2rem;
+  position: relative;
+}
+
+.backButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--color-surface);
+  border-radius: 12px;
+  color: var(--color-white);
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: absolute;
+  left: 0;
+}
+
+.backButton:hover {
+  background-color: var(--color-surface);
+}
+
+.title {
+  flex: 1;
+  text-align: center;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--color-white);
+}
+
+/* --- GRID PRINCIPAL --- */
+.mainContent {
+  width: 100%;
+  max-width: 1200px;
+  display: grid;
+  grid-template-columns: 3fr 1fr; /* O Quiz pega 75% da tela, o Status 25% */
+  gap: 2rem;
+  align-items: start;
+}
+
+/* Responsividade para celular */
+@media (max-width: 900px) {
+  .mainContent {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* --- ÁREA DO QUIZ --- */
+.quizArea {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Progresso */
+.progressHeader {
+  display: flex;
+  justify-content: space-between;
+  color: var(--color-text-dark);
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.progressBarBg {
+  height: 8px;
+  background-color: var(--color-surface);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 2rem;
+}
+
+.progressBarFill {
+  height: 100%;
+  background-color: var(--color-primary); /* Ciano */
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+/* Cartão da Questão */
+.questionCard {
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-surface);
+  border-radius: 16px;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  margin-bottom: 1rem;
+}
+
+.questionMeta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.badgePoints {
+  background-color: var(--color-primary);
+  color: var(--color-bg-main);
+  padding: 0.4rem 1rem;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.timer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #ef4444; /* Vermelho/Coral para o tempo */
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.timerDanger {
+  animation: pulse 1s infinite;
+}
+
+.badgeDifficulty {
+  background-color: var(--color-surface);
+  color: var(--color-text-muted);
+  padding: 0.4rem 1rem;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.questionText {
+  color: var(--color-white);
+  font-size: 1.6rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+/* Alternativas (Grid 2x2) */
+.optionsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+@media (max-width: 600px) {
+  .optionsGrid {
+    grid-template-columns: 1fr; /* Empilha no celular */
+  }
+}
+
+.optionBtn {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  background-color: transparent;
+  border: 1px solid var(--color-surface);
+  border-radius: 12px;
+  padding: 1.5rem;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s;
+}
+
+.optionBtn:hover {
+  border-color: var(--color-text-muted);
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+.optionSelected {
+  border-color: var(--color-primary);
+  background-color: rgba(0, 204, 255, 0.05); /* Fundo ciano super translúcido */
+}
+
+.optionLetter {
+  color: var(--color-white);
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.optionText {
+  color: var(--color-white);
+  font-weight: 500;
+  font-size: 1.05rem;
+}
+
+/* Rodapé de Ações */
+.actionFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.btnSkip {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: transparent;
+  border: 1px solid var(--color-surface);
+  color: var(--color-text-dark);
+  padding: 0.8rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btnSkip:hover {
+  color: var(--color-white);
+  border-color: var(--color-text-muted);
+}
+
+.btnNext {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: var(--color-primary);
+  color: var(--color-bg-main);
+  border: none;
+  padding: 0.8rem 1.8rem;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.btnNext:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.btnNext:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: grayscale(1);
+}
+
+/* --- PAINEL DE STATUS --- */
+.statusCard {
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-surface);
+  border-radius: 16px;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.statusTitle {
+  color: var(--color-white);
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.statusItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 1px solid var(--color-surface);
+  border-radius: 12px;
+  padding: 1.2rem;
+  background-color: rgba(255,255,255, 0.01);
+}
+
+.statusLabel {
+  color: var(--color-text-dark);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.statusValueCyan {
+  color: var(--color-primary);
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.statusValueWhite {
+  color: var(--color-white);
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.livesContainer {
+  display: flex;
+  gap: 0.3rem;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}

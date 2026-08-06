@@ -9,6 +9,7 @@ import { Dashboard } from './pages/Dashboard/Dashboard';
 import { CreateQuiz } from './pages/CreateQuiz/CreateQuiz';
 import { Quizzes } from './pages/Quizzes/Quizzes';
 import { ShareQuiz } from './pages/ShareQuiz/ShareQuiz';
+import { TakeQuiz } from './pages/TakeQuiz/TakeQuiz';
 
 function AppRoutes() {
   const location = useLocation();
@@ -36,6 +37,7 @@ function AppRoutes() {
           <Route path="/quizzes" element={<Quizzes />} />
           <Route path="/quizzes/:id" element={<QuizDetails />} />
           <Route path="/share-quiz/:id" element={<ShareQuiz />} />
+          <Route path="/take-quiz/:id" element={<TakeQuiz />} />
         </Routes>
       </motion.div>
     </AnimatePresence>
