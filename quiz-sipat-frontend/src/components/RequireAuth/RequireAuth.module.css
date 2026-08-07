@@ -1,0 +1,114 @@
+.container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background-color: var(--color-bg-main, #0a0a0a);
+  padding: 2rem;
+}
+
+.card {
+  background-color: var(--color-bg-secondary, #121212);
+  border: 1px solid var(--color-surface, #333333);
+  border-radius: 16px;
+  padding: 3rem 2rem;
+  max-width: 450px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+.iconWrapper {
+  width: 80px;
+  height: 80px;
+  background-color: rgba(239, 68, 68, 0.1); 
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.icon {
+  color: #ef4444; 
+}
+
+.title {
+  color: var(--color-white, #ffffff);
+  font-size: 1.8rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+}
+
+.message {
+  color: var(--color-text-muted, #999999);
+  font-size: 1rem;
+  line-height: 1.6;
+  margin-bottom: 2.5rem;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+  margin-bottom: 2rem;
+}
+
+.btnLogin {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background-color: var(--color-primary, #00c3ff);
+  color: var(--color-white, #ffffff);
+  border: none;
+  padding: 1rem;
+  border-radius: 8px;
+  font-weight: bold;
+  text-decoration: none;
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.btnLogin:hover {
+  opacity: 0.9;
+  transform: translateY(-2px);
+}
+
+.btnRegister {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background-color: transparent;
+  color: var(--color-white, #ffffff);
+  border: 1px solid var(--color-surface, #333333);
+  padding: 1rem;
+  border-radius: 8px;
+  font-weight: bold;
+  text-decoration: none;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.btnRegister:hover {
+  border-color: var(--color-primary, #00c3ff);
+  color: var(--color-primary, #00c3ff);
+}
+
+.linkHome {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: var(--color-text-dark, #666666);
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: color 0.2s;
+}
+
+.linkHome:hover {
+  color: var(--color-white, #ffffff);
+}
