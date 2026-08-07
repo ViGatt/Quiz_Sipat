@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from domain.entities.questao import Questao
+from typing import List, Dict, Any
 
 class QuizRepository(ABC):
     @abstractmethod
@@ -12,4 +13,7 @@ class QuizRepository(ABC):
 
     @abstractmethod
     def buscar_questoes_por_quiz(self, dia_sipat_id: int) -> list[Questao]:
+        pass
+    @abstractmethod
+    def listar_dias_sipat(self) -> List[Dict[str, Any]]:
         pass

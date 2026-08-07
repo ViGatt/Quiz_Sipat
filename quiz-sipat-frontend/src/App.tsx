@@ -15,6 +15,7 @@ import { ParticipantQuizzes } from './pages/ParticipantQuizzes/ParticipantQuizze
 import { ParticipantQuizDetails } from './pages/ParticipantQuizDetails/ParticipantQuizDetails';
 import { RequireAuth } from './components/RequireAuth/RequireAuth';
 
+
 function AppRoutes() {
   const location = useLocation();
   const isCreateQuiz = location.pathname === '/create-quiz';

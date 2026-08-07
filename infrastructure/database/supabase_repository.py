@@ -1,9 +1,11 @@
+from typing import List, Dict, Any
 from supabase import Client
 from domain.entities.colaborador import Colaborador
 from domain.entities.participacao import Participacao
 from domain.entities.questao import Questao
 from domain.entities.numero_sorte import NumeroSorte
 import uuid
+from domain.repositories.quiz_repository import QuizRepository
 
 class SupabaseColaboradorRepository:
     def __init__(self, supabase_client: Client):
@@ -103,7 +105,8 @@ class SupabaseParticipacaoRepository:
             "numero_gerado": numero_sorte.numero
         }).execute()
 
-class SupabaseQuizRepository:
+
+class SupabaseQuizRepository(QuizRepository):
     def __init__(self, supabase_client: Client):
         self.db = supabase_client
 
@@ -136,6 +139,15 @@ class SupabaseQuizRepository:
                 resposta_correta=q["resposta_correta"]
             ) for q in response.data
         ]
+
+    def listar_dias_sipat(self) -> List[Dict[str, Any]]:
+        """
+        Faz um SELECT na tabela dias_sipat para buscar os quizzes.
+        """
+        response = self.db.table('dias_sipat').select('*').order('id').execute()
+        return response.data
+
+
 class SupabaseRelatorioRepository:
     def __init__(self, supabase_client: Client):
         self.db = supabase_client

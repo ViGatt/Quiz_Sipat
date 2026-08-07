@@ -22,14 +22,11 @@ export function Login() {
     setLoading(true);
 
     try {
-      const cpfLimpo = cpf.replace(/\D/g, '');
-
-      // Agora o sistema verifica o CPF E a Senha simultaneamente
+      // 1. Busca o colaborador pelo CPF diretamente na tabela do Supabase
       const { data, error } = await supabase
         .from('colaboradores')
         .select('*')
-        .eq('cpf', cpfLimpo)
-        .eq('senha', senha)
+        .eq('cpf', cpf)
         .single();
 
       if (error || !data) {
@@ -38,6 +35,14 @@ export function Login() {
         return;
       }
 
+      // 2. Compara a senha digitada com a senha salva no banco
+      if (data.senha !== senha) {
+        setErro('CPF não encontrado ou senha incorreta.');
+        setLoading(false);
+        return;
+      }
+
+      // 3. Sucesso! Passamos os dados reais para o AuthContext salvar na sessão
       login({
         id: data.id,
         cpf: data.cpf,
@@ -45,14 +50,16 @@ export function Login() {
         is_comissao: data.is_comissao
       });
 
+      // 4. Redireciona com base no perfil (is_comissao)
       if (data.is_comissao) {
-        navigate('/dashboard');
+        navigate('/dashboard'); // Administrador vai para o Dashboard
       } else {
-        navigate('/meus-quizzes'); 
+        navigate('/meus-quizzes'); // Participante vai para a lista de quizzes
       }
 
     } catch (err) {
-      setErro('Erro de conexão com o banco de dados.');
+      console.error('Erro no login:', err);
+      setErro('Ocorreu um erro ao tentar fazer login. Tente novamente.');
     } finally {
       setLoading(false);
     }

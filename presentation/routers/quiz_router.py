@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
+from application.use_cases.listar_quizzes import ListarQuizzesUseCase
 from pydantic import BaseModel
-from presentation.dependencias import get_iniciar_quiz_uc, get_submeter_resposta_uc
+from presentation.dependencias import get_iniciar_quiz_uc, get_submeter_resposta_uc, get_listar_quizzes_uc
 from application.use_cases.iniciar_quiz_online import IniciarQuizOnlineUseCase
 from application.use_cases.submeter_resposta import SubmeterRespostaUseCase
 from domain.exceptions import (
@@ -25,6 +26,19 @@ class SubmeterRespostaRequest(BaseModel):
     questao_id: str
     alternativa_escolhida: str
 
+@router.get("/")
+def listar_quizzes(
+    use_case: ListarQuizzesUseCase = Depends(get_listar_quizzes_uc)
+):
+    """
+    Retorna a lista de todos os quizzes (dias da SIPAT) disponíveis no banco de dados.
+    """
+    try:
+        resultado = use_case.executar()
+        return {"quizzes": resultado}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao buscar quizzes: {str(e)}")
+
 @router.post("/iniciar")
 def iniciar_quiz(
     request: IniciarQuizRequest,
@@ -45,6 +59,20 @@ def iniciar_quiz(
         raise HTTPException(status_code=409, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail="Erro interno ao processar a solicitação.")
+
+@router.get("/")
+def listar_quizzes(
+    # Aqui você pode injetar um repositório genérico ou um caso de uso simples de leitura
+    # Exemplo: repo: QuizRepository = Depends(get_quiz_repository)
+):
+    """
+    Retorna a lista de todos os quizzes (dias da SIPAT) disponíveis com suas descrições.
+    """
+    # Como não tenho a sua injeção exata de repositório para listar os dias aqui, 
+    # a lógica base seria pedir ao repositório para fazer um SELECT na tabela dias_sipat.
+    # resultado = repo.listar_dias_sipat()
+    # return resultado
+    pass
 
 @router.post("/responder")
 def responder_questao(
@@ -70,3 +98,5 @@ def responder_questao(
         raise HTTPException(status_code=400, detail=str(e)) 
     except Exception as e:
         raise HTTPException(status_code=500, detail="Erro interno ao processar a solicitação.")
+
+        
