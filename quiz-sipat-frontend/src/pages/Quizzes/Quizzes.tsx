@@ -21,7 +21,7 @@ export function Quizzes() {
       id: 2, 
       title: 'Quiz Dia 02 - Tema Saúde', 
       desc: 'Conceitos basicos de saúde', 
-      status: 'Publicado', 
+      status: 'Draft', 
       questions: 15, 
       time: 20, 
       participants: 32 

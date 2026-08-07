@@ -2,8 +2,12 @@ import { Plus, BookOpen, Calendar, Users, BarChart2, Medal, ChevronRight, Home }
 import { Sidebar } from '../../components/Sidebar/Sidebar';
 import styles from './Dashboard.module.css';
 import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+
+
 
 export function Dashboard() {
+  const navigate = useNavigate();
   return (
     <div className={styles.layout}>
       <Sidebar />
@@ -74,7 +78,12 @@ export function Dashboard() {
                   <h4>Quiz Dia 01 - Tema EPI</h4>
                   <span>Hoje, 2:30 PM • 32 participants</span>
                 </div>
-                <button className={styles.btnActionPrimary}>Visualizar</button>
+                <button 
+    className={styles.btnOutline}
+    onClick={() => navigate('/meus-quizzes/1')} // Redireciona para o detalhe do quiz
+  >
+    Visualizar
+  </button>
               </div>
               
               <div className={styles.eventCard}>

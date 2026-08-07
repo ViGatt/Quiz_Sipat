@@ -35,3 +35,144 @@
 @media (max-width: 1024px) {
   .contentGrid { grid-template-columns: 1fr; }
 }
+
+/* BARRA SUPERIOR */
+.topBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.btnEditAdmin {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: var(--color-primary, #00c3ff);
+  color: #ffffff;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btnEditAdmin:hover {
+  opacity: 0.9;
+  transform: translateY(-2px);
+}
+
+/* PAINEL DE EDIÇÃO */
+.editCard {
+  background-color: var(--color-bg-secondary, #121212);
+  border: 1px solid var(--color-primary, #00c3ff);
+  border-radius: 12px;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.editTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-primary, #00c3ff);
+  font-size: 1.2rem;
+  margin-bottom: 0.5rem;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.inputGroup label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text-muted, #999999);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.inputGroup input,
+.inputGroup textarea {
+  background-color: var(--color-bg-main, #0a0a0a);
+  border: 1px solid var(--color-surface, #333333);
+  border-radius: 8px;
+  padding: 0.8rem 1rem;
+  color: #ffffff;
+  font-size: 0.95rem;
+  outline: none;
+  font-family: inherit;
+  transition: border-color 0.2s;
+}
+
+.inputGroup input:focus,
+.inputGroup textarea:focus {
+  border-color: var(--color-primary, #00c3ff);
+}
+
+.editActions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.btnSave {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #22c55e;
+  color: #ffffff;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.btnSave:hover {
+  opacity: 0.9;
+}
+
+.btnCancel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: transparent;
+  color: #ef4444;
+  border: 1px solid #ef4444;
+  padding: 0.8rem 1.5rem;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btnCancel:hover {
+  background-color: rgba(239, 68, 68, 0.1);
+}
+
+/* --- BOTÃO OUTLINE (Tabela do Dashboard) --- */
+.btnOutline {
+  background-color: transparent;
+  color: var(--color-text-muted, #999999);
+  border: 1px solid var(--color-surface, #333333);
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btnOutline:hover {
+  border-color: var(--color-primary, #00c3ff);
+  color: var(--color-primary, #00c3ff);
+  background-color: rgba(0, 195, 255, 0.05); /* Fundo ciano bem suave */
+}

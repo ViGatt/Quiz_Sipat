@@ -389,3 +389,22 @@
   align-items: center;
   gap: 0.8rem; /* Cria o espaçamento perfeito entre a casinha e o botão */
 }
+
+/* --- BOTÃO OUTLINE (Tabela do Dashboard - Padronizado) --- */
+.btnOutline {
+  background-color: transparent;
+  color: var(--color-white); /* Usa o branco padrão do seu btnActionSecondary */
+  border: 1px solid var(--color-text-dark); /* Usa a borda padrão do seu btnActionSecondary */
+  padding: 0.6rem 1.2rem; /* Usa o padding padrão dos botões de ação */
+  border-radius: 6px; /* Mantém o arredondamento padrão das ações */
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btnOutline:hover {
+  color: var(--color-primary); /* Ciano */
+  border-color: var(--color-primary);
+  background-color: rgba(0, 195, 255, 0.05);
+  transform: translateY(-2px); /* Mantém o mesmo efeito suave do botão home */
+}
