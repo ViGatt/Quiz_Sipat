@@ -14,10 +14,7 @@ interface RelatorioGeral {
 
 interface TopParticipante {
   cpf: string;
-  nome?: string;
-  nome_colaborador?: string;
-  nome_completo?: string;
-  colaborador?: string;
+  nome_colaborador: string;
   total_pontos: number;
   quizzes_respondidos: number;
 }
@@ -44,24 +41,38 @@ export function Dashboard() {
         const resQuizzes = await api.get('/quiz/');
         const resRelatorio = await api.get('/relatorios/geral');
 
-        const listaQuizzes = resQuizzes.data?.quizzes || [];
-        setQuizzes(listaQuizzes);
+        setQuizzes(resQuizzes.data?.quizzes || []);
         setResumo(resRelatorio.data?.resumo || null);
 
-        // --- INÍCIO DO AGRUPAMENTO BLINDADO ---
         const listaDesempenho = resRelatorio.data?.desempenho || [];
         const rankingAgrupado: Record<string, any> = {};
 
         listaDesempenho.forEach((item: any) => {
-          // Pega o nome do colaborador (tentando várias colunas possíveis)
-          const nomePessoa = item.nome_colaborador || item.nome || item.nome_completo || item.colaborador || 'Participante';
-          
-          // A chave do grupo será o CPF, mas se não tiver CPF na View, usamos o próprio Nome!
-          const chaveAgrupamento = item.cpf || item.colaborador_cpf || nomePessoa;
+          // 1. Log de depuração (para vermos exatamente o que o banco mandou)
+          console.log("🔍 LINHA PURA DO BANCO:", item);
 
-          // Flexibilidade total para achar a pontuação (mesmo se o banco mandar como texto)
-          // Adicionei "acertos" caso a sua View chame os pontos assim
-          const pontos = Number(item.total_pontos || item.pontos || item.pontuacao || item.score || item.acertos || 0);
+          // 2. Pegando o Nome
+          const nomePessoa = item.nome_completo || item.nome_colaborador || item.nome || item.colaborador || 'Participante';
+          const chaveAgrupamento = item.cpf || nomePessoa;
+
+          // 3. RADAR DE PONTUAÇÃO (Busca Dinâmica)
+          let valorBruto: any = 0;
+          
+          // Varre todas as colunas que o banco enviou
+          Object.keys(item).forEach(key => {
+            const k = key.toLowerCase();
+            // Se o nome da coluna lembrar "pontuação", "nota" ou "acertos", pegamos o valor!
+            if (k.includes('pont') || k.includes('nota') || k.includes('acert') || k.includes('score')) {
+              valorBruto = item[key];
+            }
+          });
+          
+          let pontos = Number(valorBruto);
+          
+          // Limpeza de texto caso o banco mande "100 pts" em vez de 100
+          if (isNaN(pontos)) {
+            pontos = parseFloat(String(valorBruto).replace(',', '.').replace(/[^\d.-]/g, '')) || 0;
+          }
           
           const diaId = item.dia_sipat_id || item.quiz_id || null;
 
@@ -74,6 +85,7 @@ export function Dashboard() {
             };
           }
 
+          // Soma a pontuação limpa
           rankingAgrupado[chaveAgrupamento].total_pontos += pontos;
           
           if (diaId) {
@@ -81,7 +93,6 @@ export function Dashboard() {
           }
         });
 
-        // Transforma o objeto de volta em uma lista para o React
         const rankingFinal: TopParticipante[] = Object.values(rankingAgrupado).map((part: any) => ({
           cpf: part.cpf,
           nome_colaborador: part.nome_colaborador,
@@ -89,11 +100,11 @@ export function Dashboard() {
           quizzes_respondidos: part.dias_respondidos.size > 0 ? part.dias_respondidos.size : 1
         }));
 
-        // Ordena do Maior Ponto para o Menor
         const top5 = rankingFinal
           .sort((a, b) => b.total_pontos - a.total_pontos)
           .slice(0, 5);
 
+        console.log("🏆 RANKING FINAL PRONTO:", top5);
         setRanking(top5);
 
       } catch (err) {
@@ -113,8 +124,8 @@ export function Dashboard() {
       <main className={styles.mainContent}>
         <header className={styles.header}>
           <div>
-            <h1 className={styles.title}>Dashboard</h1>
-            <p className={styles.subtitle}>Bem vindo(a) de volta! Veja o que está acontecendo nos Quizzes</p>
+            <h1 className={styles.title}>Dashboard CIPA</h1>
+            <p className={styles.subtitle}>Visão geral do engajamento e resultados da SIPAT</p>
           </div>
           
           <div className={styles.headerActions}>
@@ -152,7 +163,7 @@ export function Dashboard() {
               </div>
               <div className={styles.statCard}>
                 <div className={styles.statHeader}>
-                  <span className={styles.statLabel}>Total de Colaboradores</span>
+                  <span className={styles.statLabel}>Total Cadastros</span>
                   <Users size={20} className={styles.statIconBlue} />
                 </div>
                 <div className={styles.statValue}>{resumo?.total_colaboradores || 0}</div>
@@ -211,16 +222,10 @@ export function Dashboard() {
                         <div className={styles.participantAvatar}></div>
                         <div className={styles.participantInfo}>
                         <h4 style={{ textTransform: 'capitalize' }}>
-                          {(
-                            part.nome_colaborador || 
-                            part.nome || 
-                            part.nome_completo || 
-                            part.colaborador || 
-                            `CPF ${part.cpf}`
-                          ).toLowerCase()}
+                          {(part.nome_colaborador).toLowerCase()}
                         </h4>
-  <span>{part.quizzes_respondidos || 0} Quizzes respondidos</span>
-</div>
+                          <span>{part.quizzes_respondidos || 0} Quizzes respondidos</span>
+                        </div>
                         <div className={styles.participantScore}>
                           <Medal size={16} className={styles.medalIcon} />
                           {part.total_pontos || 0}
@@ -237,8 +242,8 @@ export function Dashboard() {
             {/* SECÇÃO INFERIOR */}
             <div className={styles.bottomSection}>
               <div className={styles.sectionHeader}>
-                <h3 className={styles.panelTitle}>Quizzes Ativos</h3>
-                <p className={styles.panelSubtitle}>Quizzes da SIPAT disponíveis</p>
+                <h3 className={styles.panelTitle}>Todos os Quizzes</h3>
+                <p className={styles.panelSubtitle}>Gerenciamento de biblioteca</p>
               </div>
 
               <div className={styles.quizzesGrid}>
@@ -275,7 +280,7 @@ export function Dashboard() {
                     <Plus size={20} />
                   </div>
                   <h4>Criar Novo Quiz</h4>
-                  <p>Adicione questões, limite de tempo, entre outros</p>
+                  <p>Adicione questões, limites e vídeos da CIPA</p>
                 </Link>
 
               </div>
