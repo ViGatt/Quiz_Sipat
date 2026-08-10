@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { BookOpen, PlayCircle, Home } from 'lucide-react'; // <-- Home adicionado
-import { useNavigate, Link } from 'react-router-dom'; // <-- Link adicionado
+import { BookOpen, PlayCircle, Home } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
 import { ParticipantSidebar } from '../../components/ParticipantSidebar/ParticipantSidebar';
 import styles from './ParticipantQuizzes.module.css';
 import { api } from '../../services/api'; 
