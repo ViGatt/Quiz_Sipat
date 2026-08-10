@@ -14,7 +14,10 @@ interface RelatorioGeral {
 
 interface TopParticipante {
   cpf: string;
-  nome_colaborador: string;
+  nome?: string;
+  nome_colaborador?: string;
+  nome_completo?: string;
+  colaborador?: string;
   total_pontos: number;
   quizzes_respondidos: number;
 }
@@ -172,11 +175,17 @@ export function Dashboard() {
                         <div className={styles.participantRank}>{index + 1}</div>
                         <div className={styles.participantAvatar}></div>
                         <div className={styles.participantInfo}>
-                          <h4 style={{ textTransform: 'capitalize' }}>
-                            {part.nome_colaborador ? part.nome_colaborador.toLowerCase() : 'Participante Oculto'}
-                          </h4>
-                          <span>{part.quizzes_respondidos || 0} Quizzes respondidos</span>
-                        </div>
+                        <h4 style={{ textTransform: 'capitalize' }}>
+                          {(
+                            part.nome_colaborador || 
+                            part.nome || 
+                            part.nome_completo || 
+                            part.colaborador || 
+                            `CPF ${part.cpf}`
+                          ).toLowerCase()}
+                        </h4>
+  <span>{part.quizzes_respondidos || 0} Quizzes respondidos</span>
+</div>
                         <div className={styles.participantScore}>
                           <Medal size={16} className={styles.medalIcon} />
                           {part.total_pontos || 0}
