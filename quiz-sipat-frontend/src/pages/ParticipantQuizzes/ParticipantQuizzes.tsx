@@ -3,7 +3,8 @@ import { BookOpen, PlayCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ParticipantSidebar } from '../../components/ParticipantSidebar/ParticipantSidebar';
 import styles from './ParticipantQuizzes.module.css';
-import { api } from '../../services/api'; // Certifique-se de que o caminho está correto!
+import { api } from '../../services/api'; 
+import { useAuth } from '../../context/AuthContext';
 
 // Tipagem para os dados que vêm da nossa API (FastAPI)
 interface QuizAPI {
@@ -16,20 +17,34 @@ interface QuizAPI {
 
 export function ParticipantQuizzes() {
   const navigate = useNavigate();
+  const { usuario } = useAuth(); // Importado e chamado apenas uma vez
   
   // Estados para gerenciar os dados da API
   const [quizzes, setQuizzes] = useState<QuizAPI[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Estado para armazenar os IDs dos quizzes já concluídos
+  const [concluidos, setConcluidos] = useState<number[]>([]);
 
   // Busca os dados do backend assim que a tela monta
   useEffect(() => {
-    const fetchQuizzes = async () => {
+    const fetchQuizzesEStatus = async () => {
+      // Se não tiver usuário logado, não faz a requisição
+      if (!usuario) return;
+
       try {
         setLoading(true);
-        const response = await api.get('/quiz/');
-        // O FastAPI nos devolve o JSON: { "quizzes": [ ... ] }
-        setQuizzes(response.data.quizzes);
+        
+        // Dispara as duas requisições ao mesmo tempo para ser mais rápido (Promise.all)
+        const [resQuizzes, resConcluidos] = await Promise.all([
+          api.get('/quiz/'),
+          api.get(`/quiz/concluidos/${usuario.cpf}`)
+        ]);
+        
+        setQuizzes(resQuizzes.data.quizzes);
+        setConcluidos(resConcluidos.data.concluidos);
+        
       } catch (err) {
         console.error("Erro ao buscar quizzes:", err);
         setError("Não foi possível carregar os quizzes no momento. Tente novamente mais tarde.");
@@ -38,8 +53,8 @@ export function ParticipantQuizzes() {
       }
     };
 
-    fetchQuizzes();
-  }, []);
+    fetchQuizzesEStatus();
+  }, [usuario]); // A dependência agora é o usuário
 
   return (
     <div className={styles.container}>
@@ -83,15 +98,25 @@ export function ParticipantQuizzes() {
                       {/* Puxando o tema direto do banco */}
                       <h3 className={styles.quizTitle}>Dia {quiz.id} - {quiz.tema}</h3>
                       
-                      {/* Por enquanto todos são pendentes. A lógica de concluído virá com o login do CPF */}
-                      <span className={styles.badgePending}>Pendente</span>
+                      {/* Renderização Condicional da Badge de Concluído/Pendente */}
+                      {concluidos.includes(quiz.id) ? (
+                        <span style={{ backgroundColor: '#22c55e', color: '#fff', padding: '4px 10px', borderRadius: '12px', fontSize: '0.8rem', fontWeight: 'bold' }}>
+                          Concluído
+                        </span>
+                      ) : (
+                        <span style={{ backgroundColor: '#f59e0b', color: '#fff', padding: '4px 10px', borderRadius: '12px', fontSize: '0.8rem', fontWeight: 'bold' }}>
+                          Pendente
+                        </span>
+                      )}
                     </div>
+
                     {/* Exibe a descrição ou um texto padrão caso o campo esteja nulo no Supabase */}
                     <p className={styles.quizDescription}>
                       {quiz.descricao || 'Assista à palestra obrigatória para liberar o quiz do dia.'}
                     </p>
+
                     <div className={styles.quizMeta}>
-                      <span>15 questões</span> {/* Valor fixo por escopo, conforme seu PDF */}
+                      <span>15 questões</span>
                       <span>⏱ 20 min</span>
                     </div>
                   </div>

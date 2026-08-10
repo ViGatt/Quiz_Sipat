@@ -64,6 +64,17 @@ def obter_quiz(quiz_id: int, repo: SupabaseQuizRepository = Depends(get_quiz_rep
         raise HTTPException(status_code=404, detail="Quiz não encontrado")
     return quiz
 
+@router.get("/concluidos/{cpf}")
+def listar_quizzes_concluidos(cpf: str, repo: SupabaseQuizRepository = Depends(get_quiz_repo)):
+    """
+    Retorna os IDs dos quizzes que o usuário já respondeu ou tem presença.
+    """
+    try:
+        dias_concluidos = repo.obter_dias_concluidos(cpf)
+        return {"concluidos": dias_concluidos}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao buscar status: {str(e)}")
+
 # -----------------------------------------------------------------
 # 2. ROTA PUT - Disparada quando o Admin clica em SALVAR ALTERAÇÕES
 # -----------------------------------------------------------------

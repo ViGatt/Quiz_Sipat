@@ -223,6 +223,17 @@ class SupabaseQuizRepository(QuizRepository):
             print(f"Erro ao atualizar quiz: {e}")
             return False
 
+    def obter_dias_concluidos(self, cpf: str) -> list[int]:
+        """
+        Retorna uma lista com os IDs dos dias (quizzes) que o colaborador já participou.
+        """
+        response = self.db.table("participacoes") \
+            .select("dia_sipat_id, colaboradores!inner(cpf)") \
+            .eq("colaboradores.cpf", cpf) \
+            .execute()
+        
+        return [item["dia_sipat_id"] for item in response.data]
+
 class SupabaseRelatorioRepository:
     def __init__(self, supabase_client: Client):
         self.db = supabase_client
