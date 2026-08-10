@@ -254,4 +254,23 @@ class SupabaseRelatorioRepository:
         response = self.db.table("view_relatorio_desempenho").select("*").execute()
         return response.data
 
+    def obter_resumo_geral(self) -> dict:
+        """Busca os dados totais da view_relatorio_geral no Supabase"""
+        try:
+            response = self.db.table("view_relatorio_geral").select("*").execute()
+            # Retorna a primeira linha, ou um dicionário vazio se não tiver dados
+            return response.data[0] if response.data else {}
+        except Exception as e:
+            print(f"Erro ao buscar resumo geral: {e}")
+            return {}
+
+    def obter_desempenho_online(self) -> list:
+        """Busca o ranking de participantes da view_relatorio_desempenho"""
+        try:
+            response = self.db.table("view_relatorio_desempenho").select("*").execute()
+            return response.data
+        except Exception as e:
+            print(f"Erro ao buscar desempenho online: {e}")
+            return []
+
     

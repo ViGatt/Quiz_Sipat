@@ -53,3 +53,6 @@ def get_listar_quizzes_uc():
 
 def get_quiz_repo():
     return quiz_repo
+
+def get_relatorio_repo():
+    return relatorio_repo

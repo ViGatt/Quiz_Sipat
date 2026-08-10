@@ -1,9 +1,25 @@
 from fastapi import APIRouter, Depends, HTTPException
-from presentation.dependencias import get_gerar_relatorio_uc
+from presentation.dependencias import get_gerar_relatorio_uc, get_relatorio_repo
 from application.use_cases.gerar_relatorio_final import GerarRelatorioFinalUseCase
+from infrastructure.database.supabase_repository import SupabaseRelatorioRepository
 
 router = APIRouter(prefix="/relatorios", tags=["Relatórios Gerenciais"])
 
+# --- NOVA ROTA PARA O DASHBOARD ---
+@router.get("/geral")
+def obter_relatorio_dashboard(repo: SupabaseRelatorioRepository = Depends(get_relatorio_repo)):
+    """
+    Consome as views do banco de dados para alimentar os cards e o ranking do Dashboard.
+    """
+    try:
+        return {
+            "resumo": repo.obter_resumo_geral(),
+            "desempenho": repo.obter_desempenho_online()
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao buscar dados do dashboard: {str(e)}")
+
+# --- SUA ROTA ORIGINAL MANTIDA ---
 @router.get("/consolidado")
 def obter_relatorio_consolidado(
     use_case: GerarRelatorioFinalUseCase = Depends(get_gerar_relatorio_uc)
