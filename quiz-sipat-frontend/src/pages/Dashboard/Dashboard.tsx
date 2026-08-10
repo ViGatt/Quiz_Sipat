@@ -41,25 +41,60 @@ export function Dashboard() {
       try {
         setLoading(true);
         
-        const [resQuizzes, resRelatorio] = await Promise.all([
-          api.get('/quiz/'),
-          api.get('/relatorios/geral')
-        ]);
+        const resQuizzes = await api.get('/quiz/');
+        const resRelatorio = await api.get('/relatorios/geral');
 
-        // Travas de segurança: se vier nulo/indefinido, assume um array vazio
         const listaQuizzes = resQuizzes.data?.quizzes || [];
         setQuizzes(listaQuizzes);
-        
         setResumo(resRelatorio.data?.resumo || null);
 
-        // Clona o array com [...array] antes de ordenar para evitar erros de mutação
+        // --- INÍCIO DO AGRUPAMENTO BLINDADO ---
         const listaDesempenho = resRelatorio.data?.desempenho || [];
-        if (listaDesempenho.length > 0) {
-          const top5 = [...listaDesempenho]
-            .sort((a: TopParticipante, b: TopParticipante) => (b.total_pontos || 0) - (a.total_pontos || 0))
-            .slice(0, 5);
-          setRanking(top5);
-        }
+        const rankingAgrupado: Record<string, any> = {};
+
+        listaDesempenho.forEach((item: any) => {
+          // Pega o nome do colaborador (tentando várias colunas possíveis)
+          const nomePessoa = item.nome_colaborador || item.nome || item.nome_completo || item.colaborador || 'Participante';
+          
+          // A chave do grupo será o CPF, mas se não tiver CPF na View, usamos o próprio Nome!
+          const chaveAgrupamento = item.cpf || item.colaborador_cpf || nomePessoa;
+
+          // Flexibilidade total para achar a pontuação (mesmo se o banco mandar como texto)
+          // Adicionei "acertos" caso a sua View chame os pontos assim
+          const pontos = Number(item.total_pontos || item.pontos || item.pontuacao || item.score || item.acertos || 0);
+          
+          const diaId = item.dia_sipat_id || item.quiz_id || null;
+
+          if (!rankingAgrupado[chaveAgrupamento]) {
+            rankingAgrupado[chaveAgrupamento] = {
+              cpf: item.cpf || '',
+              nome_colaborador: nomePessoa,
+              total_pontos: 0,
+              dias_respondidos: new Set() 
+            };
+          }
+
+          rankingAgrupado[chaveAgrupamento].total_pontos += pontos;
+          
+          if (diaId) {
+            rankingAgrupado[chaveAgrupamento].dias_respondidos.add(diaId);
+          }
+        });
+
+        // Transforma o objeto de volta em uma lista para o React
+        const rankingFinal: TopParticipante[] = Object.values(rankingAgrupado).map((part: any) => ({
+          cpf: part.cpf,
+          nome_colaborador: part.nome_colaborador,
+          total_pontos: part.total_pontos,
+          quizzes_respondidos: part.dias_respondidos.size > 0 ? part.dias_respondidos.size : 1
+        }));
+
+        // Ordena do Maior Ponto para o Menor
+        const top5 = rankingFinal
+          .sort((a, b) => b.total_pontos - a.total_pontos)
+          .slice(0, 5);
+
+        setRanking(top5);
 
       } catch (err) {
         console.error("Erro ao carregar dashboard:", err);
@@ -70,7 +105,7 @@ export function Dashboard() {
 
     carregarDashboard();
   }, []);
-
+  
   return (
     <div className={styles.layout}>
       <Sidebar />
