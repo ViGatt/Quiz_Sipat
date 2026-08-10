@@ -68,10 +68,28 @@ export function ParticipantQuizDetails() {
   // Função auxiliar para converter URLs normais do YouTube para formato Embed
   const getEmbedUrl = (url: string) => {
     if (!url) return '';
-    if (url.includes('embed/')) return url;
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-    const match = url.match(regExp);
-    return (match && match[2].length === 11) ? `https://www.youtube.com/embed/${match[2]}` : url;
+    if (url.includes('embed/')) return url; // Se já for embed, ignora
+
+    let videoId = '';
+    try {
+      const urlObj = new URL(url);
+      
+      if (urlObj.hostname.includes('youtube.com')) {
+        // Pega o ID de links normais (watch?v=...)
+        videoId = urlObj.searchParams.get('v') || '';
+        // Pega o ID caso seja um link de YouTube Shorts
+        if (!videoId && urlObj.pathname.startsWith('/shorts/')) {
+          videoId = urlObj.pathname.split('/')[2];
+        }
+      } else if (urlObj.hostname === 'youtu.be') {
+        // Pega o ID de links encurtados (youtu.be/...)
+        videoId = urlObj.pathname.slice(1);
+      }
+    } catch (e) {
+      console.error("URL de vídeo inválida:", e);
+    }
+
+    return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
   };
 
   const handleSaveEdit = async () => {
