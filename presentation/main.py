@@ -1,10 +1,20 @@
 from fastapi import FastAPI
-from presentation.routers import recepcao_router, quiz_router, relatorio_router # <-- relatorio adicionado
+from fastapi.middleware.cors import CORSMiddleware  # <-- Importação do CORS adicionada
+from presentation.routers import recepcao_router, quiz_router, relatorio_router
 
 app = FastAPI(
     title="Quiz SIPAT API - RIC Ambiental",
     description="Plataforma digital para acompanhamento da SIPAT e gamificação",
     version="1.0.0"
+)
+
+# Configuração do CORS para permitir que o React se comunique com o FastAPI
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Permite requisições de qualquer origem (localhost:5173)
+    allow_credentials=True,
+    allow_methods=["*"],  # Permite todos os métodos (GET, POST, etc.)
+    allow_headers=["*"],  # Permite todos os cabeçalhos
 )
 
 app.include_router(recepcao_router.router)
