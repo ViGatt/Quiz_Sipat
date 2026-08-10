@@ -66,12 +66,24 @@ class SupabaseParticipacaoRepository:
         )
 
     def salvar(self, participacao: Participacao) -> None:
-        self.db.table("participacoes").insert({
-            "id": str(participacao.id),
-            "colaborador_id": str(participacao.colaborador_id),
-            "dia_sipat_id": participacao.dia_sipat_id,
-            "modalidade": participacao.modalidade
-        }).execute()
+        from postgrest.exceptions import APIError  # <-- Importação para tratar o erro
+        
+        try:
+            self.db.table("participacoes").insert({
+                "id": str(participacao.id),
+                "colaborador_id": str(participacao.colaborador_id),
+                "dia_sipat_id": participacao.dia_sipat_id,
+                "modalidade": participacao.modalidade
+            }).execute()
+            
+        except APIError as e:
+            # Código 23505 = Unique Violation (Duplicidade no banco)
+            # Isso neutraliza o "tiro duplo" do React Strict Mode
+            if e.code == '23505':
+                print("Aviso: Participação já registrada (possível disparo duplo do front-end). Segue o jogo!")
+                pass
+            else:
+                raise e
 
     def questao_ja_respondida(self, participacao_id: uuid.UUID, questao_id: str) -> bool:
         response = self.db.table("respostas")\
