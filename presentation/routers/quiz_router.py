@@ -1,7 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException
 from application.use_cases.listar_quizzes import ListarQuizzesUseCase
 from pydantic import BaseModel
-from presentation.dependencias import get_iniciar_quiz_uc, get_submeter_resposta_uc, get_listar_quizzes_uc
+from presentation.dependencias import (
+    get_iniciar_quiz_uc, 
+    get_submeter_resposta_uc, 
+    get_listar_quizzes_uc,
+    get_quiz_repo # <-- Importamos o getter do repositório
+)
+from infrastructure.database.supabase_repository import SupabaseQuizRepository
 from application.use_cases.iniciar_quiz_online import IniciarQuizOnlineUseCase
 from application.use_cases.submeter_resposta import SubmeterRespostaUseCase
 from domain.exceptions import (
@@ -39,6 +45,18 @@ def listar_quizzes(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao buscar quizzes: {str(e)}")
 
+# --- NOVA ROTA ADICIONADA AQUI ---
+@router.get("/{quiz_id}")
+def obter_quiz(quiz_id: int, repo: SupabaseQuizRepository = Depends(get_quiz_repo)):
+    """
+    Retorna os detalhes de um quiz específico junto com suas opções de questões.
+    """
+    quiz = repo.obter_por_id(quiz_id)
+    if not quiz:
+        raise HTTPException(status_code=404, detail="Quiz não encontrado")
+    return quiz
+# ---------------------------------
+
 @router.post("/iniciar")
 def iniciar_quiz(
     request: IniciarQuizRequest,
@@ -59,20 +77,6 @@ def iniciar_quiz(
         raise HTTPException(status_code=409, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail="Erro interno ao processar a solicitação.")
-
-@router.get("/")
-def listar_quizzes(
-    # Aqui você pode injetar um repositório genérico ou um caso de uso simples de leitura
-    # Exemplo: repo: QuizRepository = Depends(get_quiz_repository)
-):
-    """
-    Retorna a lista de todos os quizzes (dias da SIPAT) disponíveis com suas descrições.
-    """
-    # Como não tenho a sua injeção exata de repositório para listar os dias aqui, 
-    # a lógica base seria pedir ao repositório para fazer um SELECT na tabela dias_sipat.
-    # resultado = repo.listar_dias_sipat()
-    # return resultado
-    pass
 
 @router.post("/responder")
 def responder_questao(
@@ -98,5 +102,3 @@ def responder_questao(
         raise HTTPException(status_code=400, detail=str(e)) 
     except Exception as e:
         raise HTTPException(status_code=500, detail="Erro interno ao processar a solicitação.")
-
-        

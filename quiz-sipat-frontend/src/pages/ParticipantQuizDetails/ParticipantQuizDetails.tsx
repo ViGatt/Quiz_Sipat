@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ChevronLeft, PlayCircle, CheckCircle, Clock, BookOpen, Edit3, Save, X, Video } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ParticipantSidebar } from '../../components/ParticipantSidebar/ParticipantSidebar';
 import { useAuth } from '../../context/AuthContext';
+import { api } from '../../services/api'; // Importando a nossa API
 import styles from './ParticipantQuizDetails.module.css';
 
 export function ParticipantQuizDetails() {
@@ -10,22 +11,59 @@ export function ParticipantQuizDetails() {
   const { id } = useParams();
   const { usuario } = useAuth();
 
-  // Estados dos dados da palestra (editáveis pelo Admin)
-  const [videoUrl, setVideoUrl] = useState('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
-  const [lectureTitle, setLectureTitle] = useState('Treinamento sobre Equipamentos de Proteção Individual (EPI)');
-  const [lectureDescription, setLectureDescription] = useState(
-    'Nesta palestra, o especialista aborda a importância do uso correto, manutenção e descarte dos EPIs no ambiente de trabalho. Assista com atenção, pois as questões do quiz abaixo são baseadas neste conteúdo.'
-  );
+  // Estados de Carregamento
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Estados de controle de edição
+  // Estados dos dados da palestra (Agora começam vazios e são preenchidos pela API)
+  const [videoUrl, setVideoUrl] = useState('');
+  const [lectureTitle, setLectureTitle] = useState('');
+  const [lectureDescription, setLectureDescription] = useState('');
+  const [qtdQuestoes, setQtdQuestoes] = useState(15);
+
+  // Estados de controle de edição (Para o Admin)
   const [isEditing, setIsEditing] = useState(false);
-  const [tempVideoUrl, setTempVideoUrl] = useState(videoUrl);
-  const [tempTitle, setTempTitle] = useState(lectureTitle);
-  const [tempDescription, setTempDescription] = useState(lectureDescription);
+  const [tempVideoUrl, setTempVideoUrl] = useState('');
+  const [tempTitle, setTempTitle] = useState('');
+  const [tempDescription, setTempDescription] = useState('');
 
-  // Simulação de status do participante
-  const [isCompleted] = useState(id === '2');
-  const score = "14/15";
+  // Simulação de status do participante (Em breve puxaremos isso do banco também)
+  const [isCompleted] = useState(false); 
+  const score = "0/15";
+
+  // Busca os dados reais no FastAPI ao abrir a tela
+  useEffect(() => {
+    const fetchQuizData = async () => {
+      try {
+        setLoading(true);
+        const response = await api.get(`/quiz/${id}`);
+        const data = response.data;
+
+        // Atualiza a tela com os dados do banco
+        setVideoUrl(data.link_youtube_palestra || '');
+        setLectureTitle(`Dia ${data.id} - ${data.tema}`);
+        setLectureDescription(data.descricao || 'Assista ao vídeo e prepare-se para o quiz.');
+        
+        // Se a API retornar as questões, podemos mostrar a quantidade exata
+        if (data.questoes) {
+          setQtdQuestoes(data.questoes.length);
+        }
+
+        // Alimenta também os campos temporários de edição (caso um Admin queira editar)
+        setTempVideoUrl(data.link_youtube_palestra || '');
+        setTempTitle(data.tema || '');
+        setTempDescription(data.descricao || '');
+
+      } catch (err) {
+        console.error("Erro ao buscar detalhes do quiz:", err);
+        setError('Não foi possível carregar os detalhes desta palestra.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) fetchQuizData();
+  }, [id]);
 
   // Função auxiliar para converter URLs normais do YouTube para formato Embed
   const getEmbedUrl = (url: string) => {
@@ -37,11 +75,14 @@ export function ParticipantQuizDetails() {
   };
 
   const handleSaveEdit = () => {
+    // Atualiza a visualização local
     setVideoUrl(tempVideoUrl);
     setLectureTitle(tempTitle);
     setLectureDescription(tempDescription);
     setIsEditing(false);
-    // Futuramente aqui faremos o UPDATE no Supabase!
+    
+    // Futuramente aqui faremos o UPDATE no Supabase usando um POST/PUT na API!
+    alert("Alterações salvas visualmente. No futuro, isso será gravado no banco!");
   };
 
   const handleCancelEdit = () => {
@@ -50,6 +91,37 @@ export function ParticipantQuizDetails() {
     setTempDescription(lectureDescription);
     setIsEditing(false);
   };
+
+  // Telas de Feedback (Carregando / Erro)
+  if (loading) {
+    return (
+      <div className={styles.container}>
+        <ParticipantSidebar />
+        <main className={styles.mainContent}>
+          <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--color-primary)' }}>
+            Carregando a sala de palestra...
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className={styles.container}>
+        <ParticipantSidebar />
+        <main className={styles.mainContent}>
+          <div style={{ padding: '3rem', textAlign: 'center', color: '#ef4444' }}>
+            {error}
+            <br/><br/>
+            <button className={styles.backButton} onClick={() => navigate('/meus-quizzes')}>
+              <ChevronLeft size={20} /> Voltar
+            </button>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.container}>
@@ -118,15 +190,22 @@ export function ParticipantQuizDetails() {
               /* --- EXIBIÇÃO NORMAL DO VÍDEO E TEXTO --- */
               <>
                 <div className={styles.videoWrapper}>
-                  <iframe 
-                    width="100%" 
-                    height="100%" 
-                    src={getEmbedUrl(videoUrl)} 
-                    title="Palestra SIPAT" 
-                    frameBorder="0" 
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                    allowFullScreen
-                  ></iframe>
+                  {videoUrl ? (
+                    <iframe 
+                      width="100%" 
+                      height="100%" 
+                      src={getEmbedUrl(videoUrl)} 
+                      title="Palestra SIPAT" 
+                      frameBorder="0" 
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                      allowFullScreen
+                    ></iframe>
+                  ) : (
+                    <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', backgroundColor: '#1e293b', color: '#64748b'}}>
+                      <PlayCircle size={48} />
+                      <p>Vídeo não cadastrado para este dia.</p>
+                    </div>
+                  )}
                 </div>
                 
                 <div className={styles.lectureInfo}>
@@ -147,7 +226,7 @@ export function ParticipantQuizDetails() {
                   <BookOpen size={20} className={styles.metaIcon} />
                   <div>
                     <span className={styles.metaLabel}>Questões</span>
-                    <span className={styles.metaValue}>15 de múltipla escolha</span>
+                    <span className={styles.metaValue}>{qtdQuestoes} de múltipla escolha</span>
                   </div>
                 </div>
                 <div className={styles.metaItem}>

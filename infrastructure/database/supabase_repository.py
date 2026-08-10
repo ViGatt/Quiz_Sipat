@@ -147,6 +147,52 @@ class SupabaseQuizRepository(QuizRepository):
         response = self.db.table('dias_sipat').select('*').order('id').execute()
         return response.data
 
+    # --- NOVO MÉTODO ADICIONADO AQUI ---
+    def obter_por_id(self, quiz_id: int) -> dict | None:
+        """
+        Busca os detalhes do quiz do dia e também todas as questões vinculadas a ele.
+        """
+        # Busca o quiz no banco
+        res_quiz = self.db.table("dias_sipat").select("*").eq("id", quiz_id).execute()
+        if not res_quiz.data:
+            return None
+        
+        quiz_data = res_quiz.data[0]
+
+        # Busca as questões usando os nomes REAIS das colunas da sua tabela ('texto' e 'opcoes')
+        res_questoes = self.db.table("questoes").select("id, texto, opcoes").eq("dia_sipat_id", quiz_id).execute()
+        
+        # Mapeamos os dados do banco para o formato exato que o Front-end espera
+        questoes_formatadas = []
+        for q in res_questoes.data:
+            opcoes_banco = q.get("opcoes", {})
+            
+            # Trata as opções dependendo se você salvou como um Dicionário (JSON) ou Lista no banco
+            if isinstance(opcoes_banco, dict):
+                opt_a = opcoes_banco.get("A", opcoes_banco.get("a", ""))
+                opt_b = opcoes_banco.get("B", opcoes_banco.get("b", ""))
+                opt_c = opcoes_banco.get("C", opcoes_banco.get("c", ""))
+                opt_d = opcoes_banco.get("D", opcoes_banco.get("d", ""))
+            elif isinstance(opcoes_banco, list):
+                opt_a = opcoes_banco[0] if len(opcoes_banco) > 0 else ""
+                opt_b = opcoes_banco[1] if len(opcoes_banco) > 1 else ""
+                opt_c = opcoes_banco[2] if len(opcoes_banco) > 2 else ""
+                opt_d = opcoes_banco[3] if len(opcoes_banco) > 3 else ""
+            else:
+                opt_a = opt_b = opt_c = opt_d = ""
+
+            questoes_formatadas.append({
+                "id": q["id"],
+                "enunciado": q.get("texto", ""), # Traduz o 'texto' para 'enunciado'
+                "opcao_a": opt_a,
+                "opcao_b": opt_b,
+                "opcao_c": opt_c,
+                "opcao_d": opt_d
+            })
+            
+        quiz_data["questoes"] = questoes_formatadas
+        return quiz_data
+
 
 class SupabaseRelatorioRepository:
     def __init__(self, supabase_client: Client):

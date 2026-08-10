@@ -48,5 +48,8 @@ def get_iniciar_quiz_uc():
 def get_gerar_relatorio_uc():
     return gerar_relatorio_uc
 
-def get_listar_quizzes_uc(): # <-- Função que a rota estava pedindo!
+def get_listar_quizzes_uc(): 
     return listar_quizzes_uc
+
+def get_quiz_repo():
+    return quiz_repo
