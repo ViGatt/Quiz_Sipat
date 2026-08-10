@@ -17,6 +17,7 @@ from domain.exceptions import (
     ParticipacaoNaoEncontradaError,
     RegraNegocioError
 )
+from typing import List
 
 router = APIRouter(prefix="/quiz", tags=["Quiz Online"])
 
@@ -38,6 +39,20 @@ class AtualizarQuizRequest(BaseModel):
     descricao: str
     link_youtube_palestra: str
 
+from typing import List
+
+# DTO para a Questão que vem do Front-end
+class NovaQuestaoRequest(BaseModel):
+    texto: str
+    opcoes: dict
+    resposta_correta: str
+
+# DTO principal para a Criação do Quiz
+class CriarQuizRequest(BaseModel):
+    tema: str
+    descricao: str
+    questoes: List[NovaQuestaoRequest]
+
 @router.get("/")
 def listar_quizzes(
     use_case: ListarQuizzesUseCase = Depends(get_listar_quizzes_uc)
@@ -50,6 +65,25 @@ def listar_quizzes(
         return {"quizzes": resultado}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao buscar quizzes: {str(e)}")
+
+# -----------------------------------------------------------------
+# NOVA ROTA POST - Criação de Novo Quiz
+# -----------------------------------------------------------------
+@router.post("/")
+def criar_novo_quiz(request: CriarQuizRequest, repo: SupabaseQuizRepository = Depends(get_quiz_repo)):
+    """
+    Cria um novo dia de SIPAT e vincula as questões a ele.
+    """
+    sucesso = repo.criar_quiz_com_questoes(
+        tema=request.tema,
+        descricao=request.descricao,
+        questoes=request.questoes
+    )
+    
+    if not sucesso:
+        raise HTTPException(status_code=500, detail="Erro ao salvar o Quiz no banco de dados.")
+        
+    return {"message": "Quiz criado com sucesso!"}
 
 # -----------------------------------------------------------------
 # 1. ROTA GET - Disparada quando o usuário ABRE a tela

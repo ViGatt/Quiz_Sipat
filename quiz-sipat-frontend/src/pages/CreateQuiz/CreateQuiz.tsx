@@ -1,42 +1,64 @@
 import { useState } from 'react';
 import { ChevronLeft, ChevronRight, Clock, CheckCircle2, Trash2, Plus, Circle, CheckCircle } from 'lucide-react';
-import { Link,useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import styles from './CreateQuiz.module.css';
+import { api } from '../../services/api'; // <-- Importando a API
 
 export function CreateQuiz() {
   const [showSuccess, setShowSuccess] = useState(false);
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Estados do Passo 1 (Configurações do Quiz)
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [category, setCategory] = useState('Saúde');
+  const [difficulty, setDifficulty] = useState('Médio');
   const [randomize, setRandomize] = useState(true);
   const [immediateResult, setImmediateResult] = useState(true);
 
-  // --- LÓGICA DO CARROSSEL DE QUESTÕES ---
+  // Estados do Passo 2 (Carrossel de Questões)
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [questions, setQuestions] = useState([
     {
-      id: 1,
-      text: "Colocar sacola na geladeira pode causar....",
+      id: Date.now(),
+      text: "",
       points: 10,
       type: "Multipla",
       options: [
-        { text: "Nada, só enfeita", isCorrect: false },
-        { text: "Ocupar espaço", isCorrect: false },
-        { text: "Contaminação Cruzada", isCorrect: true },
-        { text: "Conter umidade", isCorrect: false },
+        { text: "", isCorrect: true },
+        { text: "", isCorrect: false },
+        { text: "", isCorrect: false },
+        { text: "", isCorrect: false },
       ]
     }
   ]);
 
-  const handlePublish = () => {
-    // Aqui no futuro entrará a função de salvar no Supabase!
-    setShowSuccess(true); 
-    
-    setTimeout(() => {
-      navigate('/quizzes');
-    }, 3000);
+  // Atualiza texto da questão atual
+  const updateQuestionText = (text: string) => {
+    const updated = [...questions];
+    updated[currentQuestionIndex].text = text;
+    setQuestions(updated);
   };
 
-  // Função para adicionar nova questão em branco
+  // Atualiza as opções (texto e resposta correta)
+  const updateOption = (optIndex: number, field: string, value: any) => {
+    const updated = [...questions];
+    updated[currentQuestionIndex].options[optIndex] = {
+      ...updated[currentQuestionIndex].options[optIndex],
+      [field]: value
+    };
+
+    // Se marcou como correta, desmarca as outras
+    if (field === 'isCorrect' && value === true) {
+      updated[currentQuestionIndex].options.forEach((opt, idx) => {
+        if (idx !== optIndex) opt.isCorrect = false;
+      });
+    }
+    setQuestions(updated);
+  };
+
   const handleAddQuestion = () => {
     const newQuestion = {
       id: Date.now(),
@@ -44,17 +66,16 @@ export function CreateQuiz() {
       points: 10,
       type: "Multipla",
       options: [
-        { text: "", isCorrect: true }, // A primeira nasce correta por padrão
+        { text: "", isCorrect: true },
         { text: "", isCorrect: false },
         { text: "", isCorrect: false },
         { text: "", isCorrect: false },
       ]
     };
     setQuestions([...questions, newQuestion]);
-    setCurrentQuestionIndex(questions.length); // Pula para a nova questão criada
+    setCurrentQuestionIndex(questions.length);
   };
 
-  // Funções de navegação do carrossel
   const handlePrev = () => {
     if (currentQuestionIndex > 0) setCurrentQuestionIndex(prev => prev - 1);
   };
@@ -63,28 +84,71 @@ export function CreateQuiz() {
     if (currentQuestionIndex < questions.length - 1) setCurrentQuestionIndex(prev => prev + 1);
   };
 
-  // Função para deletar a questão atual
   const handleDelete = () => {
-    if (questions.length === 1) return; // Impede deletar se só tiver 1
+    if (questions.length === 1) return;
     const updatedQuestions = questions.filter((_, idx) => idx !== currentQuestionIndex);
     setQuestions(updatedQuestions);
-    // Ajusta o índice para não bugar a tela
     setCurrentQuestionIndex(prev => Math.max(0, prev - 1));
   };
 
-  // Pega a questão que está visível no momento
   const currentQuestion = questions[currentQuestionIndex];
+
+  // --- O CORAÇÃO DO ENVIO PARA A API ---
+  const handlePublish = async () => {
+    if (!title || questions[0].text === "") {
+      alert("Por favor, preencha o título e pelo menos uma questão!");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+
+      // Formata os dados para o que o FastAPI e o Banco esperam
+      const payload = {
+        tema: title,
+        descricao: description,
+        questoes: questions.map(q => {
+          const opcoesObj: Record<string, string> = {};
+          let respostaCorreta = 'A';
+          const letras = ['A', 'B', 'C', 'D'];
+
+          q.options.forEach((opt, idx) => {
+            opcoesObj[letras[idx]] = opt.text || `Opção ${idx + 1}`; // Evita nulo
+            if (opt.isCorrect) respostaCorreta = letras[idx];
+          });
+
+          return {
+            texto: q.text,
+            opcoes: opcoesObj,
+            resposta_correta: respostaCorreta
+          };
+        })
+      };
+
+      await api.post('/quiz/', payload);
+      
+      setShowSuccess(true); 
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 3000);
+
+    } catch (err) {
+      console.error("Erro ao publicar quiz:", err);
+      alert("Erro ao salvar o Quiz. Tente novamente.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   if (showSuccess) {
     return (
       <div className={styles.successContainer}>
         <div className={styles.successContent}>
           <div className={styles.iconPulse}>
-            {/* Usamos o CheckCircle que já estava importado e a sua cor verde */}
             <CheckCircle size={80} color="var(--color-secondary)" />
           </div>
           <h2 className={styles.successTitle}>Quiz Criado com Sucesso!</h2>
-          <p className={styles.successSubtitle}>Redirecionando para a biblioteca...</p>
+          <p className={styles.successSubtitle}>Redirecionando para o Dashboard...</p>
         </div>
       </div>
     );
@@ -92,7 +156,6 @@ export function CreateQuiz() {
 
   return (
     <div className={styles.layout}>
-      {/* CABEÇALHO FIXO */}
       <header className={styles.header}>
         <div className={styles.headerLeft}>
           <Link to="/dashboard" className={styles.backButton}>
@@ -110,10 +173,8 @@ export function CreateQuiz() {
       </header>
 
       <main className={styles.mainContent}>
-        {/* --- PASSO 1 --- */}
         {step === 1 && (
           <div className={styles.step1Grid}>
-            {/* Coluna Esquerda: Detalhes */}
             <div className={styles.card}>
               <div className={styles.cardHeader}>
                 <h2>Detalhe do Quiz</h2>
@@ -121,23 +182,31 @@ export function CreateQuiz() {
               </div>
 
               <div className={styles.formGroup}>
-                <label>Título do Quiz</label>
-                <input type="text" defaultValue="Quiz Dia 02 - Tema Saúde" className={styles.inputField} />
+                <label>Título / Tema do Quiz</label>
+                <input 
+                  type="text" 
+                  value={title} 
+                  onChange={(e) => setTitle(e.target.value)} 
+                  placeholder="Ex: Quiz Dia 04 - Segurança do Trabalho" 
+                  className={styles.inputField} 
+                />
               </div>
 
               <div className={styles.formGroup}>
-                <label>Description</label>
+                <label>Descrição</label>
                 <textarea 
                   className={styles.textareaField} 
                   rows={4}
-                  defaultValue="Teste seu conhecimento sobre o tema de saúde, consolide o aprendizado e tenha oportunidade de aprender sobre novos assuntos"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Descreva o propósito deste quiz..."
                 />
               </div>
 
               <div className={styles.rowGrid}>
                 <div className={styles.formGroup}>
                   <label>Categoria</label>
-                  <select className={styles.selectField} defaultValue="Saúde">
+                  <select className={styles.selectField} value={category} onChange={(e) => setCategory(e.target.value)}>
                     <option value="Saúde">Saúde</option>
                     <option value="EPI">EPI</option>
                     <option value="Ergonomia">Ergonomia</option>
@@ -145,7 +214,7 @@ export function CreateQuiz() {
                 </div>
                 <div className={styles.formGroup}>
                   <label>Dificuldade</label>
-                  <select className={styles.selectField} defaultValue="Médio">
+                  <select className={styles.selectField} value={difficulty} onChange={(e) => setDifficulty(e.target.value)}>
                     <option value="Fácil">Fácil</option>
                     <option value="Médio">Médio</option>
                     <option value="Difícil">Difícil</option>
@@ -154,7 +223,6 @@ export function CreateQuiz() {
               </div>
             </div>
 
-            {/* Coluna Direita: Configurações */}
             <div className={styles.card}>
               <div className={styles.cardHeader}>
                 <h2>Configurações Quiz</h2>
@@ -208,19 +276,16 @@ export function CreateQuiz() {
           </div>
         )}
 
-        {/* --- PASSO 2 (COM CARROSSEL) --- */}
         {step === 2 && (
           <div className={styles.step2Container}>
             <div className={styles.card}>
               
-              {/* Header do Card + Controles do Carrossel */}
               <div className={styles.cardHeaderWithCarousel}>
                 <div>
                   <h2>Perguntas do Quiz</h2>
                   <p>Crie e Gerencie as perguntas</p>
                 </div>
                 
-                {/* Controles do Carrossel (< >) */}
                 <div className={styles.carouselControls}>
                   <button 
                     className={styles.btnCarousel} 
@@ -242,17 +307,12 @@ export function CreateQuiz() {
                 </div>
               </div>
 
-              {/* Bloco de Pergunta (Exibe apenas a questão atual) */}
               <div className={styles.questionBlock}>
                 <div className={styles.questionHeader}>
                   <h3>Pergunta {String(currentQuestionIndex + 1).padStart(2, '0')}</h3>
                   <div className={styles.questionSettings}>
                     <label>Pontos:</label>
-                    <input type="number" defaultValue={currentQuestion.points} className={styles.pointsInput} />
-                    <select className={styles.selectFieldSmall} defaultValue={currentQuestion.type}>
-                      <option value="Multipla">Múltipla Escolha</option>
-                      <option value="VF">Verdadeiro/Falso</option>
-                    </select>
+                    <input type="number" value={currentQuestion.points} readOnly className={styles.pointsInput} />
                     <button 
                       className={styles.btnIconDanger} 
                       onClick={handleDelete}
@@ -266,12 +326,11 @@ export function CreateQuiz() {
 
                 <div className={styles.formGroup}>
                   <label>Texto da Pergunta</label>
-                  {/* O "key" força o React a limpar o campo quando mudamos de questão */}
                   <textarea 
-                    key={`text-${currentQuestion.id}`}
                     className={styles.textareaField} 
                     rows={2}
-                    defaultValue={currentQuestion.text}
+                    value={currentQuestion.text}
+                    onChange={(e) => updateQuestionText(e.target.value)}
                     placeholder="Digite sua pergunta aqui..."
                   />
                 </div>
@@ -279,17 +338,20 @@ export function CreateQuiz() {
                 <div className={styles.optionsSection}>
                   <label>Opções de Resposta</label>
                   
-                  {/* Lista de Opções da questão atual */}
                   {currentQuestion.options.map((opt, index) => (
-                    <div key={`opt-${currentQuestion.id}-${index}`} className={`${styles.optionRow} ${opt.isCorrect ? styles.optionCorrect : ''}`}>
-                      <button className={styles.radioBtn}>
+                    <div key={`opt-${index}`} className={`${styles.optionRow} ${opt.isCorrect ? styles.optionCorrect : ''}`}>
+                      <button 
+                        className={styles.radioBtn}
+                        onClick={() => updateOption(index, 'isCorrect', true)}
+                      >
                         {opt.isCorrect ? <CheckCircle size={20} className={styles.iconCyan} /> : <Circle size={20} className={styles.iconMuted} />}
                       </button>
                       <input 
                         type="text" 
-                        defaultValue={opt.text} 
+                        value={opt.text}
+                        onChange={(e) => updateOption(index, 'text', e.target.value)}
                         className={styles.optionInput} 
-                        placeholder={`Opção ${index + 1}`}
+                        placeholder={`Digite a Opção ${['A', 'B', 'C', 'D'][index]}`}
                       />
                     </div>
                   ))}
@@ -306,8 +368,8 @@ export function CreateQuiz() {
         {/* BARRA DE NAVEGAÇÃO INFERIOR */}
         <div className={styles.footerActions}>
           {step === 2 ? (
-            <button className={styles.btnOutline} onClick={() => setStep(1)}>
-              <ChevronLeft size={18} /> Prev
+            <button className={styles.btnOutline} onClick={() => setStep(1)} disabled={isSubmitting}>
+              <ChevronLeft size={18} /> Anterior
             </button>
           ) : (
             <div style={{ width: '85px' }}></div>
@@ -315,14 +377,15 @@ export function CreateQuiz() {
           
           {step === 1 ? (
             <button className={styles.btnPrimary} onClick={() => setStep(2)}>
-              Prox. <ChevronRight size={18} />
+              Próximo Passo <ChevronRight size={18} />
             </button>
           ) : (
             <button 
               className={styles.btnPrimary} 
               onClick={handlePublish}
+              disabled={isSubmitting}
             >
-              Prévia e Publicar
+              {isSubmitting ? 'Salvando...' : 'Finalizar e Publicar'}
             </button>
           )}
         </div>

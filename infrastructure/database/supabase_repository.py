@@ -5,6 +5,7 @@ from domain.entities.participacao import Participacao
 from domain.entities.questao import Questao
 from domain.entities.numero_sorte import NumeroSorte
 import uuid
+from datetime import datetime
 from domain.repositories.quiz_repository import QuizRepository
 
 class SupabaseColaboradorRepository:
@@ -233,6 +234,46 @@ class SupabaseQuizRepository(QuizRepository):
             .execute()
         
         return [item["dia_sipat_id"] for item in response.data]
+
+    def criar_quiz_com_questoes(self, tema: str, descricao: str, questoes: list) -> bool:
+        """
+        Cria um novo dia de SIPAT e insere todas as questões vinculadas a ele.
+        """
+        try:
+            # --- PASSO EXTRA: Descobrir o próximo ID disponível ---
+            # Busca o maior ID que já existe na tabela
+            resp_id = self.db.table("dias_sipat").select("id").order("id", desc=True).limit(1).execute()
+            proximo_id = 1
+            if resp_id.data:
+                proximo_id = resp_id.data[0]["id"] + 1
+
+            # 1. Cria o Novo Quiz (Dia da SIPAT) informando o novo ID
+            self.db.table("dias_sipat").insert({
+                "id": proximo_id,  # <-- Agora enviamos o ID explicitamente!
+                "tema": tema,
+                "descricao": descricao,
+                "data": datetime.now().date().isoformat(), 
+                "link_youtube_palestra": "" 
+            }).execute()
+
+            # 2. Prepara as questões para inserir no banco atreladas a esse novo ID
+            questoes_db = []
+            for q in questoes:
+                questoes_db.append({
+                    "id": str(uuid.uuid4()), # Gera um ID único para a questão para evitar o mesmo erro
+                    "dia_sipat_id": proximo_id,
+                    "texto": q.texto,
+                    "opcoes": q.opcoes,
+                    "resposta_correta": q.resposta_correta
+                })
+
+            # 3. Insere todas as questões de uma vez só!
+            self.db.table("questoes").insert(questoes_db).execute()
+            
+            return True
+        except Exception as e:
+            print(f"Erro ao criar quiz no banco: {e}")
+            return False
 
 class SupabaseRelatorioRepository:
     def __init__(self, supabase_client: Client):
