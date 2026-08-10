@@ -193,6 +193,23 @@ class SupabaseQuizRepository(QuizRepository):
         quiz_data["questoes"] = questoes_formatadas
         return quiz_data
 
+    def atualizar_quiz(self, quiz_id: int, tema: str, descricao: str, link_youtube_palestra: str) -> bool:
+        """
+        Atualiza as informações da palestra de um dia específico.
+        """
+        try:
+            response = self.db.table("dias_sipat").update({
+                "tema": tema,
+                "descricao": descricao,
+                "link_youtube_palestra": link_youtube_palestra
+            }).eq("id", quiz_id).execute()
+            
+            # Como a API do supabase-python retorna os dados atualizados, 
+            # podemos checar se a lista 'data' não está vazia.
+            return len(response.data) > 0
+        except Exception as e:
+            print(f"Erro ao atualizar quiz: {e}")
+            return False
 
 class SupabaseRelatorioRepository:
     def __init__(self, supabase_client: Client):
@@ -213,3 +230,5 @@ class SupabaseRelatorioRepository:
     def obter_desempenho_online(self) -> list[dict]:
         response = self.db.table("view_relatorio_desempenho").select("*").execute()
         return response.data
+
+    

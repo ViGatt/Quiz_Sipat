@@ -32,6 +32,12 @@ class SubmeterRespostaRequest(BaseModel):
     questao_id: str
     alternativa_escolhida: str
 
+    # DTO para atualizar o quiz (Admin)
+class AtualizarQuizRequest(BaseModel):
+    tema: str
+    descricao: str
+    link_youtube_palestra: str
+
 @router.get("/")
 def listar_quizzes(
     use_case: ListarQuizzesUseCase = Depends(get_listar_quizzes_uc)
@@ -45,7 +51,9 @@ def listar_quizzes(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao buscar quizzes: {str(e)}")
 
-# --- NOVA ROTA ADICIONADA AQUI ---
+# -----------------------------------------------------------------
+# 1. ROTA GET - Disparada quando o usuário ABRE a tela
+# -----------------------------------------------------------------
 @router.get("/{quiz_id}")
 def obter_quiz(quiz_id: int, repo: SupabaseQuizRepository = Depends(get_quiz_repo)):
     """
@@ -55,6 +63,30 @@ def obter_quiz(quiz_id: int, repo: SupabaseQuizRepository = Depends(get_quiz_rep
     if not quiz:
         raise HTTPException(status_code=404, detail="Quiz não encontrado")
     return quiz
+
+# -----------------------------------------------------------------
+# 2. ROTA PUT - Disparada quando o Admin clica em SALVAR ALTERAÇÕES
+# -----------------------------------------------------------------
+@router.put("/{quiz_id}")
+def atualizar_quiz_admin(
+    quiz_id: int,
+    request: AtualizarQuizRequest,
+    repo: SupabaseQuizRepository = Depends(get_quiz_repo)
+):
+    """
+    Atualiza as informações de um quiz (tema, descrição e vídeo) - Ação de Administrador.
+    """
+    sucesso = repo.atualizar_quiz(
+        quiz_id=quiz_id,
+        tema=request.tema,
+        descricao=request.descricao,
+        link_youtube_palestra=request.link_youtube_palestra
+    )
+    
+    if not sucesso:
+        raise HTTPException(status_code=400, detail="Erro ao atualizar o quiz no banco de dados.")
+    
+    return {"message": "Quiz atualizado com sucesso!"}
 # ---------------------------------
 
 @router.post("/iniciar")

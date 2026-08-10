@@ -74,15 +74,26 @@ export function ParticipantQuizDetails() {
     return (match && match[2].length === 11) ? `https://www.youtube.com/embed/${match[2]}` : url;
   };
 
-  const handleSaveEdit = () => {
-    // Atualiza a visualização local
-    setVideoUrl(tempVideoUrl);
-    setLectureTitle(tempTitle);
-    setLectureDescription(tempDescription);
-    setIsEditing(false);
-    
-    // Futuramente aqui faremos o UPDATE no Supabase usando um POST/PUT na API!
-    alert("Alterações salvas visualmente. No futuro, isso será gravado no banco!");
+  const handleSaveEdit = async () => {
+    try {
+      // 1. Faz o disparo (PUT) para o back-end com os dados editados
+      await api.put(`/quiz/${id}`, {
+        tema: tempTitle,
+        descricao: tempDescription,
+        link_youtube_palestra: tempVideoUrl
+      });
+
+      // 2. Atualiza a visualização local para refletir o sucesso
+      setVideoUrl(tempVideoUrl);
+      setLectureTitle(`Dia ${id} - ${tempTitle}`);
+      setLectureDescription(tempDescription);
+      setIsEditing(false);
+      
+      alert("Alterações salvas com sucesso no banco de dados!");
+    } catch (err) {
+      console.error("Erro ao salvar edição:", err);
+      alert("Ocorreu um erro ao tentar salvar as alterações.");
+    }
   };
 
   const handleCancelEdit = () => {
