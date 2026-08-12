@@ -8,6 +8,7 @@ from domain.repositories.colaborador_repository import ColaboradorRepository
 from domain.repositories.quiz_repository import QuizRepository
 from domain.entities.participacao import Participacao
 import uuid
+from datetime import datetime, timezone  # <-- NOVO IMPORT NECESSÁRIO
 
 class IniciarQuizOnlineUseCase:
     def __init__(
@@ -26,7 +27,27 @@ class IniciarQuizOnlineUseCase:
         if not colaborador:
             raise ColaboradorNaoEncontradoError("CPF não cadastrado na base de colaboradores.")
 
-        # 2. Verificar bloqueios cruzados e tentativas (Regra de Ouro)
+        # 2. Buscar o Quiz e aplicar a Trava de Agendamento ANTES de criar participação
+        quiz_do_dia = self.quiz_repo.buscar_quiz_por_dia(dia_sipat_id)
+        if not quiz_do_dia:
+            raise Exception("Quiz não encontrado.")
+            
+        # --- NOVA TRAVA DE SEGURANÇA (AGENDAMENTO) ---
+        status_quiz = getattr(quiz_do_dia, 'status', 'Publicado')
+        data_liberacao_str = getattr(quiz_do_dia, 'data_liberacao', None)
+        
+        if status_quiz == 'Programado' and data_liberacao_str:
+            # Converte a data que vem do banco (ISO 8601) para um objeto datetime em UTC
+            data_liberacao = datetime.fromisoformat(data_liberacao_str.replace('Z', '+00:00'))
+            agora = datetime.now(timezone.utc)
+            
+            if agora < data_liberacao:
+                # Se ainda não deu o horário, formata a data e bloqueia!
+                data_formatada = data_liberacao.strftime("%d/%m/%Y às %H:%M")
+                raise AcessoBloqueadoError(f"Acesso antecipado bloqueado. Este quiz só estará disponível a partir de {data_formatada}.")
+        # ---------------------------------------------
+
+        # 3. Verificar bloqueios cruzados e tentativas (Regra de Ouro)
         participacao_existente = self.participacao_repo.buscar_por_colaborador_e_dia(
             colaborador.id, dia_sipat_id
         )
@@ -41,7 +62,7 @@ class IniciarQuizOnlineUseCase:
                     "Você já iniciou ou concluiu o Quiz Online de hoje. É permitida apenas uma tentativa."
                 )
 
-        # 3. Criar a sessão de participação ONLINE
+        # 4. Criar a sessão de participação ONLINE (Agora é seguro criar!)
         nova_participacao = Participacao(
             id=uuid.uuid4(),
             colaborador_id=colaborador.id,
@@ -50,11 +71,10 @@ class IniciarQuizOnlineUseCase:
         )
         self.participacao_repo.salvar(nova_participacao)
 
-        # 4. Buscar os dados do Quiz do dia (Vídeo e as 15 perguntas que te enviarão)
-        quiz_do_dia = self.quiz_repo.buscar_quiz_por_dia(dia_sipat_id)
+        # 5. Buscar as 15 perguntas vinculadas ao Quiz
         questoes = self.quiz_repo.buscar_questoes_por_quiz(quiz_do_dia.id)
 
-        # 5. Retornar a estrutura inicial para o Front-end
+        # 6. Retornar a estrutura inicial para o Front-end
         # Nota: As alternativas corretas NÃO devem ser enviadas para o front-end por segurança
         questoes_sanitizadas = [
             {
@@ -67,6 +87,6 @@ class IniciarQuizOnlineUseCase:
         return {
             "participacao_id": nova_participacao.id,
             "colaborador_nome": colaborador.nome,
-            "link_youtube": quiz_do_dia.link_youtube_palestra,
+            "link_youtube": getattr(quiz_do_dia, 'link_youtube_palestra', ""),
             "questoes": questoes_sanitizadas
         }

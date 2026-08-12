@@ -3,7 +3,7 @@ import { ChevronLeft, PlayCircle, CheckCircle, Clock, BookOpen, Edit3, Save, X, 
 import { useNavigate, useParams } from 'react-router-dom';
 import { ParticipantSidebar } from '../../components/ParticipantSidebar/ParticipantSidebar';
 import { useAuth } from '../../context/AuthContext';
-import { api } from '../../services/api'; // Importando a nossa API
+import { api } from '../../services/api'; 
 import styles from './ParticipantQuizDetails.module.css';
 
 export function ParticipantQuizDetails() {
@@ -15,11 +15,15 @@ export function ParticipantQuizDetails() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Estados dos dados da palestra (Agora começam vazios e são preenchidos pela API)
+  // Estados dos dados da palestra
   const [videoUrl, setVideoUrl] = useState('');
   const [lectureTitle, setLectureTitle] = useState('');
   const [lectureDescription, setLectureDescription] = useState('');
   const [qtdQuestoes, setQtdQuestoes] = useState(15);
+  
+  // --- NOVOS ESTADOS PARA A TRAVA DE AGENDAMENTO ---
+  const [quizStatus, setQuizStatus] = useState('Publicado');
+  const [dataLiberacao, setDataLiberacao] = useState<string | null>(null);
 
   // Estados de controle de edição (Para o Admin)
   const [isEditing, setIsEditing] = useState(false);
@@ -44,12 +48,15 @@ export function ParticipantQuizDetails() {
         setLectureTitle(`Dia ${data.id} - ${data.tema}`);
         setLectureDescription(data.descricao || 'Assista ao vídeo e prepare-se para o quiz.');
         
-        // Se a API retornar as questões, podemos mostrar a quantidade exata
+        // Puxa as configurações de agendamento
+        setQuizStatus(data.status || 'Publicado');
+        setDataLiberacao(data.data_liberacao || null);
+        
         if (data.questoes) {
           setQtdQuestoes(data.questoes.length);
         }
 
-        // Alimenta também os campos temporários de edição (caso um Admin queira editar)
+        // Alimenta também os campos temporários de edição
         setTempVideoUrl(data.link_youtube_palestra || '');
         setTempTitle(data.tema || '');
         setTempDescription(data.descricao || '');
@@ -68,21 +75,18 @@ export function ParticipantQuizDetails() {
   // Função auxiliar para converter URLs normais do YouTube para formato Embed
   const getEmbedUrl = (url: string) => {
     if (!url) return '';
-    if (url.includes('embed/')) return url; // Se já for embed, ignora
+    if (url.includes('embed/')) return url; 
 
     let videoId = '';
     try {
       const urlObj = new URL(url);
       
       if (urlObj.hostname.includes('youtube.com')) {
-        // Pega o ID de links normais (watch?v=...)
         videoId = urlObj.searchParams.get('v') || '';
-        // Pega o ID caso seja um link de YouTube Shorts
         if (!videoId && urlObj.pathname.startsWith('/shorts/')) {
           videoId = urlObj.pathname.split('/')[2];
         }
       } else if (urlObj.hostname === 'youtu.be') {
-        // Pega o ID de links encurtados (youtu.be/...)
         videoId = urlObj.pathname.slice(1);
       }
     } catch (e) {
@@ -94,14 +98,12 @@ export function ParticipantQuizDetails() {
 
   const handleSaveEdit = async () => {
     try {
-      // 1. Faz o disparo (PUT) para o back-end com os dados editados
       await api.put(`/quiz/${id}`, {
         tema: tempTitle,
         descricao: tempDescription,
         link_youtube_palestra: tempVideoUrl
       });
 
-      // 2. Atualiza a visualização local para refletir o sucesso
       setVideoUrl(tempVideoUrl);
       setLectureTitle(`Dia ${id} - ${tempTitle}`);
       setLectureDescription(tempDescription);
@@ -121,7 +123,22 @@ export function ParticipantQuizDetails() {
     setIsEditing(false);
   };
 
-  // Telas de Feedback (Carregando / Erro)
+  // --- LÓGICA DE BLOQUEIO VISUAL (FRONT-END) ---
+  let isLocked = false;
+  let dataFormatada = '';
+
+  if (quizStatus === 'Programado' && dataLiberacao) {
+    const dataLibObj = new Date(dataLiberacao);
+    if (dataLibObj > new Date()) {
+      isLocked = true;
+      dataFormatada = dataLibObj.toLocaleString('pt-BR', {
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+      });
+    }
+  }
+
+  // Telas de Feedback
   if (loading) {
     return (
       <div className={styles.container}>
@@ -162,7 +179,6 @@ export function ParticipantQuizDetails() {
             <ChevronLeft size={20} /> Voltar
           </button>
 
-          {/* Botão exclusivo para Administradores/Comissão */}
           {usuario?.is_comissao && !isEditing && (
             <button className={styles.btnEditAdmin} onClick={() => setIsEditing(true)}>
               <Edit3 size={18} /> Editar Palestra e Vídeo
@@ -171,10 +187,8 @@ export function ParticipantQuizDetails() {
         </div>
 
         <div className={styles.contentGrid}>
-          {/* Lado Esquerdo: Vídeo e Informações da Palestra */}
           <div className={styles.videoSection}>
             {isEditing ? (
-              /* --- FORMULÁRIO DE EDIÇÃO (ADMIN) --- */
               <div className={styles.editCard}>
                 <h3 className={styles.editTitle}><Edit3 size={20} /> Painel de Edição da CIPA</h3>
                 
@@ -216,7 +230,6 @@ export function ParticipantQuizDetails() {
                 </div>
               </div>
             ) : (
-              /* --- EXIBIÇÃO NORMAL DO VÍDEO E TEXTO --- */
               <>
                 <div className={styles.videoWrapper}>
                   {videoUrl ? (
@@ -245,7 +258,6 @@ export function ParticipantQuizDetails() {
             )}
           </div>
 
-          {/* Lado Direito: Painel do Quiz */}
           <div className={styles.quizPanel}>
             <div className={styles.panelCard}>
               <h3 className={styles.panelTitle}>Sobre o Quiz Diário</h3>
@@ -279,12 +291,44 @@ export function ParticipantQuizDetails() {
               ) : (
                 <div className={styles.actionBox}>
                   <p className={styles.warningText}>* Atenção: Você tem apenas uma tentativa por CPF.</p>
+                  
+                  {/* --- BOTÃO COM APLICAÇÃO VISUAL DA TRAVA --- */}
                   <button 
                     className={styles.btnStart} 
-                    onClick={() => navigate(`/take-quiz/${id}`)}
+                    onClick={() => { if (!isLocked) navigate(`/take-quiz/${id}`) }}
+                    disabled={isLocked}
+                    style={isLocked ? { 
+                      opacity: 0.5, 
+                      cursor: 'not-allowed', 
+                      backgroundColor: '#475569', 
+                      boxShadow: 'none' 
+                    } : {}}
                   >
                     <PlayCircle size={20} /> Iniciar Quiz Agora
                   </button>
+
+                  {/* --- BANNER ALARANJADO DE AVISO --- */}
+                  {isLocked && (
+                    <div style={{
+                      marginTop: '1rem',
+                      padding: '0.85rem',
+                      backgroundColor: 'rgba(249, 115, 22, 0.1)',
+                      border: '1px solid rgba(249, 115, 22, 0.4)',
+                      borderRadius: '8px',
+                      color: '#f97316',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '4px',
+                      textAlign: 'center'
+                    }}>
+                      <Clock size={22} style={{ marginBottom: '4px' }}/>
+                      <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>Acesso Antecipado Bloqueado</span>
+                      <span style={{ fontSize: '0.8rem', opacity: 0.9 }}>Disponível em: {dataFormatada}</span>
+                    </div>
+                  )}
+                  
                 </div>
               )}
             </div>

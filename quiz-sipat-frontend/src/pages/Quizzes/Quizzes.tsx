@@ -21,16 +21,29 @@ export function Quizzes() {
         const response = await api.get('/quiz/');
         const fetchedQuizzes = response.data?.quizzes || [];
         
-        const formattedQuizzes = fetchedQuizzes.map((q: any) => ({
-          id: q.id,
-          title: `Quiz Dia ${String(q.id).padStart(2, '0')} - ${q.tema || 'Sem Tema'}`,
-          desc: q.descricao || 'Sem descrição cadastrada',
-          status: q.status || 'Publicado', 
-          questions: q.questoes ? q.questoes.length : (q.total_questoes || 0), 
-          time: q.tempo_limite || 15, 
-          participants: q.total_participantes || 0,
-          data_criacao: q.criado_em ? new Date(q.criado_em).toLocaleDateString() : 'Recentemente'
-        }));
+        const formattedQuizzes = fetchedQuizzes.map((q: any) => {
+          // --- LÓGICA DO STATUS DINÂMICO ---
+          let statusReal = q.status || 'Publicado';
+          const agora = new Date();
+          
+          if (statusReal === 'Programado' && q.data_liberacao) {
+            const dataLiberacao = new Date(q.data_liberacao);
+            if (dataLiberacao <= agora) {
+              statusReal = 'Publicado'; // O horário já passou, então já está valendo!
+            }
+          }
+
+          return {
+            id: q.id,
+            title: `Quiz Dia ${String(q.id).padStart(2, '0')} - ${q.tema || 'Sem Tema'}`,
+            desc: q.descricao || 'Sem descrição cadastrada',
+            status: statusReal, // Usa o status inteligente
+            questions: q.questoes ? q.questoes.length : (q.total_questoes || 0), 
+            time: q.tempo_limite || 15, 
+            participants: q.total_participantes || 0,
+            data_criacao: q.criado_em ? new Date(q.criado_em).toLocaleDateString() : 'Recentemente'
+          };
+        });
 
         setQuizzes(formattedQuizzes);
       } catch (error) {
