@@ -146,12 +146,22 @@ export function Quizzes() {
                     </div>
                   </div>
 
-                  <div className={styles.quizActions}>
+                  <div className={styles.quizActions} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    {/* Botão 1: Vai para a tela de Detalhes e Métricas (QuizDetails) */}
+                    <button 
+                      className={styles.btnOutline}
+                      onClick={() => navigate(`/quizzes/${quiz.id}`)}
+                    >
+                      Métricas
+                    </button>
+
+                    {/* Botão 2: Vai para a tela de Responder o Quiz */}
                     <button 
                       className={styles.btnOutline}
                       onClick={() => navigate(`/meus-quizzes/${quiz.id}`)}
+                      title="Abrir o Quiz para responder"
                     >
-                      Visualizar
+                      Testar Quiz
                     </button>
                     
                     <button className={styles.btnIcon} onClick={() => navigate(`/share-quiz/${quiz.id}`)}>
