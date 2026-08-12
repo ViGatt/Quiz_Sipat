@@ -14,7 +14,10 @@ interface RelatorioGeral {
 
 interface TopParticipante {
   cpf: string;
-  nome_colaborador: string;
+  nome?: string;
+  nome_colaborador?: string;
+  nome_completo?: string;
+  colaborador?: string;
   total_pontos: number;
   quizzes_respondidos: number;
 }
@@ -42,34 +45,35 @@ export function Dashboard() {
         const resRelatorio = await api.get('/relatorios/geral');
 
         setQuizzes(resQuizzes.data?.quizzes || []);
-        setResumo(resRelatorio.data?.resumo || null);
 
+        // --- 1. RESUMO GERAL DIRETO DO BANCO OTIMIZADO ---
+        const resumoBanco = resRelatorio.data?.resumo || {};
+        
+        setResumo({
+          // Agora puxamos direto da nova coluna 'total_cadastros' e 'taxa_engajamento'
+          total_colaboradores: Number(resumoBanco.total_cadastros || 0), 
+          taxa_engajamento: Number(resumoBanco.taxa_engajamento || 0),
+          total_online: Number(resumoBanco.total_online || 0),
+          total_presenciais: Number(resumoBanco.total_presencial || 0),
+        });
+
+        // --- 2. RANKING (MANTIDO IGUAL - FUNCIONANDO) ---
         const listaDesempenho = resRelatorio.data?.desempenho || [];
         const rankingAgrupado: Record<string, any> = {};
 
         listaDesempenho.forEach((item: any) => {
-          // 1. Log de depuração (para vermos exatamente o que o banco mandou)
-          console.log("🔍 LINHA PURA DO BANCO:", item);
-
-          // 2. Pegando o Nome
           const nomePessoa = item.nome_completo || item.nome_colaborador || item.nome || item.colaborador || 'Participante';
           const chaveAgrupamento = item.cpf || nomePessoa;
 
-          // 3. RADAR DE PONTUAÇÃO (Busca Dinâmica)
           let valorBruto: any = 0;
-          
-          // Varre todas as colunas que o banco enviou
           Object.keys(item).forEach(key => {
             const k = key.toLowerCase();
-            // Se o nome da coluna lembrar "pontuação", "nota" ou "acertos", pegamos o valor!
             if (k.includes('pont') || k.includes('nota') || k.includes('acert') || k.includes('score')) {
               valorBruto = item[key];
             }
           });
           
           let pontos = Number(valorBruto);
-          
-          // Limpeza de texto caso o banco mande "100 pts" em vez de 100
           if (isNaN(pontos)) {
             pontos = parseFloat(String(valorBruto).replace(',', '.').replace(/[^\d.-]/g, '')) || 0;
           }
@@ -85,7 +89,6 @@ export function Dashboard() {
             };
           }
 
-          // Soma a pontuação limpa
           rankingAgrupado[chaveAgrupamento].total_pontos += pontos;
           
           if (diaId) {
@@ -104,7 +107,6 @@ export function Dashboard() {
           .sort((a, b) => b.total_pontos - a.total_pontos)
           .slice(0, 5);
 
-        console.log("🏆 RANKING FINAL PRONTO:", top5);
         setRanking(top5);
 
       } catch (err) {
@@ -124,8 +126,8 @@ export function Dashboard() {
       <main className={styles.mainContent}>
         <header className={styles.header}>
           <div>
-            <h1 className={styles.title}>Dashboard CIPA</h1>
-            <p className={styles.subtitle}>Visão geral do engajamento e resultados da SIPAT</p>
+            <h1 className={styles.title}>Dashboard</h1>
+            <p className={styles.subtitle}>Bem vindo(a) de volta! Veja o que está acontecendo nos Quizzes</p>
           </div>
           
           <div className={styles.headerActions}>
@@ -163,7 +165,7 @@ export function Dashboard() {
               </div>
               <div className={styles.statCard}>
                 <div className={styles.statHeader}>
-                  <span className={styles.statLabel}>Total Cadastros</span>
+                  <span className={styles.statLabel}>Total de Colaboradores</span>
                   <Users size={20} className={styles.statIconBlue} />
                 </div>
                 <div className={styles.statValue}>{resumo?.total_colaboradores || 0}</div>
@@ -222,10 +224,16 @@ export function Dashboard() {
                         <div className={styles.participantAvatar}></div>
                         <div className={styles.participantInfo}>
                         <h4 style={{ textTransform: 'capitalize' }}>
-                          {(part.nome_colaborador).toLowerCase()}
+                          {(
+                            part.nome_colaborador || 
+                            part.nome || 
+                            part.nome_completo || 
+                            part.colaborador || 
+                            `CPF ${part.cpf}`
+                          ).toLowerCase()}
                         </h4>
-                          <span>{part.quizzes_respondidos || 0} Quizzes respondidos</span>
-                        </div>
+  <span>{part.quizzes_respondidos || 0} Quizzes respondidos</span>
+</div>
                         <div className={styles.participantScore}>
                           <Medal size={16} className={styles.medalIcon} />
                           {part.total_pontos || 0}
@@ -242,8 +250,8 @@ export function Dashboard() {
             {/* SECÇÃO INFERIOR */}
             <div className={styles.bottomSection}>
               <div className={styles.sectionHeader}>
-                <h3 className={styles.panelTitle}>Todos os Quizzes</h3>
-                <p className={styles.panelSubtitle}>Gerenciamento de biblioteca</p>
+                <h3 className={styles.panelTitle}>Quizzes Ativos</h3>
+                <p className={styles.panelSubtitle}>Quizzes da SIPAT disponíveis</p>
               </div>
 
               <div className={styles.quizzesGrid}>
@@ -280,7 +288,7 @@ export function Dashboard() {
                     <Plus size={20} />
                   </div>
                   <h4>Criar Novo Quiz</h4>
-                  <p>Adicione questões, limites e vídeos da CIPA</p>
+                  <p>Adicione questões, limite de tempo, entre outros</p>
                 </Link>
 
               </div>
