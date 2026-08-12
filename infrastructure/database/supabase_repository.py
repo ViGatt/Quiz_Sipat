@@ -278,6 +278,18 @@ class SupabaseQuizRepository(QuizRepository):
             print(f"Erro ao criar quiz no banco: {e}")
             return False
 
+    def excluir_quiz_definitivo(self, quiz_id: int) -> bool:
+        """
+        Exclui o quiz permanentemente do banco de dados para limpar testes e não sujar as métricas.
+        """
+        try:
+            # O Supabase apagará o quiz fisicamente. 
+            self.db.table("dias_sipat").delete().eq("id", quiz_id).execute()
+            return True
+        except Exception as e:
+            print(f"Erro ao excluir quiz definitivamente: {e}")
+            return False
+
 class SupabaseRelatorioRepository:
     def __init__(self, supabase_client: Client):
         self.db = supabase_client
@@ -316,20 +328,7 @@ class SupabaseRelatorioRepository:
         except Exception as e:
             print(f"Erro ao buscar desempenho online: {e}")
             return []
-        
-    def excluir_quiz_definitivo(self, quiz_id: int) -> bool:
-        """
-        Exclui o quiz permanentemente do banco de dados para limpar testes e não sujar as métricas.
-        """
-        try:
-            # O Supabase apagará o quiz fisicamente. 
-            # (Se o seu banco estiver com "ON DELETE CASCADE" configurado nas chaves estrangeiras, 
-            # ele também limpará as questões e respostas fakes atreladas automaticamente).
-            self.db.table("dias_sipat").delete().eq("id", quiz_id).execute()
-            return True
-        except Exception as e:
-            print(f"Erro ao excluir quiz definitivamente: {e}")
-            return False
+    
 
     
 

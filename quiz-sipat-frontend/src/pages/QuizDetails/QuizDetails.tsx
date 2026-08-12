@@ -18,7 +18,7 @@ export function QuizDetails() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const [hasData, setHasData] = useState(true);
+  const [hasData] = useState(true);
 
   // Lista mockada
   const recentCompletions = hasData ? [
