@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from application.use_cases.listar_quizzes import ListarQuizzesUseCase
 from pydantic import BaseModel
+from typing import List, Optional
+from datetime import datetime
 from presentation.dependencias import (
     get_iniciar_quiz_uc, 
     get_submeter_resposta_uc, 
@@ -47,10 +49,13 @@ class NovaQuestaoRequest(BaseModel):
     opcoes: dict
     resposta_correta: str
 
-# DTO principal para a Criação do Quiz
+# DTO principal para a Criação do Quiz (ADICIONAMOS OS NOVOS CAMPOS AQUI)
 class CriarQuizRequest(BaseModel):
     tema: str
     descricao: str
+    tempo_limite: int = 15
+    status: str = "Publicado"
+    data_liberacao: Optional[datetime] = None
     questoes: List[NovaQuestaoRequest]
 
 @router.get("/")
@@ -74,9 +79,13 @@ def criar_novo_quiz(request: CriarQuizRequest, repo: SupabaseQuizRepository = De
     """
     Cria um novo dia de SIPAT e vincula as questões a ele.
     """
+    # AGORA ENVIAMOS OS NOVOS CAMPOS PARA O REPOSITÓRIO
     sucesso = repo.criar_quiz_com_questoes(
         tema=request.tema,
         descricao=request.descricao,
+        tempo_limite=request.tempo_limite,
+        status=request.status,
+        data_liberacao=request.data_liberacao,
         questoes=request.questoes
     )
     

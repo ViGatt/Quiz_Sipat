@@ -235,7 +235,7 @@ class SupabaseQuizRepository(QuizRepository):
         
         return [item["dia_sipat_id"] for item in response.data]
 
-    def criar_quiz_com_questoes(self, tema: str, descricao: str, questoes: list) -> bool:
+    def criar_quiz_com_questoes(self, tema: str, descricao: str, tempo_limite: int, status: str, data_liberacao, questoes: list) -> bool:
         """
         Cria um novo dia de SIPAT e insere todas as questões vinculadas a ele.
         """
@@ -247,13 +247,16 @@ class SupabaseQuizRepository(QuizRepository):
             if resp_id.data:
                 proximo_id = resp_id.data[0]["id"] + 1
 
-            # 1. Cria o Novo Quiz (Dia da SIPAT) informando o novo ID
+            # 1. Cria o Novo Quiz (Dia da SIPAT) informando o novo ID e as novas configurações
             self.db.table("dias_sipat").insert({
-                "id": proximo_id,  # <-- Agora enviamos o ID explicitamente!
+                "id": proximo_id, 
                 "tema": tema,
                 "descricao": descricao,
                 "data": datetime.now().date().isoformat(), 
-                "link_youtube_palestra": "" 
+                "link_youtube_palestra": "",
+                "tempo_limite": tempo_limite,       # <-- NOVO CAMPO ADICIONADO AQUI
+                "status": status,                   # <-- NOVO CAMPO ADICIONADO AQUI
+                "data_liberacao": data_liberacao.isoformat() if data_liberacao else None  # <-- NOVO CAMPO
             }).execute()
 
             # 2. Prepara as questões para inserir no banco atreladas a esse novo ID

@@ -1,41 +1,57 @@
-import { Search, Plus, BookOpen, Clock, Users, MoreVertical, ChevronDown } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Search, Plus, BookOpen, Clock, Users, MoreVertical } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Sidebar } from '../../components/Sidebar/Sidebar';
+import { api } from '../../services/api';
 import styles from './Quizzes.module.css';
-
 
 export function Quizzes() {
   const navigate = useNavigate();
-  // Simulando os dados que virão da API Python no futuro
-  const quizzesList = [
-    { 
-      id: 1, 
-      title: 'Quiz Dia 01 - Tema EPI', 
-      desc: 'Conceitos basicos de saúde', 
-      status: 'Published', 
-      questions: 15, 
-      time: 20, 
-      participants: 32 
-    },
-    { 
-      id: 2, 
-      title: 'Quiz Dia 02 - Tema Saúde', 
-      desc: 'Conceitos basicos de saúde', 
-      status: 'Draft', 
-      questions: 15, 
-      time: 20, 
-      participants: 32 
-    },
-    { 
-      id: 3, 
-      title: 'Quiz Dia 03 - Tema Ergonomia', 
-      desc: 'Conceitos basicos de ergonomia', 
-      status: 'Rascunho', 
-      questions: 15, 
-      time: 20, 
-      participants: 32 
-    },
-  ];
+  const [quizzes, setQuizzes] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // --- ESTADOS DOS FILTROS ---
+  const [activeTab, setActiveTab] = useState('Todos');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    const carregarQuizzes = async () => {
+      try {
+        setLoading(true);
+        const response = await api.get('/quiz/');
+        const fetchedQuizzes = response.data?.quizzes || [];
+        
+        const formattedQuizzes = fetchedQuizzes.map((q: any) => ({
+          id: q.id,
+          title: `Quiz Dia ${String(q.id).padStart(2, '0')} - ${q.tema || 'Sem Tema'}`,
+          desc: q.descricao || 'Sem descrição cadastrada',
+          status: q.status || 'Publicado', 
+          questions: q.questoes ? q.questoes.length : (q.total_questoes || 0), 
+          time: q.tempo_limite || 15, 
+          participants: q.total_participantes || 0,
+          data_criacao: q.criado_em ? new Date(q.criado_em).toLocaleDateString() : 'Recentemente'
+        }));
+
+        setQuizzes(formattedQuizzes);
+      } catch (error) {
+        console.error("Erro ao buscar biblioteca de quizzes:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    carregarQuizzes();
+  }, []);
+
+  // --- LÓGICA DE FILTRAGEM (ABA + BARRA DE BUSCA) ---
+  const filteredQuizzes = quizzes.filter(quiz => {
+    const matchesTab = activeTab === 'Todos' || quiz.status === activeTab;
+    const matchesSearch = 
+      quiz.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      quiz.desc.toLowerCase().includes(searchQuery.toLowerCase());
+      
+    return matchesTab && matchesSearch;
+  });
 
   return (
     <div className={styles.layout}>
@@ -63,66 +79,92 @@ export function Quizzes() {
             </div>
           </div>
 
-          {/* Barra de Controles (Abas, Busca e Filtro) */}
+          {/* Barra de Controles (Abas e Busca) */}
           <div className={styles.controlsRow}>
             <div className={styles.tabs}>
-              <button className={`${styles.tabBtn} ${styles.activeTab}`}>Quizzes</button>
-              <button className={styles.tabBtn}>Publicados</button>
-              <button className={styles.tabBtn}>Rascunho</button>
+              <button 
+                className={`${styles.tabBtn} ${activeTab === 'Todos' ? styles.activeTab : ''}`}
+                onClick={() => setActiveTab('Todos')}
+              >
+                Todos
+              </button>
+              <button 
+                className={`${styles.tabBtn} ${activeTab === 'Publicado' ? styles.activeTab : ''}`}
+                onClick={() => setActiveTab('Publicado')}
+              >
+                Publicados
+              </button>
+              <button 
+                className={`${styles.tabBtn} ${activeTab === 'Programado' ? styles.activeTab : ''}`}
+                onClick={() => setActiveTab('Programado')}
+              >
+                Programados
+              </button>
             </div>
 
             <div className={styles.filters}>
               <div className={styles.searchWrapper}>
                 <Search size={18} className={styles.iconMuted} />
-                <input type="text" placeholder="Buscar quizzes..." className={styles.searchInput} />
+                <input 
+                  type="text" 
+                  placeholder="Buscar quizzes..." 
+                  className={styles.searchInput} 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
               </div>
-              <button className={styles.filterBtn}>
-                <Search size={16} className={styles.iconMuted} style={{ visibility: 'hidden', width: 0, padding: 0 }}/> {/* Placeholder para alinhamento se quiser colocar icone de filtro */}
-                Categorias
-                <ChevronDown size={16} />
-              </button>
             </div>
           </div>
 
           {/* Lista de Quizzes */}
           <div className={styles.quizList}>
-            {quizzesList.map((quiz) => (
-              <div key={quiz.id} className={styles.quizItem}>
-                <div className={styles.quizIconWrapper}>
-                  <BookOpen size={24} className={styles.quizIcon} />
-                </div>
-                
-                <div className={styles.quizInfo}>
-                  <div className={styles.quizTitleRow}>
-                    <h3>{quiz.title}</h3>
-                    <span className={`${styles.badge} ${quiz.status === 'Published' ? styles.badgePublished : styles.badgeDraft}`}>
-                      {quiz.status}
-                    </span>
-                  </div>
-                  <p className={styles.quizDesc}>{quiz.desc}</p>
-                  
-                  <div className={styles.quizMeta}>
-                    <span><BookOpen size={14} /> {quiz.questions} questões</span>
-                    <span><Clock size={14} /> {quiz.time} min</span>
-                    <span><Users size={14} /> {quiz.participants} complementos</span>
-                    <span>Criado agora</span>
-                  </div>
-                </div>
-
-                <div className={styles.quizActions}>
-                  <button 
-                    className={styles.btnOutline}
-                    onClick={() => navigate(`/quizzes/${quiz.id}`)}
-                  >
-                    Visualizar
-                  </button>
-                  
-                  <button className={styles.btnIcon} onClick={() => navigate(`/share-quiz/${quiz.id}`)}>
-                    <MoreVertical size={20} />
-                  </button>
-                </div>
+            {loading ? (
+              <div style={{ padding: '2rem', textAlign: 'center', color: '#666' }}>
+                Carregando seus quizzes...
               </div>
-            ))}
+            ) : filteredQuizzes.length > 0 ? (
+              filteredQuizzes.map((quiz) => (
+                <div key={quiz.id} className={styles.quizItem}>
+                  <div className={styles.quizIconWrapper}>
+                    <BookOpen size={24} className={styles.quizIcon} />
+                  </div>
+                  
+                  <div className={styles.quizInfo}>
+                    <div className={styles.quizTitleRow}>
+                      <h3>{quiz.title}</h3>
+                      <span className={`${styles.badge} ${quiz.status === 'Publicado' ? styles.badgePublished : styles.badgeDraft}`}>
+                        {quiz.status}
+                      </span>
+                    </div>
+                    <p className={styles.quizDesc}>{quiz.desc}</p>
+                    
+                    <div className={styles.quizMeta}>
+                      <span><BookOpen size={14} /> {quiz.questions} questões</span>
+                      <span><Clock size={14} /> {quiz.time} min</span>
+                      <span><Users size={14} /> {quiz.participants} participações</span>
+                      <span>{quiz.data_criacao}</span>
+                    </div>
+                  </div>
+
+                  <div className={styles.quizActions}>
+                    <button 
+                      className={styles.btnOutline}
+                      onClick={() => navigate(`/meus-quizzes/${quiz.id}`)}
+                    >
+                      Visualizar
+                    </button>
+                    
+                    <button className={styles.btnIcon} onClick={() => navigate(`/share-quiz/${quiz.id}`)}>
+                      <MoreVertical size={20} />
+                    </button>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div style={{ padding: '2rem', textAlign: 'center', color: '#666' }}>
+                Nenhum quiz encontrado com esses filtros.
+              </div>
+            )}
           </div>
         </div>
       </main>

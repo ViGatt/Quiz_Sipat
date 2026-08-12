@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { ChevronLeft, ChevronRight, Clock, CheckCircle2, Trash2, Plus, Circle, CheckCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Clock, CheckCircle2, Trash2, Plus, Circle, CheckCircle, Calendar } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import styles from './CreateQuiz.module.css';
-import { api } from '../../services/api'; // <-- Importando a API
+import { api } from '../../services/api'; 
 
 export function CreateQuiz() {
   const [showSuccess, setShowSuccess] = useState(false);
@@ -17,6 +17,11 @@ export function CreateQuiz() {
   const [difficulty, setDifficulty] = useState('Médio');
   const [randomize, setRandomize] = useState(true);
   const [immediateResult, setImmediateResult] = useState(true);
+
+  // --- NOVOS ESTADOS PARA INTEGRAÇÃO COM O BANCO ---
+  const [tempoLimite, setTempoLimite] = useState(15);
+  const [status, setStatus] = useState('Publicado');
+  const [dataLiberacao, setDataLiberacao] = useState('');
 
   // Estados do Passo 2 (Carrossel de Questões)
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -93,7 +98,7 @@ export function CreateQuiz() {
 
   const currentQuestion = questions[currentQuestionIndex];
 
-  // --- O CORAÇÃO DO ENVIO PARA A API ---
+  // --- O CORAÇÃO DO ENVIO PARA A API (ATUALIZADO) ---
   const handlePublish = async () => {
     if (!title || questions[0].text === "") {
       alert("Por favor, preencha o título e pelo menos uma questão!");
@@ -103,17 +108,23 @@ export function CreateQuiz() {
     try {
       setIsSubmitting(true);
 
-      // Formata os dados para o que o FastAPI e o Banco esperam
+      // Formata os dados exatamente como o backend e o banco esperam
       const payload = {
         tema: title,
         descricao: description,
+        // Adicionando as configurações reais de tempo e status
+        tempo_limite: Number(tempoLimite) || 15,
+        status: status,
+        // Se for Programado, converte a data para o padrão ISO do banco (ex: 2026-08-12T10:00:00Z)
+        data_liberacao: status === 'Programado' && dataLiberacao ? new Date(dataLiberacao).toISOString() : null,
+        
         questoes: questions.map(q => {
           const opcoesObj: Record<string, string> = {};
           let respostaCorreta = 'A';
           const letras = ['A', 'B', 'C', 'D'];
 
           q.options.forEach((opt, idx) => {
-            opcoesObj[letras[idx]] = opt.text || `Opção ${idx + 1}`; // Evita nulo
+            opcoesObj[letras[idx]] = opt.text || `Opção ${idx + 1}`; 
             if (opt.isCorrect) respostaCorreta = letras[idx];
           });
 
@@ -129,7 +140,7 @@ export function CreateQuiz() {
       
       setShowSuccess(true); 
       setTimeout(() => {
-        navigate('/dashboard');
+        navigate('/quizzes'); // Redirecionando para a Biblioteca de Quizzes ao invés do Dashboard
       }, 3000);
 
     } catch (err) {
@@ -148,7 +159,7 @@ export function CreateQuiz() {
             <CheckCircle size={80} color="var(--color-secondary)" />
           </div>
           <h2 className={styles.successTitle}>Quiz Criado com Sucesso!</h2>
-          <p className={styles.successSubtitle}>Redirecionando para o Dashboard...</p>
+          <p className={styles.successSubtitle}>Redirecionando para a biblioteca...</p>
         </div>
       </div>
     );
@@ -158,7 +169,7 @@ export function CreateQuiz() {
     <div className={styles.layout}>
       <header className={styles.header}>
         <div className={styles.headerLeft}>
-          <Link to="/dashboard" className={styles.backButton}>
+          <Link to="/quizzes" className={styles.backButton}>
             <ChevronLeft size={24} />
           </Link>
           <div>
@@ -229,16 +240,46 @@ export function CreateQuiz() {
                 <p>Configure como seu Quiz funcionará</p>
               </div>
 
+              {/* TEMPO LIMITE AGORA LIGADO AO ESTADO */}
               <div className={styles.formGroup}>
                 <label>Tempo limite</label>
                 <div className={styles.inputWrapper}>
                   <Clock size={18} className={styles.iconMuted} />
-                  <input type="number" defaultValue="15" className={styles.inputTransparent} />
+                  <input 
+                    type="number" 
+                    value={tempoLimite}
+                    onChange={(e) => setTempoLimite(Number(e.target.value))} 
+                    className={styles.inputTransparent} 
+                  />
                   <span className={styles.suffix}>minutos</span>
                 </div>
               </div>
 
+              {/* NOVOS CAMPOS: STATUS E AGENDAMENTO */}
               <div className={styles.formGroup}>
+                <label>Status de Publicação</label>
+                <select className={styles.selectField} value={status} onChange={(e) => setStatus(e.target.value)}>
+                  <option value="Publicado">Publicar Imediatamente</option>
+                  <option value="Programado">Programar para data futura</option>
+                </select>
+              </div>
+
+              {status === 'Programado' && (
+                <div className={styles.formGroup}>
+                  <label>Data e Hora da Liberação</label>
+                  <div className={styles.inputWrapper}>
+                    <Calendar size={18} className={styles.iconMuted} />
+                    <input 
+                      type="datetime-local" 
+                      value={dataLiberacao}
+                      onChange={(e) => setDataLiberacao(e.target.value)} 
+                      className={styles.inputTransparent} 
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className={styles.formGroup} style={{marginTop: '1rem'}}>
                 <label>Pontuação para aprovação</label>
                 <div className={styles.inputWrapper}>
                   <CheckCircle2 size={18} className={styles.iconMuted} />
@@ -385,7 +426,7 @@ export function CreateQuiz() {
               onClick={handlePublish}
               disabled={isSubmitting}
             >
-              {isSubmitting ? 'Salvando...' : 'Finalizar e Publicar'}
+              {isSubmitting ? 'Salvando...' : 'Finalizar e Salvar'}
             </button>
           )}
         </div>
