@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { 
   ChevronLeft, Share2, BookOpen, Calendar, Users, BarChart2, X, 
-  Download, Search, Inbox 
+  Download, Search, Inbox, Trash2, AlertTriangle
 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Sidebar } from '../../components/Sidebar/Sidebar';
 import styles from './QuizDetails.module.css';
+import { api } from '../../services/api';
 
 export function QuizDetails() {
   const navigate = useNavigate();
@@ -13,7 +14,8 @@ export function QuizDetails() {
 
   const [showCompletionsModal, setShowCompletionsModal] = useState(false);
   const [showPerformanceModal, setShowPerformanceModal] = useState(false);
-  
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
   const [hasData, setHasData] = useState(true);
@@ -57,9 +59,14 @@ export function QuizDetails() {
             </div>
           </div>
           <div className={styles.headerActions}>
-            {/* Botão temporário para você testar os Empty States */}
-            <button className={styles.btnOutline} onClick={() => setHasData(!hasData)}>
-              {hasData ? "Simular Banco Vazio" : "Voltar Dados"}
+            
+            {/* NOVO BOTÃO DE EXCLUIR QUIZ */}
+            <button 
+              className={styles.btnOutline} 
+              style={{ color: '#ef4444', borderColor: '#ef4444' }} 
+              onClick={() => setShowDeleteModal(true)}
+            >
+              <Trash2 size={16} /> Excluir Quiz
             </button>
 
             <button className={styles.btnOutline} onClick={() => navigate(`/share-quiz/${id || '1'}`)}>
@@ -308,6 +315,55 @@ export function QuizDetails() {
         </div>
       )}
 
-    </div>
+      {/* =========================================
+          MODAL DE EXCLUSÃO (DUPLA CHECAGEM)
+      ========================================= */}
+      {showDeleteModal && (
+        <div className={styles.modalOverlay} onClick={() => !isDeleting && setShowDeleteModal(false)}>
+          <div className={styles.modalContent} style={{ maxWidth: '450px', textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem', color: '#ef4444' }}>
+              <AlertTriangle size={64} />
+            </div>
+            <h2 style={{ marginBottom: '0.5rem' }}>Excluir este Quiz?</h2>
+            <p style={{ color: 'var(--color-muted)', marginBottom: '1.5rem', lineHeight: '1.5' }}>
+              Tem certeza que deseja apagar este quiz? Esta ação é <b>irreversível</b> e ele desaparecerá da biblioteca. 
+              <br/><br/>
+              <i>Nota: Todos os dados e respostas atrelados a este quiz também serão removidos do banco para limpar as métricas do sistema.</i>
+            </p>
+
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+              <button 
+                className={styles.btnOutline} 
+                onClick={() => setShowDeleteModal(false)}
+                disabled={isDeleting}
+              >
+                Cancelar
+              </button>
+              <button 
+                className={styles.btnPrimary} 
+                style={{ backgroundColor: '#ef4444' }}
+                disabled={isDeleting}
+                onClick={async () => {
+                  try {
+                    setIsDeleting(true);
+                    // Dispara a rota DELETE que criamos no back-end
+                    await api.delete(`/quiz/${id}`);
+                    setShowDeleteModal(false);
+                    navigate('/quizzes'); // Redireciona para a biblioteca
+                  } catch (error) {
+                    console.error("Erro ao excluir quiz:", error);
+                    alert("Não foi possível excluir o quiz.");
+                    setIsDeleting(false);
+                  }
+                }}
+              >
+                {isDeleting ? 'Excluindo...' : 'Sim, Quero Excluir'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+    </div> 
   );
 }

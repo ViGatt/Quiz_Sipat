@@ -188,3 +188,18 @@ def responder_questao(
         raise HTTPException(status_code=400, detail=str(e)) 
     except Exception as e:
         raise HTTPException(status_code=500, detail="Erro interno ao processar a solicitação.")
+
+
+@router.delete("/{quiz_id}")
+def deletar_quiz(quiz_id: int, repo: SupabaseQuizRepository = Depends(get_quiz_repo)):
+    """
+    Exclui um quiz de forma definitiva para não interferir nas métricas.
+    """
+    sucesso = repo.excluir_quiz_definitivo(quiz_id)
+    if not sucesso:
+        raise HTTPException(
+            status_code=500, 
+            detail="Erro ao excluir. (Dica: verifique se as tabelas filhas no Supabase possuem 'ON DELETE CASCADE')."
+        )
+    
+    return {"message": "Quiz e dados de teste excluídos permanentemente!"}
