@@ -328,8 +328,128 @@ class SupabaseRelatorioRepository:
         except Exception as e:
             print(f"Erro ao buscar desempenho online: {e}")
             return []
-    
+    def obter_metricas_detalhadas_quiz(self, quiz_id: int) -> dict | None:
+        """
+        Calcula as métricas reais de um quiz específico baseado nas respostas e participações do banco.
+        """
+        try:
+            # 1. Busca os dados do Quiz com fallback para tempo_limite
+            res_quiz = self.db.table("dias_sipat").select("*").eq("id", quiz_id).execute()
+            if not res_quiz.data:
+                return None
+            quiz = res_quiz.data[0]
+            tempo_limite_val = quiz.get("tempo_limite") or 15
 
+            # 2. Busca as questões vinculadas
+            res_questoes = self.db.table("questoes").select("id, texto").eq("dia_sipat_id", quiz_id).execute()
+            questoes = res_questoes.data or []
+            total_questoes = len(questoes) if len(questoes) > 0 else 1
+
+            # 3. Busca participações
+            res_part = self.db.table("participacoes") \
+                .select("id, criado_em, tempo_gasto, colaboradores(nome)") \
+                .eq("dia_sipat_id", quiz_id) \
+                .execute()
+            
+            participacoes = res_part.data or []
+            total_completos = len(participacoes)
+
+            conclusoes_recentes = []
+            pontuacoes = []
+            tempos_segundos = []
+            aprovados_count = 0
+
+            # 4. Processa cada participação para calcular nota e tempo gasto
+            for part in participacoes:
+                p_id = part["id"]
+                colab = part.get("colaboradores") or {}
+                nome_colaborador = colab.get("nome", "Colaborador") if isinstance(colab, dict) else "Colaborador"
+                data_criacao = part.get("criado_em", "")
+                tempo_seg = part.get("tempo_gasto", 0) or 0
+
+                if tempo_seg > 0:
+                    tempos_segundos.append(tempo_seg)
+
+                # Busca acertos na tabela respostas
+                res_resp = self.db.table("respostas").select("acertou").eq("participacao_id", str(p_id)).execute()
+                respostas_user = res_resp.data or []
+                
+                acertos = sum(1 for r in respostas_user if r.get("acertou") is True)
+                pct_score = round((acertos / total_questoes) * 100, 1)
+                pontuacoes.append(pct_score)
+
+                if pct_score >= 70.0:
+                    aprovados_count += 1
+
+                # Formata data
+                data_fmt = "Recente"
+                if data_criacao:
+                    try:
+                        dt = datetime.fromisoformat(data_criacao.replace('Z', '+00:00'))
+                        data_fmt = dt.strftime("%d/%m %H:%M")
+                    except Exception:
+                        data_fmt = "Recente"
+
+                # Formata tempo individual MM:SS
+                minutos_ind = tempo_seg // 60
+                segundos_ind = tempo_seg % 60
+                tempo_ind_fmt = f"{minutos_ind:02d}:{segundos_ind:02d}" if tempo_seg > 0 else "--:--"
+
+                conclusoes_recentes.append({
+                    "id": p_id,
+                    "name": nome_colaborador,
+                    "score": f"{pct_score}%",
+                    "time": tempo_ind_fmt,
+                    "date": data_fmt
+                })
+
+            # Métricas agregadas
+            pontuacao_media = round(sum(pontuacoes) / len(pontuacoes), 1) if pontuacoes else 0
+            maior_pontuacao = max(pontuacoes) if pontuacoes else 0
+            taxa_aprovacao = round((aprovados_count / total_completos) * 100, 1) if total_completos > 0 else 0
+
+            # Formata Tempo Médio em MM:SS
+            if tempos_segundos:
+                media_seg = sum(tempos_segundos) // len(tempos_segundos)
+                min_m = media_seg // 60
+                seg_m = media_seg % 60
+                tempo_medio_fmt = f"{min_m:02d}:{seg_m:02d}"
+            else:
+                tempo_medio_fmt = "--:--"
+
+            # 5. Cálculo de Desempenho por Questão
+            desempenho_questoes = []
+            for idx, q in enumerate(questoes, 1):
+                q_id = q["id"]
+                res_q = self.db.table("respostas").select("acertou").eq("questao_id", str(q_id)).execute()
+                resps_q = res_q.data or []
+                total_resps = len(resps_q)
+                acertos_q = sum(1 for r in resps_q if r.get("acertou") is True)
+                
+                rate = round((acertos_q / total_resps) * 100) if total_resps > 0 else 0
+                
+                desempenho_questoes.append({
+                    "id": q_id,
+                    "question": f"{idx}. {q.get('texto', 'Questão')}",
+                    "correctRate": rate
+                })
+
+            return {
+                "quiz_id": quiz_id,
+                "tema": quiz.get("tema", ""),
+                "descricao": quiz.get("descricao", ""),
+                "total_completos": str(total_completos),
+                "taxa_aprovacao": f"{taxa_aprovacao}%",
+                "tempo_limite": f"{tempo_limite_val} min",
+                "tempo_medio": tempo_medio_fmt,
+                "pontuacao_media": f"{pontuacao_media}%",
+                "maior_pontuacao": f"{maior_pontuacao}%",
+                "conclusoes_recentes": conclusoes_recentes,
+                "desempenho_questoes": desempenho_questoes
+            }
+        except Exception as e:
+            print(f"Erro ao obter métricas do quiz {quiz_id}: {e}")
+            return None
     
 
     

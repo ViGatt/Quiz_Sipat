@@ -1,66 +1,104 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   ChevronLeft, Share2, BookOpen, Calendar, Users, BarChart2, X, 
-  Download, Search, Inbox, Trash2, AlertTriangle
+  Download, Search, Inbox, Trash2, AlertTriangle, Clock, Award 
 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Sidebar } from '../../components/Sidebar/Sidebar';
-import styles from './QuizDetails.module.css';
 import { api } from '../../services/api';
+import styles from './QuizDetails.module.css';
 
 export function QuizDetails() {
   const navigate = useNavigate();
   const { id } = useParams();
 
+  const [loading, setLoading] = useState(true);
   const [showCompletionsModal, setShowCompletionsModal] = useState(false);
   const [showPerformanceModal, setShowPerformanceModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
   const [searchQuery, setSearchQuery] = useState('');
 
-  const [hasData] = useState(true);
+  // Estados das métricas reais da API
+  const [quizInfo, setQuizInfo] = useState({
+    title: '',
+    desc: '',
+    totalCompletos: '0',
+    taxaAprovacao: '0%',
+    tempoLimite: '15 min',
+    tempoMedio: '--:--',
+    pontuacaoMedia: '0%',
+    maiorPontuacao: '0%'
+  });
 
-  // Lista mockada
-  const recentCompletions = hasData ? [
-    { id: 1, name: 'Alex Johnson', score: '85%', time: '15:24', date: '2 hours ago' },
-    { id: 2, name: 'Emma Wilson', score: '92%', time: '18:24', date: '2 hours ago' },
-    { id: 3, name: 'Michael Cohen', score: '92%', time: '18:24', date: '2 hours ago' },
-    { id: 4, name: 'Sophia Garcia', score: '92%', time: '18:24', date: '2 hours ago' },
-    { id: 5, name: 'Lucas Mendes', score: '100%', time: '10:12', date: '3 hours ago' },
-    { id: 6, name: 'Ana Souza', score: '70%', time: '20:00', date: '4 hours ago' },
-    { id: 7, name: 'Pedro Costa', score: '65%', time: '14:30', date: '5 hours ago' },
-  ] : [];
+  const [recentCompletions, setRecentCompletions] = useState<any[]>([]);
+  const [questionPerformance, setQuestionPerformance] = useState<any[]>([]);
 
-  const questionPerformance = hasData ? Array.from({ length: 15 }, (_, index) => ({
-    id: index + 1,
-    question: `${index + 1}. Pergunta de avaliação sobre o tema abordado?`,
-    correctRate: Math.floor(Math.random() * (100 - 60 + 1)) + 60
-  })) : [];
+  useEffect(() => {
+    const fetchMetrics = async () => {
+      try {
+        setLoading(true);
+        const response = await api.get(`/relatorios/quiz/${id}`);
+        const data = response.data;
 
-  // Filtra os participantes em tempo real baseado no que for digitado
+        setQuizInfo({
+          title: `Quiz Dia ${String(data.quiz_id).padStart(2, '0')} - ${data.tema || 'Sem Tema'}`,
+          desc: data.descricao || 'Sem descrição cadastrada',
+          totalCompletos: data.total_completos || '0',
+          taxaAprovacao: data.taxa_aprovacao || '0%',
+          tempoLimite: data.tempo_limite || '15 min',
+          tempoMedio: data.tempo_medio || '--:--',
+          pontuacaoMedia: data.pontuacao_media || '0%',
+          maiorPontuacao: data.maior_pontuacao || '0%'
+        });
+
+        setRecentCompletions(data.conclusoes_recentes || []);
+        setQuestionPerformance(data.desempenho_questoes || []);
+      } catch (error) {
+        console.error("Erro ao carregar métricas do quiz:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) fetchMetrics();
+  }, [id]);
+
   const filteredCompletions = recentCompletions.filter(user => 
     user.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  if (loading) {
+    return (
+      <div className={styles.layout}>
+        <Sidebar />
+        <main className={styles.mainContent}>
+          <div style={{ padding: '3rem', textAlign: 'center', color: '#64748b' }}>
+            Carregando métricas do quiz...
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.layout}>
       <Sidebar />
       
       <main className={styles.mainContent}>
-        {/* --- CABEÇALHO --- */}
+        {/* CABEÇALHO */}
         <header className={styles.header}>
           <div className={styles.headerLeft}>
             <button className={styles.backButton} onClick={() => navigate('/quizzes')}>
               <ChevronLeft size={24} />
             </button>
             <div>
-              <h1 className={styles.title}>Quiz Dia 01 - Tema EPI</h1>
-              <p className={styles.subtitle}>Conceitos básicos sobre o uso de EPIs</p>
+              <h1 className={styles.title}>{quizInfo.title}</h1>
+              <p className={styles.subtitle}>{quizInfo.desc}</p>
             </div>
           </div>
           <div className={styles.headerActions}>
-            
-            {/* NOVO BOTÃO DE EXCLUIR QUIZ */}
             <button 
               className={styles.btnOutline} 
               style={{ color: '#ef4444', borderColor: '#ef4444' }} 
@@ -79,41 +117,65 @@ export function QuizDetails() {
           </div>
         </header>
 
-        {/* --- MÉTRICAS GERAIS --- */}
+        {/* MÉTRICAS GERAIS - GRID 3 COLUNAS X 2 FILEIRAS */}
         <div className={styles.statsGrid}>
+          {/* Fileira 1 - Card 1 */}
           <div className={styles.statCard}>
             <div className={styles.statHeader}>
               <span className={styles.statLabel}>Total Completos</span>
               <BookOpen size={20} className={styles.iconPurple} />
             </div>
-            <div className={styles.statValue}>{hasData ? '28' : '0'}</div>
+            <div className={styles.statValue}>{quizInfo.totalCompletos}</div>
           </div>
+
+          {/* Fileira 1 - Card 2 */}
           <div className={styles.statCard}>
             <div className={styles.statHeader}>
-              <span className={styles.statLabel}>Tempo de Conclusão</span>
-              <Calendar size={20} className={styles.iconGreen} />
+              <span className={styles.statLabel}>Taxa de Aprovação</span>
+              <Award size={20} className={styles.iconGreen} />
             </div>
-            <div className={styles.statValue}>{hasData ? '12:45' : '--:--'}</div>
+            <div className={styles.statValue}>{quizInfo.taxaAprovacao}</div>
           </div>
+
+          {/* Fileira 1 - Card 3 */}
+          <div className={styles.statCard}>
+            <div className={styles.statHeader}>
+              <span className={styles.statLabel}>Tempo Limite</span>
+              <Calendar size={20} className={styles.iconPurple} />
+            </div>
+            <div className={styles.statValue}>{quizInfo.tempoLimite}</div>
+          </div>
+
+          {/* Fileira 2 - Card 4 */}
+          <div className={styles.statCard}>
+            <div className={styles.statHeader}>
+              <span className={styles.statLabel}>Tempo Médio</span>
+              <Clock size={20} className={styles.iconGreen} />
+            </div>
+            <div className={styles.statValue}>{quizInfo.tempoMedio}</div>
+          </div>
+
+          {/* Fileira 2 - Card 5 */}
           <div className={styles.statCard}>
             <div className={styles.statHeader}>
               <span className={styles.statLabel}>Pontuação Média</span>
               <Users size={20} className={styles.iconBlue} />
             </div>
-            <div className={styles.statValue}>{hasData ? '78.5%' : '0%'}</div>
+            <div className={styles.statValue}>{quizInfo.pontuacaoMedia}</div>
           </div>
+
+          {/* Fileira 2 - Card 6 */}
           <div className={styles.statCard}>
             <div className={styles.statHeader}>
               <span className={styles.statLabel}>Maior Pontuação</span>
               <BarChart2 size={20} className={styles.iconOrange} />
             </div>
-            <div className={styles.statValue}>{hasData ? '95%' : '0%'}</div>
+            <div className={styles.statValue}>{quizInfo.maiorPontuacao}</div>
           </div>
         </div>
 
-        {/* --- GRIDS INTERMEDIÁRIOS --- */}
+        {/* GRIDS INTERMEDIÁRIOS */}
         <div className={styles.middleGrid}>
-          
           {/* Tabela de Conclusão Recente */}
           <div className={styles.panel}>
             <div className={styles.panelHeader}>
@@ -124,13 +186,12 @@ export function QuizDetails() {
               <button 
                 className={styles.btnOutlineSmall}
                 onClick={() => setShowCompletionsModal(true)}
-                disabled={!hasData}
+                disabled={recentCompletions.length === 0}
               >
                 Ver Resultados
               </button>
             </div>
             
-            {/* MELHORIA 3: Empty State na Tabela */}
             {recentCompletions.length > 0 ? (
               <div className={styles.tableContainer}>
                 <table className={styles.table}>
@@ -139,7 +200,7 @@ export function QuizDetails() {
                       <th>Participante</th>
                       <th>Pontuação</th>
                       <th>Tempo Gasto</th>
-                      <th>Concluído</th>
+                      <th>Concluído em</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -158,12 +219,12 @@ export function QuizDetails() {
               <div className={styles.emptyState}>
                 <Inbox size={40} className={styles.emptyIcon} />
                 <h4 className={styles.emptyTitle}>Nenhum dado ainda</h4>
-                <p className={styles.emptyDesc}>Nenhum colaborador concluiu este quiz. Compartilhe o link para começar!</p>
+                <p className={styles.emptyDesc}>Nenhum colaborador concluiu este quiz ainda.</p>
               </div>
             )}
           </div>
 
-          {/* Desempenho dos Participantes */}
+          {/* Desempenho por Questão */}
           <div className={styles.panel}>
             <div className={styles.panelHeader}>
               <div>
@@ -173,13 +234,12 @@ export function QuizDetails() {
               <button 
                 className={styles.btnOutlineSmall}
                 onClick={() => setShowPerformanceModal(true)}
-                disabled={!hasData}
+                disabled={questionPerformance.length === 0}
               >
                 Ver Todas
               </button>
             </div>
             
-            {/* MELHORIA 3: Empty State no Desempenho */}
             {questionPerformance.length > 0 ? (
               <div className={styles.performanceList}>
                 {questionPerformance.slice(0, 5).map((item) => (
@@ -205,14 +265,13 @@ export function QuizDetails() {
               </div>
             )}
           </div>
-          
         </div>
 
-        {/* --- COMPARTILHAMENTO --- */}
+        {/* COMPARTILHAMENTO */}
         <div className={styles.shareBanner}>
           <div>
             <h3 className={styles.panelTitle}>Compartilhe esse Quiz</h3>
-            <p className={styles.panelSubtitle}>Compartilhe esse Quiz com colegas de equipe</p>
+            <p className={styles.panelSubtitle}>Compartilhe este Quiz com colaboradores de equipe</p>
           </div>
           <button 
             className={styles.btnPrimaryShare} 
@@ -224,7 +283,7 @@ export function QuizDetails() {
 
       </main>
 
-      {/* MODAL 1: TODOS OS PARTICIPANTES (COM BARRA DE BUSCA) */}
+      {/* MODAL 1: TODOS OS PARTICIPANTES */}
       {showCompletionsModal && (
         <div className={styles.modalOverlay} onClick={() => setShowCompletionsModal(false)}>
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
@@ -235,7 +294,6 @@ export function QuizDetails() {
               </button>
             </div>
             
-            {/* MELHORIA 2: Barra de Busca no Modal */}
             <div className={styles.modalSearchArea}>
               <div className={styles.searchWrapper}>
                 <Search size={18} className={styles.searchIcon} />
@@ -275,7 +333,7 @@ export function QuizDetails() {
                 <div className={styles.emptyState}>
                   <Search size={40} className={styles.emptyIcon} />
                   <h4 className={styles.emptyTitle}>Colaborador não encontrado</h4>
-                  <p className={styles.emptyDesc}>Ninguém com esse nome respondeu ao quiz ainda.</p>
+                  <p className={styles.emptyDesc}>Ninguém com esse nome respondeu a este quiz ainda.</p>
                 </div>
               )}
             </div>
@@ -283,12 +341,12 @@ export function QuizDetails() {
         </div>
       )}
 
-      {/* MODAL 2: TODAS AS 15 QUESTÕES (DESEMPENHO)          */}
+      {/* MODAL 2: TODAS AS QUESTÕES */}
       {showPerformanceModal && (
         <div className={styles.modalOverlay} onClick={() => setShowPerformanceModal(false)}>
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
-              <h2>Desempenho Detalhado (15 Questões)</h2>
+              <h2>Desempenho Detalhado por Questão</h2>
               <button className={styles.closeBtn} onClick={() => setShowPerformanceModal(false)}>
                 <X size={24} />
               </button>
@@ -315,9 +373,7 @@ export function QuizDetails() {
         </div>
       )}
 
-      {/* =========================================
-          MODAL DE EXCLUSÃO (DUPLA CHECAGEM)
-      ========================================= */}
+      {/* MODAL DE EXCLUSÃO */}
       {showDeleteModal && (
         <div className={styles.modalOverlay} onClick={() => !isDeleting && setShowDeleteModal(false)}>
           <div className={styles.modalContent} style={{ maxWidth: '450px', textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
@@ -326,7 +382,7 @@ export function QuizDetails() {
             </div>
             <h2 style={{ marginBottom: '0.5rem' }}>Excluir este Quiz?</h2>
             <p style={{ color: 'var(--color-muted)', marginBottom: '1.5rem', lineHeight: '1.5' }}>
-              Tem certeza que deseja apagar este quiz? Esta ação é <b>irreversível</b> e ele desaparecerá da biblioteca. 
+              Tem certeza que deseja apagar este quiz? Esta ação é <b>irreversível</b> e ele desaparecerá da biblioteca.
               <br/><br/>
               <i>Nota: Todos os dados e respostas atrelados a este quiz também serão removidos do banco para limpar as métricas do sistema.</i>
             </p>
@@ -346,10 +402,9 @@ export function QuizDetails() {
                 onClick={async () => {
                   try {
                     setIsDeleting(true);
-                    // Dispara a rota DELETE que criamos no back-end
                     await api.delete(`/quiz/${id}`);
                     setShowDeleteModal(false);
-                    navigate('/quizzes'); // Redireciona para a biblioteca
+                    navigate('/quizzes');
                   } catch (error) {
                     console.error("Erro ao excluir quiz:", error);
                     alert("Não foi possível excluir o quiz.");
@@ -364,6 +419,6 @@ export function QuizDetails() {
         </div>
       )}
 
-    </div> 
+    </div>
   );
 }

@@ -33,3 +33,19 @@ def obter_relatorio_consolidado(
         return use_case.executar()
     except Exception as e:
         raise HTTPException(status_code=500, detail="Erro interno ao gerar o relatório consolidado.")
+
+@router.get("/quiz/{quiz_id}")
+def obter_metricas_detalhadas_quiz(
+    quiz_id: int, 
+    repo: SupabaseRelatorioRepository = Depends(get_relatorio_repo)
+):
+    """
+    Retorna os dados consolidados e métricas de desempenho de um quiz específico.
+    """
+    try:
+        dados = repo.obter_metricas_detalhadas_quiz(quiz_id)
+        if not dados:
+            raise HTTPException(status_code=404, detail="Métricas não encontradas para este quiz.")
+        return dados
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao carregar métricas: {str(e)}")
