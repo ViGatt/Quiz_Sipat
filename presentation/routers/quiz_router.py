@@ -162,7 +162,12 @@ def iniciar_quiz(
     except ParticipacaoDuplicadaError as e:
         raise HTTPException(status_code=409, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Erro interno ao processar a solicitação.")
+        # --- ESSAS DUAS LINHAS VÃO FORÇAR O PYTHON A IMPRIMIR O ERRO REAL ---
+        import traceback
+        traceback.print_exc()
+        
+        # Opcional: Devolve o erro pro front-end também para vermos no console do navegador
+        raise HTTPException(status_code=500, detail=f"Erro interno: {str(e)}")
 
 @router.post("/responder")
 def responder_questao(
