@@ -14,6 +14,7 @@ import { TakeQuiz } from './pages/TakeQuiz/TakeQuiz';
 import { ParticipantQuizzes } from './pages/ParticipantQuizzes/ParticipantQuizzes';
 import { ParticipantQuizDetails } from './pages/ParticipantQuizDetails/ParticipantQuizDetails';
 import { RequireAuth } from './components/RequireAuth/RequireAuth';
+import { Participants } from './pages/Participants/Participants';
 
 
 function AppRoutes() {
@@ -52,6 +53,7 @@ function AppRoutes() {
           <Route path="/quizzes" element={<Quizzes />} />
           <Route path="/quizzes/:id" element={<QuizDetails />} />
           <Route path="/share-quiz/:id" element={<ShareQuiz />} />
+          <Route path="/participantes" element={<Participants />} />
             </Route>
         </Routes>
       </motion.div>
