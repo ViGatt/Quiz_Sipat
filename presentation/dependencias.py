@@ -56,3 +56,17 @@ def get_quiz_repo():
 
 def get_relatorio_repo():
     return relatorio_repo
+
+
+_supabase_instance: Client = None
+
+def get_supabase_client() -> Client:
+    """
+    Retorna a mesma instância do Supabase para todas as requisições (Singleton),
+    evitando o esgotamento de sockets no Windows (WinError 10035).
+    """
+    global _supabase_instance
+    if _supabase_instance is None:
+        _supabase_instance = create_client(SUPABASE_URL, SUPABASE_KEY)
+    
+    return _supabase_instance

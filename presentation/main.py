@@ -1,3 +1,11 @@
+import sys
+import asyncio
+
+# --- FIX DEFINITIVO PARA O WINERROR 10035 NO WINDOWS ---
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+# -------------------------------------------------------
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware  # <-- Importação do CORS adicionada
 from presentation.routers import recepcao_router, quiz_router, relatorio_router
