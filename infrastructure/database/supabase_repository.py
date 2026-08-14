@@ -25,6 +25,23 @@ class SupabaseColaboradorRepository:
             tipo=data["tipo"],
             is_comissao=data["is_comissao"]
         )
+    def importar_colaboradores_em_massa(self, lista_colaboradores: list[dict]) -> dict:
+        """
+        Recebe uma lista de dicionários e insere todos no Supabase.
+        Se o CPF já existir, ele apenas ignora ou atualiza.
+        """
+        try:
+            # O upsert tenta inserir. Se houver conflito na coluna 'cpf', ele atualiza.
+            response = self.db.table("colaboradores").upsert(
+                lista_colaboradores, 
+                on_conflict="cpf"
+            ).execute()
+            
+            inseridos = len(response.data) if response.data else 0
+            return {"sucesso": True, "quantidade": inseridos}
+        except Exception as e:
+            print(f"Erro na importação em massa: {e}")
+            return {"sucesso": False, "erro": str(e)}
 
 class SupabaseParticipacaoRepository:
     def __init__(self, supabase_client: Client):
