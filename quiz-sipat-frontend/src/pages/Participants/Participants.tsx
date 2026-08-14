@@ -1,32 +1,72 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { 
   Search, Upload, UserCheck, Key, Ticket, 
-  AlertCircle, CheckCircle, FileText
+  AlertCircle, CheckCircle, FileText, Loader2
 } from 'lucide-react';
 import { Sidebar } from '../../components/Sidebar/Sidebar';
 import styles from './Participants.module.css';
 
-// --- MOCK DE DADOS PARA VISUALIZAÇÃO ---
+// --- MOCK DE DADOS PARA VISUALIZAÇÃO (Ainda manteremos mockado até fazermos o GET) ---
 const MOCK_PARTICIPANTS = [
-  { id: '1', nome: 'Ana Silva', cpf: '111.222.333-44', statusHoje: 'PENDENTE', numeroSorte: '1042' },
+  { id: '1', nome: 'Claudete', cpf: '999.999.999-99', statusHoje: 'PENDENTE', numeroSorte: '' },
   { id: '2', nome: 'Carlos Souza', cpf: '555.666.777-88', statusHoje: 'PRESENCIAL', numeroSorte: '2891' },
   { id: '3', nome: 'Marcos Ribeiro', cpf: '999.000.111-22', statusHoje: 'ONLINE', numeroSorte: '3301' },
+  { id: '4', nome: 'Joãozinho', cpf: '123.123.123-12', statusHoje: 'PENDENTE', numeroSorte: '' },
 ];
 
 export function Participants() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [showImportModal, setShowImportModal] = useState(false);
   const [participants, setParticipants] = useState(MOCK_PARTICIPANTS);
+
+  // Estados do Modal de Importação
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const filteredParticipants = participants.filter(p => 
     p.nome.toLowerCase().includes(searchQuery.toLowerCase()) || 
     p.cpf.includes(searchQuery)
   );
 
-  const handleCheckIn = (id: string, nome: string) => {
-    if (window.confirm(`Confirmar presença presencial para ${nome} no dia de hoje?`)) {
-      setParticipants(prev => prev.map(p => p.id === id ? { ...p, statusHoje: 'PRESENCIAL' } : p));
-      alert('Presença registrada com sucesso!');
+  // --- FUNÇÕES DA TABELA ---
+  const handleCheckIn = async (id: string, nome: string, cpf: string) => {
+    if (!window.confirm(`Confirmar presença presencial para ${nome} no dia de hoje?`)) {
+      return;
+    }
+
+    try {
+      // Faz a chamada para a nossa rota do FastAPI
+      const response = await fetch("http://127.0.0.1:8000/recepcao/registrar", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          cpf: cpf.replace(/\D/g, ''), // Manda o CPF limpo (só números)
+          nome_completo: nome,
+          dia_sipat_id: 1 // TODO: Tornar dinâmico futuramente
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Atualiza a tabela na tela com o status verde e o Número da Sorte real do banco!
+        setParticipants(prev => prev.map(p => 
+          p.id === id 
+            ? { ...p, statusHoje: 'PRESENCIAL', numeroSorte: String(data.numero_sorte) } 
+            : p
+        ));
+        
+        alert(`Sucesso! O Número da Sorte gerado foi: ${data.numero_sorte}`);
+      } else {
+        // Mostra o erro exato que o Python devolveu (ex: "Participação já registrada")
+        alert(`Erro: ${data.detail}`);
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Erro de conexão com o servidor ao tentar fazer o check-in.");
     }
   };
 
@@ -35,6 +75,54 @@ export function Participants() {
       const novaSenha = cpf.replace(/\D/g, '').substring(0, 4);
       alert(`Senha redefinida com sucesso! A nova senha provisória é: ${novaSenha}`);
     }
+  };
+
+  // --- LÓGICA DE IMPORTAÇÃO DE ARQUIVO ---
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files.length > 0) {
+      setSelectedFile(event.target.files[0]);
+    }
+  };
+
+  const handleUploadFile = async () => {
+    if (!selectedFile) {
+      alert("Por favor, selecione uma planilha (.xlsx ou .csv) primeiro.");
+      return;
+    }
+
+    setIsUploading(true);
+
+    // Prepara o arquivo para envio no formato "multipart/form-data"
+    const formData = new FormData();
+    formData.append("file", selectedFile);
+
+    try {
+      // Dispara para a nossa rota do FastAPI
+      const response = await fetch("http://127.0.0.1:8000/recepcao/importar-rh", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alert(data.message); // Mostra a mensagem de sucesso do Python
+        setShowImportModal(false); // Fecha o modal
+        setSelectedFile(null); // Limpa o arquivo
+      } else {
+        alert(`Erro na importação: ${data.detail}`);
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Erro de conexão com o servidor. Verifique se a API está rodando.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const fecharModal = () => {
+    setShowImportModal(false);
+    setSelectedFile(null);
   };
 
   return (
@@ -117,7 +205,6 @@ export function Participants() {
                   </td>
 
                   <td className={styles.actionsCell}>
-                    {/* BOTÃO DE RESET DE SENHA */}
                     <button 
                       onClick={() => handleResetPassword(p.nome, p.cpf)}
                       className={styles.btnReset}
@@ -126,9 +213,8 @@ export function Participants() {
                       <Key size={18} />
                     </button>
 
-                    {/* BOTÃO DE CHECK-IN */}
                     <button 
-                      onClick={() => handleCheckIn(p.id, p.nome)}
+                      onClick={() => handleCheckIn(p.id, p.nome, p.cpf)}
                       disabled={p.statusHoje !== 'PENDENTE'}
                       className={styles.btnCheckIn}
                     >
@@ -153,7 +239,7 @@ export function Participants() {
 
       {/* MODAL DE IMPORTAÇÃO DE EXCEL */}
       {showImportModal && (
-        <div className={styles.modalOverlay} onClick={() => setShowImportModal(false)}>
+        <div className={styles.modalOverlay} onClick={fecharModal}>
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalIcon}>
               <FileText size={48} />
@@ -163,16 +249,51 @@ export function Participants() {
               Faça o upload de uma planilha (.xlsx ou .csv) contendo as colunas <strong>NOME</strong> e <strong>CPF</strong> para liberar o acesso ao sistema.
             </p>
 
-            <div className={styles.dropzone}>
-              <p className={styles.dropzoneText}>Clique aqui para selecionar um arquivo</p>
+            {/* ÁREA DE CLIQUE PARA ARQUIVO */}
+            <div 
+              className={styles.dropzone} 
+              onClick={() => fileInputRef.current?.click()}
+              style={{ borderColor: selectedFile ? 'var(--color-primary)' : '' }}
+            >
+              {selectedFile ? (
+                <div style={{ color: 'var(--color-primary)', fontWeight: 'bold' }}>
+                  <CheckCircle size={24} style={{ marginBottom: '8px' }} />
+                  <p>{selectedFile.name}</p>
+                </div>
+              ) : (
+                <p className={styles.dropzoneText}>Clique aqui para selecionar um arquivo</p>
+              )}
+              
+              {/* Input escondido que faz a mágica acontecer */}
+              <input 
+                type="file" 
+                ref={fileInputRef} 
+                onChange={handleFileSelect} 
+                accept=".xlsx, .xls, .csv" 
+                style={{ display: 'none' }} 
+              />
             </div>
 
             <div className={styles.modalActions}>
-              <button className={styles.btnOutline} onClick={() => setShowImportModal(false)}>
+              <button 
+                className={styles.btnOutline} 
+                onClick={fecharModal}
+                disabled={isUploading}
+              >
                 Cancelar
               </button>
-              <button className={styles.btnPrimary}>
-                Processar Arquivo
+              
+              <button 
+                className={styles.btnPrimary} 
+                onClick={handleUploadFile}
+                disabled={isUploading || !selectedFile}
+                style={{ opacity: (isUploading || !selectedFile) ? 0.5 : 1 }}
+              >
+                {isUploading ? (
+                  <> <Loader2 size={18} className="spin" /> Processando... </>
+                ) : (
+                  'Processar Arquivo'
+                )}
               </button>
             </div>
           </div>

@@ -48,61 +48,67 @@ def registrar_presenca(
 @router.post("/importar-rh")
 async def importar_planilha_rh(
     file: UploadFile = File(...),
-    repo = Depends(get_colaborador_repo) # <-- Injetamos o repositório aqui
+    repo = Depends(get_colaborador_repo) 
 ):
     """
-    Recebe um arquivo Excel/CSV, extrai NOME e CPF, e cadastra todos os colaboradores.
+    Recebe um arquivo Excel/CSV, extrai NOME, CPF e TIPO, e cadastra todos.
     """
     if not file.filename.endswith(('.xlsx', '.xls', '.csv')):
         raise HTTPException(status_code=400, detail="Formato de arquivo inválido. Envie .xlsx ou .csv")
     
     try:
-        # 1. Lê o arquivo em memória sem salvar no disco (mais seguro e rápido)
         contents = await file.read()
         if file.filename.endswith('.csv'):
             df = pd.read_csv(io.BytesIO(contents))
         else:
             df = pd.read_excel(io.BytesIO(contents))
             
-        # 2. Padroniza as colunas (tudo maiúsculo e sem espaços sobrando)
+        # Padroniza as colunas (tudo maiúsculo)
         df.columns = [str(c).strip().upper() for c in df.columns]
         
-        # 3. Verifica se as colunas obrigatórias existem
+        # Verifica as colunas obrigatórias
         if 'NOME' not in df.columns or 'CPF' not in df.columns:
-            raise HTTPException(status_code=400, detail="A planilha deve conter obrigatoriamente as colunas NOME e CPF.")
+            raise HTTPException(status_code=400, detail="A planilha deve conter as colunas NOME e CPF.")
             
+        # Vê se o RH mandou a coluna "TIPO" para separar CLT, PJ, Terceirizados...
+        tem_coluna_tipo = 'TIPO' in df.columns
+        
         lista_pronta = []
         
-        # 4. Processa cada linha e limpa os dados
         for index, row in df.iterrows():
             nome_cru = str(row['NOME']).strip()
             cpf_cru = str(row['CPF']).strip()
             
-            # Pula linhas vazias (que o pandas lê como 'nan')
             if nome_cru.lower() == 'nan' or cpf_cru.lower() == 'nan':
                 continue
                 
-            # Limpa o CPF (remove ponto e traço) e garante que tem os zeros a esquerda
             cpf_limpo = ''.join(filter(str.isdigit, cpf_cru)).zfill(11)
             
+            # --- LÓGICA DINÂMICA DO TIPO DE CONTRATO ---
+            tipo_colaborador = "Colaborador" # Padrão seguro
+            if tem_coluna_tipo:
+                tipo_cru = str(row['TIPO']).strip()
+                if tipo_cru.lower() != 'nan' and tipo_cru != '':
+                    tipo_colaborador = tipo_cru.title() # Vai ficar "Pj", "Clt", "Terceirizado", etc.
+            
             lista_pronta.append({
-                "nome": nome_cru.title(), # Deixa o nome Bonitinho (Ex: João Da Silva)
+                "nome": nome_cru.title(), 
                 "cpf": cpf_limpo,
-                "is_comissao": False
+                "is_comissao": False,
+                "tipo": tipo_colaborador
             })
             
         if not lista_pronta:
             raise HTTPException(status_code=400, detail="Nenhum dado válido encontrado na planilha.")
             
-        # 5. Manda tudo pro banco de uma vez só (Upsert)
         resultado = repo.importar_colaboradores_em_massa(lista_pronta)
         
         if not resultado.get("sucesso"):
             raise HTTPException(status_code=500, detail=resultado.get("erro", "Erro desconhecido ao salvar."))
             
         return {
-            "message": f"Sucesso! {resultado.get('quantidade')} colaboradores foram importados para o sistema.",
-            "amostra": lista_pronta[:2] # Retorna as duas primeiras pessoas só pra gente ver no console
+            "message": f"Sucesso! {resultado.get('quantidade')} pessoas foram importadas para o sistema.",
+            "amostra": lista_pronta[:2] 
         }
             
     except Exception as e:
