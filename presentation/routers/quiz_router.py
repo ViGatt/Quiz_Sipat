@@ -2,12 +2,13 @@ from fastapi import APIRouter, Depends, HTTPException
 from application.use_cases.listar_quizzes import ListarQuizzesUseCase
 from pydantic import BaseModel
 from typing import List, Optional
+import time
 from datetime import datetime
 from presentation.dependencias import (
     get_iniciar_quiz_uc, 
     get_submeter_resposta_uc, 
     get_listar_quizzes_uc,
-    get_quiz_repo # <-- Importamos o getter do repositório
+    get_quiz_repo
 )
 from infrastructure.database.supabase_repository import SupabaseQuizRepository
 from application.use_cases.iniciar_quiz_online import IniciarQuizOnlineUseCase
@@ -19,7 +20,6 @@ from domain.exceptions import (
     ParticipacaoNaoEncontradaError,
     RegraNegocioError
 )
-from typing import List
 
 router = APIRouter(prefix="/quiz", tags=["Quiz Online"])
 
@@ -35,13 +35,11 @@ class SubmeterRespostaRequest(BaseModel):
     questao_id: str
     alternativa_escolhida: str
 
-    # DTO para atualizar o quiz (Admin)
+# DTO para atualizar o quiz (Admin)
 class AtualizarQuizRequest(BaseModel):
     tema: str
     descricao: str
     link_youtube_palestra: str
-
-from typing import List
 
 # DTO para a Questão que vem do Front-end
 class NovaQuestaoRequest(BaseModel):
@@ -49,7 +47,7 @@ class NovaQuestaoRequest(BaseModel):
     opcoes: dict
     resposta_correta: str
 
-# DTO principal para a Criação do Quiz (ADICIONAMOS OS NOVOS CAMPOS AQUI)
+# DTO principal para a Criação do Quiz
 class CriarQuizRequest(BaseModel):
     tema: str
     descricao: str
@@ -65,11 +63,19 @@ def listar_quizzes(
     """
     Retorna a lista de todos os quizzes (dias da SIPAT) disponíveis no banco de dados.
     """
-    try:
-        resultado = use_case.executar()
-        return {"quizzes": resultado}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erro ao buscar quizzes: {str(e)}")
+    # Tenta até 3 vezes caso dê o erro de socket do Windows
+    for tentativa in range(3):
+        try:
+            resultado = use_case.executar()
+            return {"quizzes": resultado}
+        except Exception as e:
+            if "10035" in str(e) and tentativa < 2:
+                time.sleep(0.2) # Espera 200 milissegundos e tenta de novo
+                continue
+            
+            import traceback
+            traceback.print_exc()
+            raise HTTPException(status_code=500, detail=f"Erro ao buscar quizzes: {str(e)}")
 
 # -----------------------------------------------------------------
 # NOVA ROTA POST - Criação de Novo Quiz
@@ -79,7 +85,6 @@ def criar_novo_quiz(request: CriarQuizRequest, repo: SupabaseQuizRepository = De
     """
     Cria um novo dia de SIPAT e vincula as questões a ele.
     """
-    # AGORA ENVIAMOS OS NOVOS CAMPOS PARA O REPOSITÓRIO
     sucesso = repo.criar_quiz_com_questoes(
         tema=request.tema,
         descricao=request.descricao,
@@ -112,11 +117,19 @@ def listar_quizzes_concluidos(cpf: str, repo: SupabaseQuizRepository = Depends(g
     """
     Retorna os IDs dos quizzes que o usuário já respondeu ou tem presença.
     """
-    try:
-        dias_concluidos = repo.obter_dias_concluidos(cpf)
-        return {"concluidos": dias_concluidos}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erro ao buscar status: {str(e)}")
+    # Tenta até 3 vezes caso dê o erro de socket do Windows
+    for tentativa in range(3):
+        try:
+            dias_concluidos = repo.obter_dias_concluidos(cpf)
+            return {"concluidos": dias_concluidos}
+        except Exception as e:
+            if "10035" in str(e) and tentativa < 2:
+                time.sleep(0.2) # Espera 200 milissegundos e tenta de novo
+                continue
+            
+            import traceback
+            traceback.print_exc()
+            raise HTTPException(status_code=500, detail=f"Erro ao buscar status: {str(e)}")
 
 # -----------------------------------------------------------------
 # 2. ROTA PUT - Disparada quando o Admin clica em SALVAR ALTERAÇÕES
@@ -141,8 +154,8 @@ def atualizar_quiz_admin(
         raise HTTPException(status_code=400, detail="Erro ao atualizar o quiz no banco de dados.")
     
     return {"message": "Quiz atualizado com sucesso!"}
-# ---------------------------------
 
+# ---------------------------------
 @router.post("/iniciar")
 def iniciar_quiz(
     request: IniciarQuizRequest,
@@ -151,23 +164,26 @@ def iniciar_quiz(
     """
     Inicia a sessão do Quiz Online, validando bloqueios e retornando as questões do dia.
     """
-    try:
-        resultado = use_case.executar(request.cpf, request.dia_sipat_id)
-        return resultado
-        
-    except ColaboradorNaoEncontradoError as e:
-        raise HTTPException(status_code=404, detail=str(e))
-    except AcessoBloqueadoError as e:
-        raise HTTPException(status_code=403, detail=str(e))
-    except ParticipacaoDuplicadaError as e:
-        raise HTTPException(status_code=409, detail=str(e))
-    except Exception as e:
-        # --- ESSAS DUAS LINHAS VÃO FORÇAR O PYTHON A IMPRIMIR O ERRO REAL ---
-        import traceback
-        traceback.print_exc()
-        
-        # Opcional: Devolve o erro pro front-end também para vermos no console do navegador
-        raise HTTPException(status_code=500, detail=f"Erro interno: {str(e)}")
+    # --- AQUI ESTÁ A BLINDAGEM DO POST INICIAR ---
+    for tentativa in range(3):
+        try:
+            resultado = use_case.executar(request.cpf, request.dia_sipat_id)
+            return resultado
+            
+        except ColaboradorNaoEncontradoError as e:
+            raise HTTPException(status_code=404, detail=str(e))
+        except AcessoBloqueadoError as e:
+            raise HTTPException(status_code=403, detail=str(e))
+        except ParticipacaoDuplicadaError as e:
+            raise HTTPException(status_code=409, detail=str(e))
+        except Exception as e:
+            if "10035" in str(e) and tentativa < 2:
+                time.sleep(0.3)
+                continue
+                
+            import traceback
+            traceback.print_exc()
+            raise HTTPException(status_code=500, detail=f"Erro interno: {str(e)}")
 
 @router.post("/responder")
 def responder_questao(
@@ -177,23 +193,27 @@ def responder_questao(
     """
     Submete a resposta de uma questão, retorna feedback imediato e gera o Número da Sorte se finalizado com sucesso.
     """
-    try:
-        resultado = use_case.executar(
-            request.cpf, 
-            request.dia_sipat_id, 
-            request.questao_id, 
-            request.alternativa_escolhida
-        )
-        return resultado
-        
-    except ParticipacaoNaoEncontradaError as e:
-        raise HTTPException(status_code=404, detail=str(e))
-    except RegraNegocioError as e:
-        # Retorna erro 400 se o usuário tentar responder uma questão já respondida
-        raise HTTPException(status_code=400, detail=str(e)) 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="Erro interno ao processar a solicitação.")
-
+    # --- AQUI ESTÁ A BLINDAGEM DO POST RESPONDER ---
+    for tentativa in range(3):
+        try:
+            resultado = use_case.executar(
+                request.cpf, 
+                request.dia_sipat_id, 
+                request.questao_id, 
+                request.alternativa_escolhida
+            )
+            return resultado
+            
+        except ParticipacaoNaoEncontradaError as e:
+            raise HTTPException(status_code=404, detail=str(e))
+        except RegraNegocioError as e:
+            raise HTTPException(status_code=400, detail=str(e)) 
+        except Exception as e:
+            if "10035" in str(e) and tentativa < 2:
+                time.sleep(0.3)
+                continue
+                
+            raise HTTPException(status_code=500, detail="Erro interno ao processar a solicitação.")
 
 @router.delete("/{quiz_id}")
 def deletar_quiz(quiz_id: int, repo: SupabaseQuizRepository = Depends(get_quiz_repo)):
