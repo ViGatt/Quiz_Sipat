@@ -51,7 +51,7 @@ async def importar_planilha_rh(
     repo = Depends(get_colaborador_repo) 
 ):
     """
-    Recebe um arquivo Excel/CSV, extrai NOME, CPF e TIPO, e cadastra todos.
+    Recebe um arquivo Excel/CSV, extrai os dados dinamicamente e salva com segurança.
     """
     if not file.filename.endswith(('.xlsx', '.xls', '.csv')):
         raise HTTPException(status_code=400, detail="Formato de arquivo inválido. Envie .xlsx ou .csv")
@@ -63,15 +63,20 @@ async def importar_planilha_rh(
         else:
             df = pd.read_excel(io.BytesIO(contents))
             
-        # Padroniza as colunas (tudo maiúsculo)
-        df.columns = [str(c).strip().upper() for c in df.columns]
-        
-        # Verifica as colunas obrigatórias
-        if 'NOME' not in df.columns or 'CPF' not in df.columns:
-            raise HTTPException(status_code=400, detail="A planilha deve conter as colunas NOME e CPF.")
+        # Padroniza as colunas da planilha (Remove acentos, espaços e deixa maiúsculo)
+        # Isso evita erros se o RH mandar "Admissão" ou "Admissao"
+        import unicodedata
+        def limpar_nome_coluna(nome):
+            nome = str(nome).strip().upper()
+            return ''.join(c for c in unicodedata.normalize('NFD', nome) if unicodedata.category(c) != 'Mn')
             
-        # Vê se o RH mandou a coluna "TIPO" para separar CLT, PJ, Terceirizados...
-        tem_coluna_tipo = 'TIPO' in df.columns
+        df.columns = [limpar_nome_coluna(c) for c in df.columns]
+        
+        if 'NOME' not in df.columns or 'CPF' not in df.columns:
+            raise HTTPException(status_code=400, detail="A planilha deve conter as colunas NOME e CPF no mínimo.")
+            
+        # Verifica quais colunas extras o RH mandou nessa planilha específica
+        colunas_planilha = df.columns.tolist()
         
         lista_pronta = []
         
@@ -84,30 +89,60 @@ async def importar_planilha_rh(
                 
             cpf_limpo = ''.join(filter(str.isdigit, cpf_cru)).zfill(11)
             
-            # --- LÓGICA DINÂMICA DO TIPO DE CONTRATO ---
-            tipo_colaborador = "Colaborador" # Padrão seguro
-            if tem_coluna_tipo:
-                tipo_cru = str(row['TIPO']).strip()
-                if tipo_cru.lower() != 'nan' and tipo_cru != '':
-                    tipo_colaborador = tipo_cru.title() # Vai ficar "Pj", "Clt", "Terceirizado", etc.
+            # --- CAPTURA DINÂMICA DAS INFORMAÇÕES EXTRAS ---
             
+            # 1. Tipo de Trabalhador
+            tipo_colaborador = "Colaborador"
+            if 'TIPO TRABALHADOR' in colunas_planilha:
+                val = str(row['TIPO TRABALHADOR']).strip()
+                if val.lower() != 'nan' and val != '': tipo_colaborador = val.title()
+            elif 'TIPO' in colunas_planilha:
+                val = str(row['TIPO']).strip()
+                if val.lower() != 'nan' and val != '': tipo_colaborador = val.title()
+                
+            # 2. Admissão
+            admissao = None
+            if 'ADMISSAO/ENTRADA' in colunas_planilha:
+                val = str(row['ADMISSAO/ENTRADA']).strip()
+                if val.lower() != 'nan' and val != '': admissao = val
+            elif 'ADMISSAO' in colunas_planilha:
+                val = str(row['ADMISSAO']).strip()
+                if val.lower() != 'nan' and val != '': admissao = val
+                
+            # 3. Tempo de Empresa
+            tempo_empresa = None
+            if 'TEMPO DE EMPRESA' in colunas_planilha:
+                val = str(row['TEMPO DE EMPRESA']).strip()
+                if val.lower() != 'nan' and val != '': tempo_empresa = val
+                
+            # 4. Nascimento
+            nascimento = None
+            if 'NASCIMENTO' in colunas_planilha:
+                val = str(row['NASCIMENTO']).strip()
+                if val.lower() != 'nan' and val != '': nascimento = val
+
+            # Monta o dicionário para salvar no banco
             lista_pronta.append({
                 "nome": nome_cru.title(), 
                 "cpf": cpf_limpo,
                 "is_comissao": False,
-                "tipo": tipo_colaborador
+                "tipo": tipo_colaborador,
+                "admissao": admissao,
+                "tempo_empresa": tempo_empresa,
+                "nascimento": nascimento
             })
             
         if not lista_pronta:
             raise HTTPException(status_code=400, detail="Nenhum dado válido encontrado na planilha.")
             
+        # Envia tudo para o Supabase (Upsert fará a mágica)
         resultado = repo.importar_colaboradores_em_massa(lista_pronta)
         
         if not resultado.get("sucesso"):
             raise HTTPException(status_code=500, detail=resultado.get("erro", "Erro desconhecido ao salvar."))
             
         return {
-            "message": f"Sucesso! {resultado.get('quantidade')} pessoas foram importadas para o sistema.",
+            "message": f"Sucesso! {resultado.get('quantidade')} pessoas foram importadas.",
             "amostra": lista_pronta[:2] 
         }
             
@@ -115,3 +150,19 @@ async def importar_planilha_rh(
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Erro ao processar arquivo: {str(e)}")
+
+@router.get("/status/{dia_sipat_id}")
+def listar_status_recepcao(
+    dia_sipat_id: int, 
+    repo = Depends(get_colaborador_repo) # Use o mesmo getter que usou no importar-rh
+):
+    """
+    Retorna a lista completa de colaboradores e seus status de presença no dia.
+    """
+    try:
+        lista = repo.listar_status_recepcao(dia_sipat_id)
+        return {"participantes": lista}
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Erro ao buscar lista: {str(e)}")

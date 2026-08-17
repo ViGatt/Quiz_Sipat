@@ -43,6 +43,62 @@ class SupabaseColaboradorRepository:
             print(f"Erro na importação em massa: {e}")
             return {"sucesso": False, "erro": str(e)}
 
+    def listar_status_recepcao(self, dia_sipat_id: int) -> list[dict]:
+        """
+        Retorna a lista de todos os colaboradores e cruza com a tabela de participações
+        para descobrir quem já fez check-in (Físico ou Online) no dia atual.
+        """
+        try:
+            # 1. Busca todos os colaboradores
+            colab_response = self.db.table("colaboradores").select("*").execute()
+            colaboradores = colab_response.data if colab_response.data else []
+            
+            # 2. Busca todas as participações do dia específico
+            part_response = self.db.table("participacoes").select("*").eq("dia_sipat_id", dia_sipat_id).execute()
+            
+            # CORREÇÃO AQUI: A tabela de participacoes usa 'colaborador_id' (e não 'cpf')
+            participacoes_hoje = {p.get("colaborador_id"): p for p in (part_response.data if part_response.data else [])}
+            
+            # 3. Mescla as informações para o Front-end
+            resultado = []
+            for c in colaboradores:
+                colab_id = c.get("id") # Pegamos o ID do colaborador
+                cpf = c.get("cpf")
+                
+                # Cruzamos os dados usando o ID
+                part = participacoes_hoje.get(colab_id)
+                
+                status_hoje = "PENDENTE"
+                numero_sorte = ""
+                
+                if part:
+                    # Se tiver participação, olha a modalidade
+                    if part.get("modalidade") == "Presencial":
+                        status_hoje = "PRESENCIAL"
+                    else:
+                        status_hoje = "ONLINE"
+                        
+                    numero_sorte = part.get("numero_sorte", "")
+                    
+                resultado.append({
+                    "id": str(colab_id), 
+                    "nome": c.get("nome"),
+                    "cpf": cpf,
+                    "statusHoje": status_hoje,
+                    "numeroSorte": str(numero_sorte) if numero_sorte else ""
+                })
+                
+            # Ordena alfabeticamente pelo nome
+            resultado.sort(key=lambda x: str(x.get("nome", "")))
+            return resultado
+            
+        except Exception as e:
+            # Se der pau, vai mostrar a linha exata no terminal!
+            print(f"Erro Real capturado: {e}")
+            import traceback
+            traceback.print_exc()
+            return []
+
 class SupabaseParticipacaoRepository:
     def __init__(self, supabase_client: Client):
         self.db = supabase_client
