@@ -21,23 +21,32 @@ export function Login() {
     setErro('');
     setLoading(true);
 
+    // Limpa o CPF digitado (remove pontos e traços) para garantir que ache no banco
+    const cpfLimpo = cpf.replace(/\D/g, '');
+
     try {
-      // 1. Busca o colaborador pelo CPF diretamente na tabela do Supabase
+      // 1. Busca o colaborador pelo CPF limpo diretamente na tabela
       const { data, error } = await supabase
         .from('colaboradores')
         .select('*')
-        .eq('cpf', cpf)
+        .eq('cpf', cpfLimpo)
         .single();
 
       if (error || !data) {
-        setErro('CPF não encontrado ou senha incorreta.');
+        setErro('CPF não encontrado na base do RH.');
         setLoading(false);
         return;
       }
 
-      // 2. Compara a senha digitada com a senha salva no banco
+      // 2. Compara a senha (se ele não tiver senha salva, ele precisa ativar primeiro)
+      if (!data.senha) {
+        setErro('Cadastro não ativado. Clique em "Ative sua conta" abaixo.');
+        setLoading(false);
+        return;
+      }
+
       if (data.senha !== senha) {
-        setErro('CPF não encontrado ou senha incorreta.');
+        setErro('Senha incorreta.');
         setLoading(false);
         return;
       }
@@ -50,16 +59,16 @@ export function Login() {
         is_comissao: data.is_comissao
       });
 
-      // 4. Redireciona com base no perfil (is_comissao)
+      // 4. Redireciona com base no perfil
       if (data.is_comissao) {
-        navigate('/dashboard'); // Administrador vai para o Dashboard
+        navigate('/dashboard'); 
       } else {
-        navigate('/meus-quizzes'); // Participante vai para a lista de quizzes
+        navigate('/meus-quizzes'); 
       }
 
     } catch (err) {
       console.error('Erro no login:', err);
-      setErro('Ocorreu um erro ao tentar fazer login. Tente novamente.');
+      setErro('Ocorreu um erro de conexão. Tente novamente.');
     } finally {
       setLoading(false);
     }
@@ -86,7 +95,11 @@ export function Login() {
           <p className={styles.formSubtitle}>Coloque suas credenciais para acesso</p>
 
           <form className={styles.form} onSubmit={handleLogin}>
-            {erro && <div className={styles.errorMessage} style={{ color: '#ef4444', marginBottom: '1rem', fontSize: '0.9rem', fontWeight: '500' }}>{erro}</div>}
+            {erro && (
+              <div className={styles.errorMessage} style={{ color: '#ef4444', marginBottom: '1rem', fontSize: '0.9rem', fontWeight: '500' }}>
+                {erro}
+              </div>
+            )}
 
             <div className={styles.inputGroup}>
               <label>CPF</label>
@@ -94,15 +107,15 @@ export function Login() {
                 <Mail size={20} className={styles.inputIcon} />
                 <input 
                   type="text" 
-                  placeholder="Ex: 123.456.789-00" 
+                  placeholder="000.000.000-00" 
                   value={cpf}
                   onChange={(e) => setCpf(e.target.value)}
+                  maxLength={14}
                   required
                 />
               </div>
             </div>
 
-            {/* O Campo de Senha Voltou! */}
             <div className={styles.inputGroup}>
               <label>Senha</label>
               <div className={styles.inputWrapper}>
@@ -112,6 +125,7 @@ export function Login() {
                   placeholder="********" 
                   value={senha}
                   onChange={(e) => setSenha(e.target.value)}
+                  maxLength={4}
                   required
                 />
                 <button 
@@ -122,6 +136,10 @@ export function Login() {
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
               </div>
+              {/* DICA DE UX PARA A SENHA */}
+              <small style={{ display: 'block', marginTop: '6px', fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
+                💡 Dica: Sua senha são os <strong>4 primeiros dígitos</strong> do seu CPF.
+              </small>
             </div>
 
             <button type="submit" className={styles.submitBtn} disabled={loading}>
