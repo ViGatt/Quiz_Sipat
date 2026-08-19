@@ -37,7 +37,7 @@ export function Navbar() {
         <Link to="/meus-quizzes" className={styles.navLink}>Quizzes</Link>
         <Link to="/programacao" className={styles.navLink}>Programação</Link>
         <a href="#premios" className={styles.navLink}>Prêmios</a>
-        <a href="#sobre" className={styles.navLink}>Sobre</a>
+        <Link to="/sobre" className={styles.navLink}>Sobre</Link>
       </nav>
 
       {/* Botões Desktop */}
@@ -91,7 +91,7 @@ export function Navbar() {
           <Link to="/meus-quizzes" className={styles.navLink} onClick={() => setIsMobileMenuOpen(false)}>Quizzes</Link>
           <Link to="/programacao" className={styles.navLink} onClick={() => setIsMobileMenuOpen(false)}>Programação</Link>
           <a href="#premios" className={styles.navLink}>Prêmios</a>
-          <a href="#sobre" className={styles.navLink}>Sobre</a>
+          <Link to="/sobre" className={styles.navLink} onClick={() => setIsMobileMenuOpen(false)}>Sobre</Link>
           
           <div className={styles.mobileAuthButtons}>
             {usuario ? (

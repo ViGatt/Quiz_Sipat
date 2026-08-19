@@ -1,0 +1,306 @@
+.layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: var(--color-bg-secondary);
+}
+
+.mainContent {
+  flex: 1;
+  padding: 2.5rem 2rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* --- HERO SECTION --- */
+.heroSection {
+  text-align: center;
+  max-width: 900px;
+  margin-bottom: 3.5rem;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.4rem 1rem;
+  background-color: rgba(0, 195, 255, 0.1);
+  border: 1px solid var(--color-primary);
+  color: var(--color-primary);
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 1.2rem;
+}
+
+.title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--color-white);
+  margin-bottom: 1rem;
+  line-height: 1.2;
+}
+
+.titleHighlight {
+  color: var(--color-primary);
+}
+
+.subtitle {
+  color: var(--color-text-dark);
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+
+/* --- CARDS DE ESTATÍSTICAS INTERATIVAS --- */
+.statsContainer {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 1000px;
+  margin-bottom: 3.5rem;
+}
+
+.statBox {
+  background-color: var(--color-bg-main);
+  border: 1px solid var(--color-surface);
+  border-radius: 12px;
+  padding: 1.8rem;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.statBox:hover {
+  transform: translateY(-4px);
+  border-color: var(--color-primary);
+  box-shadow: 0 8px 20px rgba(0, 195, 255, 0.08);
+}
+
+.statIcon {
+  color: var(--color-primary);
+  margin-bottom: 0.8rem;
+}
+
+.statNumber {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--color-white);
+  margin-bottom: 0.3rem;
+}
+
+.statLabel {
+  font-size: 0.85rem;
+  color: var(--color-text-dark);
+}
+
+/* --- SEÇÃO "O QUE É A SIPAT" --- */
+.infoSection {
+  width: 100%;
+  max-width: 1000px;
+  margin-bottom: 3.5rem;
+}
+
+.sectionHeader {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.sectionTitle {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--color-white);
+  margin-bottom: 0.5rem;
+}
+
+.sectionSubtitle {
+  color: var(--color-text-dark);
+  font-size: 0.95rem;
+}
+
+.aboutCard {
+  background-color: var(--color-bg-main);
+  border: 1px solid var(--color-surface);
+  border-radius: 12px;
+  padding: 2rem;
+  line-height: 1.7;
+  color: var(--color-text-dark);
+}
+
+.aboutCard p {
+  margin-bottom: 1.2rem;
+  font-size: 1rem;
+}
+
+.aboutCard p:last-child {
+  margin-bottom: 0;
+}
+
+.aboutCard strong {
+  color: var(--color-white);
+}
+
+/* --- PILARES INTERATIVOS --- */
+.pillarsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* Força 3 colunas perfeitas em Desktop */
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 1000px;
+  margin-bottom: 3.5rem;
+}
+
+.pillarCard {
+  background-color: var(--color-bg-main);
+  border: 1px solid var(--color-surface);
+  border-radius: 12px;
+  padding: 1.8rem;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.pillarCard:hover {
+  transform: translateY(-4px);
+  border-color: var(--color-primary);
+  background-color: var(--color-surface-light);
+  box-shadow: 0 8px 20px rgba(0, 195, 255, 0.06);
+}
+
+.pillarHeader {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.pillarIconWrapper {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  background-color: rgba(0, 195, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.pillarTitle {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-white);
+}
+
+.pillarDesc {
+  font-size: 0.88rem;
+  color: var(--color-text-dark);
+  line-height: 1.5;
+}
+
+/* RESPONSIVIDADE PARA TABLETS E TELEMÓVEIS */
+@media (max-width: 992px) {
+  .pillarsGrid {
+    grid-template-columns: repeat(2, 1fr); /* 2 colunas em tablets */
+  }
+}
+
+@media (max-width: 600px) {
+  .pillarsGrid {
+    grid-template-columns: 1fr; /* 1 coluna no telemóvel */
+  }
+}
+
+/* --- CAIXA LEGAL DA NR-5 --- */
+.legalBox {
+  background-color: var(--color-bg-main);
+  border-left: 4px solid var(--color-primary);
+  border-radius: 0 12px 12px 0;
+  padding: 1.8rem;
+  width: 100%;
+  max-width: 1000px;
+  display: flex;
+  gap: 1.2rem;
+  align-items: flex-start;
+  border-top: 1px solid var(--color-surface);
+  border-right: 1px solid var(--color-surface);
+  border-bottom: 1px solid var(--color-surface);
+  margin-bottom: 3.5rem;
+}
+
+.legalText {
+  color: var(--color-text-dark);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.legalText strong {
+  color: var(--color-white);
+}
+
+/* --- CTA (CALL TO ACTION) --- */
+.ctaBox {
+  background: linear-gradient(135deg, rgba(0, 195, 255, 0.1) 0%, rgba(2, 132, 199, 0.2) 100%);
+  border: 1px solid var(--color-primary);
+  border-radius: 16px;
+  padding: 2.5rem;
+  text-align: center;
+  width: 100%;
+  max-width: 1000px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.2rem;
+}
+
+.ctaTitle {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--color-white);
+}
+
+.ctaDesc {
+  color: var(--color-text-dark);
+  max-width: 600px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.ctaBtn {
+  background-color: var(--color-primary);
+  color: var(--color-white);
+  padding: 0.8rem 1.8rem;
+  border-radius: 8px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ctaBtn:hover {
+  opacity: 0.9;
+  transform: translateY(-2px);
+}
+
+/* --- RESPONSIVIDADE --- */
+@media (max-width: 768px) {
+  .mainContent {
+    padding: 1.5rem 1rem;
+  }
+
+  .title {
+    font-size: 1.8rem;
+  }
+
+  .ctaBox {
+    padding: 1.8rem 1.2rem;
+  }
+
+  .legalBox {
+    flex-direction: column;
+  }
+}

@@ -16,6 +16,7 @@ import { ParticipantQuizDetails } from './pages/ParticipantQuizDetails/Participa
 import { RequireAuth } from './components/RequireAuth/RequireAuth';
 import { Participants } from './pages/Participants/Participants';
 import { Programacao } from './pages/Programacao/Programacao';
+import { Sobre } from './pages/Sobre/Sobre';
 
 function AppRoutes() {
   const location = useLocation();
@@ -40,6 +41,7 @@ function AppRoutes() {
           <Route path="/register" element={<Register />} />
           <Route path="/take-quiz/:id" element={<TakeQuiz />} />
           <Route path="/programacao" element={<Programacao />} />
+          <Route path="/sobre" element={<Sobre />} />
 
           <Route element={<RequireAuth />}>
           <Route path="/meus-quizzes" element={<ParticipantQuizzes />} />
