@@ -25,15 +25,17 @@ export function Navbar() {
   return (
     <header className={styles.header}>
       <div className={styles.logoContainer}>
-        <img src={logoRic} alt="Logo SIPAT RIC Ambiental" className={styles.logo} />
-        <span className={styles.logoText}>SIPAT RIC AMBIENTAL</span> 
+        <Link to="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', gap: '10px' }}>
+          <img src={logoRic} alt="Logo SIPAT RIC Ambiental" className={styles.logo} />
+          <span className={styles.logoText}>SIPAT RIC AMBIENTAL</span> 
+        </Link>
       </div>
 
       {/* Navegação Desktop */}
       <nav className={styles.navDesktop}>
-        {/* Link atualizado para direcionar à página /meus-quizzes */}
+        <Link to="/" className={styles.navLink}>Início</Link>
         <Link to="/meus-quizzes" className={styles.navLink}>Quizzes</Link>
-        <a href="#diario" className={styles.navLink}>Quiz Diário</a>
+        <Link to="/programacao" className={styles.navLink}>Programação</Link>
         <a href="#premios" className={styles.navLink}>Prêmios</a>
         <a href="#sobre" className={styles.navLink}>Sobre</a>
       </nav>
@@ -85,8 +87,9 @@ export function Navbar() {
       {isMobileMenuOpen && (
         <div className={styles.mobileMenu}>
           {/* Link atualizado no menu Mobile também */}
+          <Link to="/" className={styles.navLink}>Início</Link>
           <Link to="/meus-quizzes" className={styles.navLink} onClick={() => setIsMobileMenuOpen(false)}>Quizzes</Link>
-          <a href="#diario" className={styles.navLink}>Quiz Diário</a>
+          <Link to="/programacao" className={styles.navLink} onClick={() => setIsMobileMenuOpen(false)}>Programação</Link>
           <a href="#premios" className={styles.navLink}>Prêmios</a>
           <a href="#sobre" className={styles.navLink}>Sobre</a>
           
