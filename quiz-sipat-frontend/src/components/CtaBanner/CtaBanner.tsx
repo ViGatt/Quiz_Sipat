@@ -14,7 +14,7 @@ export function CtaBanner() {
           </p>
           <div className={styles.buttonGroup}>
             <button className={styles.btnPrimary}>Criar Conta</button>
-            <button className={styles.btnSecondary}>Explorar Quizzes</button>
+            <button className={styles.btnSecondary}>Programação</button>
           </div>
         </div>
         

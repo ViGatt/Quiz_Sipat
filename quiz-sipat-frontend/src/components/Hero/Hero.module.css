@@ -3,29 +3,39 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: 4rem 5%;
+  padding: 6rem 5% 4rem; /* Aumentei o respiro superior */
   max-width: 900px;
   margin: 0 auto;
+}
+
+.contentWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
 }
 
 .badge {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background-color: rgba(21, 168, 224, 0.1);
-  border: 1px solid rgba(21, 168, 224, 0.3);
-  padding: 0.5rem 1rem;
+  background-color: rgba(21, 168, 224, 0.08); /* Fundo sutil */
+  border: 1px solid rgba(21, 168, 224, 0.2);
+  padding: 0.5rem 1.2rem;
   border-radius: 20px;
   font-size: 0.85rem;
-  color: var(--color-text-muted);
+  font-weight: 600;
+  color: var(--color-primary); /* Ajustado para dar mais vida */
   margin-bottom: 2rem;
+  backdrop-filter: blur(4px);
 }
 
 .title {
-  font-size: 2.5rem;
+  font-size: 2.8rem;
   line-height: 1.2;
   margin-bottom: 1.5rem;
   font-weight: 800;
+  letter-spacing: -0.5px;
 }
 
 .highlight {
@@ -34,10 +44,10 @@
 
 .subtitle {
   color: var(--color-text-dark);
-  font-size: 1rem;
-  line-height: 1.5;
-  margin-bottom: 2.5rem;
-  max-width: 600px;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  margin-bottom: 3rem;
+  max-width: 650px;
 }
 
 .buttonGroup {
@@ -45,16 +55,16 @@
   flex-direction: column;
   gap: 1rem;
   width: 100%;
-  margin-bottom: 3rem;
+  margin-bottom: 3.5rem;
 }
 
 .btnPrimary, .btnSecondary {
   padding: 1rem 2rem;
   border-radius: 8px;
-  font-weight: bold;
+  font-weight: 700;
   font-size: 1rem;
   cursor: pointer;
-  transition: transform 0.2s;
+  transition: all 0.3s ease; /* Transição mais fluida */
   width: 100%;
 }
 
@@ -62,12 +72,23 @@
   background: linear-gradient(90deg, var(--color-secondary) 0%, var(--color-primary) 100%);
   border: none;
   color: var(--color-white);
+  box-shadow: 0 4px 15px rgba(21, 168, 224, 0.2); /* Sombra suave */
+}
+
+.btnPrimary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(21, 168, 224, 0.3);
 }
 
 .btnSecondary {
-  background-color: var(--color-white);
-  border: none;
-  color: var(--color-black);
+  background-color: var(--color-surface); /* Em vez de branco, usa a cor de superfície do seu dark mode */
+  border: 1px solid var(--color-border);
+  color: var(--color-white);
+}
+
+.btnSecondary:hover {
+  background-color: var(--color-surface-light);
+  transform: translateY(-2px);
 }
 
 .btnPrimary:active, .btnSecondary:active {
@@ -78,7 +99,7 @@
   display: flex;
   align-items: center;
   gap: 1rem;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   color: var(--color-text-muted);
 }
 
@@ -87,11 +108,12 @@
 }
 
 .avatar {
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   border: 2px solid var(--color-bg-main);
-  margin-left: -10px;
+  margin-left: -12px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 
 .avatar:first-child {
@@ -99,17 +121,17 @@
 }
 
 .proofHighlight {
-  color: var(--color-secondary);
+  color: var(--color-white);
   font-weight: bold;
 }
 
 /* Responsividade: Desktop */
 @media (min-width: 768px) {
   .title {
-    font-size: 4rem;
+    font-size: 4.5rem;
   }
   .subtitle {
-    font-size: 1.2rem;
+    font-size: 1.25rem;
   }
   .buttonGroup {
     flex-direction: row;
@@ -118,5 +140,6 @@
   }
   .btnPrimary, .btnSecondary {
     width: auto;
+    min-width: 180px;
   }
 }

@@ -1,12 +1,12 @@
 .categoriesSection {
-  padding: 4rem 5%;
-  max-width: 2440px;
+  padding: 6rem 5%; /* Respiro maior */
+  max-width: 1400px; /* Reduzi o max-width para os cards não ficarem esticados demais em telas grandes */
   margin: 0 auto;
 }
 
 .header {
   text-align: center;
-  margin-bottom: 3rem;
+  margin-bottom: 4rem;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -15,17 +15,19 @@
 .badge {
   background-color: var(--color-surface);
   color: var(--color-text-muted);
-  padding: 0.35rem 1rem;
+  padding: 0.4rem 1.2rem;
   border-radius: 20px;
   font-size: 0.85rem;
-  margin-bottom: 1rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
   border: 1px solid var(--color-border);
   display: flex;
   align-items: center;
 }
 
 .title {
-  font-size: 1rem;
+  font-size: 2.2rem; /* Ajustado para peso visual melhor */
+  font-weight: 800;
   margin-bottom: 1rem;
 }
 
@@ -35,37 +37,40 @@
 
 .subtitle {
   color: var(--color-text-dark);
-  font-size: 1.95rem;
+  font-size: 1.1rem;
+  max-width: 600px;
+  line-height: 1.5;
 }
 
 .grid {
   display: grid;
-  grid-template-columns: 1fr; /* Mobile: 1 coluna */
+  grid-template-columns: 1fr;
   gap: 1.5rem;
 }
 
 .card {
-  background-color: var(--color-bg-secondary);
-  border-left: 1px solid var(--color-border);
-  border-right: 1px solid var(--color-border);
-  border-bottom: 1px solid var(--color-border);
-  border-radius: 8px; /* Deixei os cantos levemente menos arredondados para combinar com a borda colorida */
-  padding: 2rem;
-  min-height: 240px;
+  background-color: var(--color-bg-main); /* Usando a cor principal dos painéis */
+  border-left: 1px solid var(--color-surface);
+  border-right: 1px solid var(--color-surface);
+  border-bottom: 1px solid var(--color-surface);
+  border-radius: 12px; /* Cantos um pouco mais suaves */
+  padding: 2.5rem 2rem;
+  min-height: 260px;
   display: flex;
-  gap: 1.2rem;
-  transition: transform 0.2s, box-shadow 0.2s;
+  flex-direction: column; /* Mudei para coluna para o ícone ficar no topo (design mais moderno) */
+  gap: 1.5rem;
+  /* A transição do y está no Framer Motion, deixamos o box-shadow aqui */
+  transition: box-shadow 0.3s ease; 
 }
 
 .card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3); /* Sombra mais elegante no dark mode */
 }
 
 .iconWrapper {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%; /* Transforma em círculo perfeito */
+  width: 54px;
+  height: 54px;
+  border-radius: 14px; /* Squircle (quadrado arredondado) está em alta na UI */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -76,18 +81,21 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  flex: 1;
 }
 
 .cardTitle {
-  font-size: 2.1rem;
-  margin-bottom: 0.5rem;
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 0.8rem;
+  color: var(--color-white);
 }
 
 .cardDesc {
   color: var(--color-text-dark);
-  font-size: 1.30rem;
-  line-height: 1.4;
-  margin-bottom: 1.2rem;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
 }
 
 .cardLink {
@@ -96,24 +104,25 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-size: 0.95rem;
+  font-weight: 700;
   cursor: pointer;
   padding: 0;
-  margin-top: auto; /* Empurra o botão para o fundo se o texto for curto */
+  margin-top: auto; 
 }
 
 /* Responsividade: Tablet */
 @media (min-width: 768px) {
   .grid {
-    grid-template-columns: repeat(2, 1fr); /* 2 colunas */
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
-/* Responsividade: Desktop (Layout Lado a Lado do Figma) */
+/* Responsividade: Desktop */
 @media (min-width: 1024px) {
-  .title { font-size: 2.5rem; }
+  .title { font-size: 2.8rem; }
   .grid {
-    grid-template-columns: repeat(3, 1fr); /* 3 colunas fixas */
+    grid-template-columns: repeat(3, 1fr); 
+    gap: 2rem; /* Mais respiro entre os cards em desktop */
   }
 }
