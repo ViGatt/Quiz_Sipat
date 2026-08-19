@@ -52,15 +52,17 @@ export function TakeQuiz() {
         if (data.questoes && data.questoes.length > 0) {
           const questoesFormatadas = data.questoes.map((q: any) => ({
             id: q.id,
-            text: q.enunciado,
-            points: 100, // Pontuação base
-            difficulty: 'Média', // Dificuldade padrão
+            // Correção: a coluna se chama 'texto' no banco, e não 'enunciado'
+            text: q.texto || "Pergunta sem texto", 
+            points: 100, 
+            difficulty: 'Média', 
+            // Correção: as opções estão salvas dentro do objeto 'opcoes' {'A': '...', 'B': '...'}
             options: [
-              { id: 'A', text: q.opcao_a },
-              { id: 'B', text: q.opcao_b },
-              { id: 'C', text: q.opcao_c },
-              { id: 'D', text: q.opcao_d }
-            ].filter(opt => opt.text) // Ignora opções que vierem vazias do banco
+              { id: 'A', text: q.opcoes?.A || '' },
+              { id: 'B', text: q.opcoes?.B || '' },
+              { id: 'C', text: q.opcoes?.C || '' },
+              { id: 'D', text: q.opcoes?.D || '' }
+            ].filter(opt => opt.text !== '') // Garante que só exibe botões com texto
           }));
           
           setQuestions(questoesFormatadas);
