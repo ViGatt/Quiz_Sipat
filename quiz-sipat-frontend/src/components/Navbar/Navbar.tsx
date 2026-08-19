@@ -87,7 +87,7 @@ export function Navbar() {
       {isMobileMenuOpen && (
         <div className={styles.mobileMenu}>
           {/* Link atualizado no menu Mobile também */}
-          <Link to="/" className={styles.navLink}>Início</Link>
+          <Link to="/" className={styles.navLink} onClick={() => setIsMobileMenuOpen(false)}>Início</Link>
           <Link to="/meus-quizzes" className={styles.navLink} onClick={() => setIsMobileMenuOpen(false)}>Quizzes</Link>
           <Link to="/programacao" className={styles.navLink} onClick={() => setIsMobileMenuOpen(false)}>Programação</Link>
           <a href="#premios" className={styles.navLink}>Prêmios</a>
