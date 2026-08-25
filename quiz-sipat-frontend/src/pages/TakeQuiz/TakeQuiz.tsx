@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
-import { ChevronLeft, Flag, ChevronRight, Clock, Heart } from 'lucide-react';
+import { ChevronLeft, Flag, ChevronRight, Clock, Heart, AlertCircle } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/api';
 import styles from './TakeQuiz.module.css';
 
-// Tipagem para as questões vindas do backend
 interface Question {
   id: string | number;
   text: string;
@@ -20,8 +19,9 @@ export function TakeQuiz() {
   const { usuario } = useAuth();
 
   // Estados do Jogo
+  const [showInstructions, setShowInstructions] = useState(true); // Controla a tela de regras
+  const [loading, setLoading] = useState(false); // Inicia falso para não mostrar loading nas instruções
   const [questions, setQuestions] = useState<Question[]>([]);
-  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -30,39 +30,37 @@ export function TakeQuiz() {
   const [lives, setLives] = useState(3);
   const [timeLeft, setTimeLeft] = useState(60);
 
-  // Busca as questões e inicia o Quiz no backend
+  // Busca as questões e inicia o Quiz no backend SOMENTE APÓS fechar as instruções
   useEffect(() => {
     const iniciarEBuscarQuiz = async () => {
-      if (!usuario || !id) return;
+      // Se ainda estiver lendo as instruções ou sem dados, aborta a busca por enquanto
+      if (!usuario || !id || showInstructions) return;
 
       try {
         setLoading(true);
         
-        // 1. Tenta iniciar o quiz no backend (Isso valida a Regra de Ouro do DDD)
+        // 1. Tenta iniciar o quiz no backend
         await api.post('/quiz/iniciar', {
           cpf: usuario.cpf,
           dia_sipat_id: Number(id)
         });
 
-        // 2. Se o backend liberou, buscamos as questões dinâmicas
+        // 2. Busca questões
         const response = await api.get(`/quiz/${id}`);
         const data = response.data;
 
-        // Formata as questões do banco para o formato que o seu visual espera
         if (data.questoes && data.questoes.length > 0) {
           const questoesFormatadas = data.questoes.map((q: any) => ({
             id: q.id,
-            // Correção: a coluna se chama 'texto' no banco, e não 'enunciado'
             text: q.texto || "Pergunta sem texto", 
             points: 100, 
             difficulty: 'Média', 
-            // Correção: as opções estão salvas dentro do objeto 'opcoes' {'A': '...', 'B': '...'}
             options: [
               { id: 'A', text: q.opcoes?.A || '' },
               { id: 'B', text: q.opcoes?.B || '' },
               { id: 'C', text: q.opcoes?.C || '' },
               { id: 'D', text: q.opcoes?.D || '' }
-            ].filter(opt => opt.text !== '') // Garante que só exibe botões com texto
+            ].filter(opt => opt.text !== '')
           }));
           
           setQuestions(questoesFormatadas);
@@ -73,7 +71,6 @@ export function TakeQuiz() {
 
       } catch (err: any) {
         console.error("Erro ao iniciar quiz:", err);
-        // O backend vai retornar 403 (bloqueado) ou 409 (já participou)
         alert(err.response?.data?.detail || "Erro ao carregar o quiz. Você já participou hoje?");
         navigate('/meus-quizzes');
       } finally {
@@ -82,15 +79,15 @@ export function TakeQuiz() {
     };
 
     iniciarEBuscarQuiz();
-  }, [id, usuario, navigate]);
+  }, [id, usuario, navigate, showInstructions]); // showInstructions adicionado nas dependências
 
   // Cronômetro
   useEffect(() => {
-    if (timeLeft > 0 && !loading && questions.length > 0) {
+    if (timeLeft > 0 && !loading && !showInstructions && questions.length > 0) {
       const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
       return () => clearTimeout(timer);
     }
-  }, [timeLeft, loading, questions]);
+  }, [timeLeft, loading, showInstructions, questions]);
 
   const handleNextQuestion = async () => {
     if (!selectedOption || submitting) return;
@@ -98,8 +95,6 @@ export function TakeQuiz() {
 
     try {
       setSubmitting(true);
-
-      // 1. Envia a resposta selecionada para o backend
       const res = await api.post('/quiz/responder', {
         cpf: usuario?.cpf,
         dia_sipat_id: Number(id),
@@ -107,14 +102,12 @@ export function TakeQuiz() {
         alternativa_escolhida: selectedOption
       });
 
-      // 2. O backend processa e nos diz se a resposta estava correta (Feedback imediato)
-      // Assumimos que o backend retorna { acertou: true/false }
       const acertou = res.data?.acertou; 
 
       if (acertou) {
-        setPoints(prev => prev + currentQuestion.points); // Acertou, ganha pontos
+        setPoints(prev => prev + currentQuestion.points);
       } else {
-        setLives(prev => prev - 1); // Errou, perde vida
+        setLives(prev => prev - 1);
         
         if (lives - 1 === 0) {
           alert("Fim de Jogo! Você perdeu todas as vidas.");
@@ -123,7 +116,6 @@ export function TakeQuiz() {
         }
       }
       
-      // 3. Avança para a próxima questão
       if (currentQuestionIndex < questions.length - 1) {
         setCurrentQuestionIndex(prev => prev + 1);
         setSelectedOption(null);
@@ -147,7 +139,48 @@ export function TakeQuiz() {
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
-  // Telas de Carregamento
+  // --- TELA DE INSTRUÇÕES (POP-UP / LOBBY) ---
+  if (showInstructions) {
+    return (
+      <div className={styles.layout}>
+        <header className={styles.header}>
+          <button className={styles.backButton} onClick={() => navigate('/meus-quizzes')}>
+            <ChevronLeft size={24} />
+          </button>
+          <h1 className={styles.title}>Instruções do Quiz</h1>
+        </header>
+
+        <main className={styles.mainContent} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className={styles.instructionsCard}>
+            <div className={styles.instructionsIcon}>
+              <AlertCircle size={56} color="var(--color-primary)" />
+            </div>
+            <h2 className={styles.instructionsTitle}>Como Jogar</h2>
+            
+            <div className={styles.instructionsList}>
+  <p><span>👉</span> <span>Você terá que responder <strong>15 questões</strong> sobre o tema do dia.</span></p>
+  <p><span>👉</span> <span>Você tem um total de <strong>3 vidas</strong> (corações). Se errar 3 vezes, o jogo acaba.</span></p>
+  <p><span>👉</span> <span>Você tem <strong>60 segundos</strong> para responder cada questão.</span></p>
+              
+              <div className={styles.instructionsWarning}>
+                <strong>Regra do Sorteio:</strong><br/>
+                Atenção! É necessário acertar no mínimo <strong>10 das 15 questões</strong> para ser elegível aos prêmios e sorteios da SIPAT.
+              </div>
+            </div>
+
+            <button 
+              className={styles.btnStartQuiz} 
+              onClick={() => setShowInstructions(false)}
+            >
+              Entendi, Começar Quiz!
+            </button>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // --- TELAS DE CARREGAMENTO E JOGO NORMAL ---
   if (loading) {
     return (
       <div className={styles.layout}>
@@ -163,7 +196,7 @@ export function TakeQuiz() {
 
   return (
     <div className={styles.layout}>
-      {/* --- CABEÇALHO --- */}
+      {/* CABEÇALHO */}
       <header className={styles.header}>
         <button className={styles.backButton} onClick={() => navigate('/meus-quizzes')}>
           <ChevronLeft size={24} />
@@ -172,10 +205,9 @@ export function TakeQuiz() {
       </header>
 
       <main className={styles.mainContent}>
-        {/* --- ÁREA PRINCIPAL DO QUIZ --- */}
+        {/* ÁREA PRINCIPAL DO QUIZ */}
         <section className={styles.quizArea}>
           
-          {/* Barra de Progresso */}
           <div className={styles.progressHeader}>
             <span>Questão {String(currentQuestionIndex + 1).padStart(2, '0')} de {questions.length}</span>
             <span>{Math.round(progressPercentage)}% Completo</span>
@@ -187,7 +219,6 @@ export function TakeQuiz() {
             ></div>
           </div>
 
-          {/* Cartão da Questão */}
           <div className={styles.questionCard}>
             <div className={styles.questionMeta}>
               <span className={styles.badgePoints}>{currentQuestion.points} points</span>
@@ -200,7 +231,6 @@ export function TakeQuiz() {
             <h2 className={styles.questionText}>{currentQuestion.text}</h2>
           </div>
 
-          {/* Grid de Opções (2x2) */}
           <div className={styles.optionsGrid}>
             {currentQuestion.options.map((opt) => {
               const isSelected = selectedOption === opt.id;
@@ -218,7 +248,6 @@ export function TakeQuiz() {
             })}
           </div>
 
-          {/* Ações Inferiores */}
           <div className={styles.actionFooter}>
             <button className={styles.btnSkip} disabled={submitting}>
               <Flag size={18} /> Pular
@@ -233,7 +262,7 @@ export function TakeQuiz() {
           </div>
         </section>
 
-        {/* --- PAINEL DE STATUS (LATERAL) --- */}
+        {/* PAINEL DE STATUS */}
         <aside className={styles.statusPanel}>
           <div className={styles.statusCard}>
             <h3 className={styles.statusTitle}>Status Quiz</h3>

@@ -308,3 +308,100 @@
   50% { opacity: 0.5; }
   100% { opacity: 1; }
 }
+
+/* MODAL / TELA DE INSTRUÇÕES INICIAIS */
+
+.instructionsCard {
+  background-color: var(--color-bg-main);
+  border: 1px solid var(--color-surface);
+  border-radius: 16px;
+  padding: 3.5rem 3rem;
+  max-width: 650px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+  animation: popIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes popIn {
+  0% { opacity: 0; transform: scale(0.95) translateY(20px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.instructionsIcon {
+  margin-bottom: 1.5rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.instructionsTitle {
+  font-size: 2.2rem;
+  color: var(--color-white);
+  margin-bottom: 2rem;
+  font-weight: 800;
+}
+
+.instructionsList {
+  text-align: left;
+  color: var(--color-text-dark);
+  font-size: 1.1rem;
+  line-height: 1.8;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  margin-bottom: 2.5rem;
+}
+
+.instructionsList p {
+  margin: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.instructionsWarning {
+  background-color: rgba(255, 107, 107, 0.1);
+  border-left: 4px solid #FF6B6B;
+  padding: 1.2rem 1.5rem;
+  border-radius: 0 12px 12px 0;
+  color: #FF6B6B;
+  margin-top: 1rem;
+  font-size: 1.05rem;
+  line-height: 1.5;
+}
+
+.instructionsWarning strong {
+  color: #ff8585; /* Destaque levemente mais claro */
+}
+
+.btnStartQuiz {
+  background: linear-gradient(90deg, var(--color-secondary) 0%, var(--color-primary) 100%);
+  color: var(--color-white);
+  border: none;
+  padding: 1.2rem 2.5rem;
+  border-radius: 12px;
+  font-size: 1.2rem;
+  font-weight: 700;
+  cursor: pointer;
+  width: 100%;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(21, 168, 224, 0.3);
+}
+
+.btnStartQuiz:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(21, 168, 224, 0.4);
+}
+
+@media (max-width: 768px) {
+  .instructionsCard {
+    padding: 2.5rem 1.5rem;
+  }
+  .instructionsTitle {
+    font-size: 1.8rem;
+  }
+  .instructionsList {
+    font-size: 1rem;
+  }
+}
