@@ -9,12 +9,16 @@ import styles from './LandingPage.module.css';
 export function LandingPage() {
   return (
     <div className={styles.container}>
-      {/* Efeitos Sutis de Blur no Fundo */}
+      {/* Luzes Principais (Maiores) */}
       <div className={`${styles.glowBlur} ${styles.glowBlueTop}`} />
       <div className={`${styles.glowBlur} ${styles.glowGreenMiddle}`} />
       <div className={`${styles.glowBlur} ${styles.glowBlueBottom}`} />
 
-      {/* Z-Index garante que o Navbar e o Main fiquem ACIMA dos blurs */}
+      {/* Luzes Secundárias (Menores e espalhadas para preencher o vazio) */}
+      <div className={`${styles.glowBlur} ${styles.glowBlueSmallRight}`} />
+      <div className={`${styles.glowBlur} ${styles.glowGreenSmallLeft}`} />
+      <div className={`${styles.glowBlur} ${styles.glowBlueSmallBottomRight}`} />
+
       <div className={styles.contentOverlay}>
         <Navbar />
         

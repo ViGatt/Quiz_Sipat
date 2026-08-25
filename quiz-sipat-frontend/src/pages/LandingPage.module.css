@@ -64,3 +64,41 @@ main {
   max-height: 450px;
   background-color: var(--color-primary);
 }
+
+/* LUZES SECUNDÁRIAS (MENORES E ESPALHADAS) - CORRIGIDAS*/
+
+/* 4. Azul no topo direito (Acompanha a mascote e a Navbar) */
+.glowBlueSmallRight {
+  top: 15%;
+  right: -2%;
+  width: 250px;
+  height: 250px;
+  background-color: var(--color-primary);
+  opacity: 0.25; 
+  filter: blur(80px); 
+  mix-blend-mode: screen; 
+}
+
+/* 5. Verde no meio esquerdo (Entre Categorias e Features) */
+.glowGreenSmallLeft {
+  top: 45%; 
+  left: -5%;
+  width: 300px;
+  height: 300px;
+  background-color: var(--color-secondary);
+  opacity: 0.25;
+  filter: blur(90px);
+  mix-blend-mode: screen;
+}
+
+/* 6. Azul no fundo direito (Na altura do CTA Banner) */
+.glowBlueSmallBottomRight {
+  bottom: 8%;
+  right: 0%;
+  width: 250px;
+  height: 250px;
+  background-color: var(--color-primary);
+  opacity: 0.30; 
+  filter: blur(80px);
+  mix-blend-mode: screen;
+}
