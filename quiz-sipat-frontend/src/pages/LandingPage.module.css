@@ -12,3 +12,55 @@ main {
   gap: 4rem; 
   padding-bottom: 4rem;
 }
+
+.contentOverlay {
+  position: relative;
+  z-index: 10; /* Garante que o site inteiro fique por cima dos blurs */
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/*  LUZES FLUTUANTES (BLURS) SUTIS */
+
+.glowBlur {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(150px); 
+  opacity: 0.12; 
+  pointer-events: none; 
+  z-index: 0;
+}
+
+/* 1. Azul no topo esquerdo (atrás do Hero) */
+.glowBlueTop {
+  top: -10%;
+  left: -10%;
+  width: 50vw;
+  height: 50vw;
+  max-width: 600px;
+  max-height: 600px;
+  background-color: var(--color-primary); 
+}
+
+/* 2. Verde no meio direito (perto do Categories/Features) */
+.glowGreenMiddle {
+  top: 40%;
+  right: -10%;
+  width: 40vw;
+  height: 40vw;
+  max-width: 500px;
+  max-height: 500px;
+  background-color: var(--color-secondary); 
+}
+
+/* 3. Azul na parte inferior esquerda (Perto do CTA Banner) */
+.glowBlueBottom {
+  bottom: 5%;
+  left: -5%;
+  width: 35vw;
+  height: 35vw;
+  max-width: 450px;
+  max-height: 450px;
+  background-color: var(--color-primary);
+}
