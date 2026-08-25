@@ -1,10 +1,14 @@
 import { Target } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, type Variants } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import styles from './Hero.module.css';
 
+// IMPORTANTE: Ajuste o caminho abaixo para onde está a imagem da sua mascote!
+// Exemplo: import mascoteImg from '../../assets/mascote.png';
+import mascoteImg from '../../assets/MASCOTE-CIPA-MARI.png'; 
+
 export function Hero() {
-  const containerVariants = {
+  const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
@@ -12,13 +16,24 @@ export function Hero() {
     }
   };
 
-  const itemVariants = {
+  const itemVariants: Variants = {
     hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" as const } }
+    visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } }
+  };
+
+  // Animação para a mascote entrar deslizando da direita
+  const mascotVariants: Variants = {
+    hidden: { opacity: 0, x: 50 },
+    visible: { 
+      opacity: 1, 
+      x: 0, 
+      transition: { duration: 0.8, ease: "easeOut", delay: 0.3 } 
+    }
   };
 
   return (
     <section className={styles.heroSection}>
+      {/* LADO ESQUERDO: CONTEÚDO */}
       <motion.div 
         className={styles.contentWrapper}
         variants={containerVariants}
@@ -31,7 +46,7 @@ export function Hero() {
         </motion.div>
         
         <motion.h1 variants={itemVariants} className={styles.title}>
-          Aprenda, Responda, <span className={styles.highlight}>Ganhe Prêmios</span>
+          Aprenda, Responda, <br/><span className={styles.highlight}>Ganhe Prêmios</span>
         </motion.h1>
         
         <motion.p variants={itemVariants} className={styles.subtitle}>
@@ -51,6 +66,16 @@ export function Hero() {
           </div>
           <p><span className={styles.proofHighlight}>100+</span> participantes nessa semana</p>
         </motion.div>
+      </motion.div>
+
+      {/* LADO DIREITO: MASCOTE */}
+      <motion.div 
+        className={styles.mascotWrapper}
+        variants={mascotVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        <img src={mascoteImg} alt="Mascote SIPAT" className={styles.mascotImage} />
       </motion.div>
     </section>
   );

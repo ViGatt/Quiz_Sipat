@@ -1,11 +1,12 @@
 .heroSection {
   display: flex;
-  flex-direction: column;
+  flex-direction: column; 
   align-items: center;
   text-align: center;
-  padding: 6rem 5% 4rem; /* Aumentei o respiro superior */
-  max-width: 900px;
+  padding: 4rem 5%;
+  max-width: 1200px; 
   margin: 0 auto;
+  gap: 3rem;
 }
 
 .contentWrapper {
@@ -13,33 +14,34 @@
   flex-direction: column;
   align-items: center;
   width: 100%;
+  flex: 1; 
 }
 
 .badge {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background-color: rgba(21, 168, 224, 0.08); /* Fundo sutil */
+  background-color: rgba(21, 168, 224, 0.08);
   border: 1px solid rgba(21, 168, 224, 0.2);
   padding: 0.5rem 1.2rem;
   border-radius: 20px;
   font-size: 0.85rem;
   font-weight: 600;
-  color: var(--color-primary); /* Ajustado para dar mais vida */
+  color: var(--color-primary);
   margin-bottom: 2rem;
   backdrop-filter: blur(4px);
 }
 
 .title {
   font-size: 2.8rem;
-  line-height: 1.2;
+  line-height: 1.1;
   margin-bottom: 1.5rem;
   font-weight: 800;
   letter-spacing: -0.5px;
 }
 
 .highlight {
-  color: var(--color-secondary); /* Verde */
+  color: var(--color-secondary);
 }
 
 .subtitle {
@@ -47,7 +49,7 @@
   font-size: 1.1rem;
   line-height: 1.6;
   margin-bottom: 3rem;
-  max-width: 650px;
+  max-width: 600px;
 }
 
 .buttonGroup {
@@ -64,15 +66,19 @@
   font-weight: 700;
   font-size: 1rem;
   cursor: pointer;
-  transition: all 0.3s ease; /* Transição mais fluida */
+  transition: all 0.3s ease;
   width: 100%;
+  text-decoration: none;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .btnPrimary {
   background: linear-gradient(90deg, var(--color-secondary) 0%, var(--color-primary) 100%);
   border: none;
   color: var(--color-white);
-  box-shadow: 0 4px 15px rgba(21, 168, 224, 0.2); /* Sombra suave */
+  box-shadow: 0 4px 15px rgba(21, 168, 224, 0.2);
 }
 
 .btnPrimary:hover {
@@ -81,7 +87,7 @@
 }
 
 .btnSecondary {
-  background-color: var(--color-surface); /* Em vez de branco, usa a cor de superfície do seu dark mode */
+  background-color: var(--color-surface);
   border: 1px solid var(--color-border);
   color: var(--color-white);
 }
@@ -125,19 +131,57 @@
   font-weight: bold;
 }
 
-/* Responsividade: Desktop */
-@media (min-width: 768px) {
+
+.mascotWrapper {
+  flex: 1; 
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  max-width: 700px; 
+}
+
+.mascotImage {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  animation: float 4s ease-in-out infinite; 
+}
+
+@keyframes float {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-15px); }
+  100% { transform: translateY(0); }
+}
+
+
+
+@media (min-width: 992px) {
+  .heroSection {
+    flex-direction: row; 
+    justify-content: space-between;
+    text-align: left; 
+    padding: 6rem 5% 4rem;
+  }
+  
+  .contentWrapper {
+    align-items: flex-start; 
+  }
+
   .title {
     font-size: 4.5rem;
   }
+  
   .subtitle {
     font-size: 1.25rem;
   }
+  
   .buttonGroup {
-    flex-direction: row;
-    justify-content: center;
+    flex-direction: row; 
+    justify-content: flex-start;
     width: auto;
   }
+  
   .btnPrimary, .btnSecondary {
     width: auto;
     min-width: 180px;
