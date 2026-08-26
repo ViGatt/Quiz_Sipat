@@ -160,10 +160,12 @@ class SupabaseParticipacaoRepository:
                 raise e
 
     def questao_ja_respondida(self, participacao_id: uuid.UUID, questao_id: str) -> bool:
-        res = self.db.table("respostas") \
-            .select("acertou, alternativa_escolhida, questoes(texto, resposta_correta, opcoes, dia_sipat_id, dias_sipat(tema))") \
-            .in_("participacao_id", participacao_ids) \
+        response = self.db.table("respostas") \
+            .select("id") \
+            .eq("participacao_id", str(participacao_id)) \
+            .eq("questao_id", questao_id) \
             .execute()
+            
         return len(response.data) > 0
 
     def salvar_resposta(self, participacao_id: uuid.UUID, questao_id: str, alternativa: str, acertou: bool) -> None:
