@@ -35,9 +35,10 @@ export function Sidebar() {
           <span>Quizzes</span>
         </Link>
 
+        {/* --- ATUALIZADO: Rota de Eventos apontando para o Admin --- */}
         <Link 
-          to="/eventos" 
-          className={`${styles.navItem} ${location.pathname === '/eventos' ? styles.active : ''}`}
+          to="/admin/eventos" 
+          className={`${styles.navItem} ${location.pathname.includes('/eventos') ? styles.active : ''}`}
         >
           <Calendar size={20} />
           <span>Eventos</span>

@@ -524,5 +524,23 @@ class SupabaseRelatorioRepository:
             print(f"Erro ao obter métricas do quiz {quiz_id}: {e}")
             return None
     
+class SupabaseEventoRepository:
+    def __init__(self, client):
+        self.client = client
 
+    def listar_eventos(self):
+        res = self.client.table("eventos").select("*").order("id").execute()
+        return res.data
+
+    def criar_evento(self, dados: dict):
+        res = self.client.table("eventos").insert(dados).execute()
+        return res.data[0] if res.data else None
+
+    def atualizar_evento(self, evento_id: int, dados: dict):
+        res = self.client.table("eventos").update(dados).eq("id", evento_id).execute()
+        return res.data[0] if res.data else None
+
+    def excluir_evento(self, evento_id: int):
+        res = self.client.table("eventos").delete().eq("id", evento_id).execute()
+        return True if res.data else False
     

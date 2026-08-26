@@ -1,14 +1,13 @@
 import sys
 import asyncio
 
-# --- FIX DEFINITIVO PARA O WINERROR 10035 NO WINDOWS ---
 if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 # -------------------------------------------------------
 
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware  # <-- Importação do CORS adicionada
-from presentation.routers import recepcao_router, quiz_router, relatorio_router
+from fastapi.middleware.cors import CORSMiddleware 
+from presentation.routers import recepcao_router, quiz_router, relatorio_router, eventos_router
 
 app = FastAPI(
     title="Quiz SIPAT API - RIC Ambiental",
@@ -28,6 +27,7 @@ app.add_middleware(
 app.include_router(recepcao_router.router)
 app.include_router(quiz_router.router)
 app.include_router(relatorio_router.router)
+app.include_router(eventos_router.router)
 
 @app.get("/")
 def health_check():

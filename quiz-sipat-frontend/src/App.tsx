@@ -17,6 +17,7 @@ import { RequireAuth } from './components/RequireAuth/RequireAuth';
 import { Participants } from './pages/Participants/Participants';
 import { Programacao } from './pages/Programacao/Programacao';
 import { Sobre } from './pages/Sobre/Sobre';
+import { EventosAdmin } from './pages/EventosAdmin/EventosAdmin';
 
 function AppRoutes() {
   const location = useLocation();
@@ -56,7 +57,9 @@ function AppRoutes() {
           <Route path="/quizzes/:id" element={<QuizDetails />} />
           <Route path="/share-quiz/:id" element={<ShareQuiz />} />
           <Route path="/participantes" element={<Participants />} />
-            </Route>
+          <Route path="/admin/eventos" element={<EventosAdmin />} />
+
+          </Route>
         </Routes>
       </motion.div>
     </AnimatePresence>

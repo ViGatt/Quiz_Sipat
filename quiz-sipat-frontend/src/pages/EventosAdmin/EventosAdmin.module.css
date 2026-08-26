@@ -1,0 +1,327 @@
+.layout {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--color-bg-secondary, #0f172a);
+}
+
+.mainContent {
+  flex: 1;
+  padding: 2.5rem 3rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 3rem;
+}
+
+.title {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--color-white, #ffffff);
+  margin-bottom: 0.5rem;
+}
+
+.subtitle {
+  color: var(--color-text-dark, #94a3b8);
+  font-size: 0.95rem;
+}
+
+.btnAdd {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: var(--color-primary, #00c3ff);
+  color: #0f172a;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 15px rgba(0, 195, 255, 0.2);
+}
+
+.btnAdd:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 195, 255, 0.4);
+}
+
+/* Grid de Eventos */
+.grid {
+  display: grid;
+  /* Garante cards lado a lado, largos o suficiente para leitura (min 450px) */
+  grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+  gap: 2rem;
+  padding-bottom: 2rem;
+}
+
+.card {
+  background-color: var(--color-bg-main, #1e293b);
+  border: 1px solid var(--color-surface, #334155);
+  border-radius: 12px;
+  padding: 1.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  transition: transform 0.2s, border-color 0.2s;
+  position: relative;
+}
+
+.card:hover {
+  transform: translateY(-3px);
+  border-color: var(--color-primary, #00c3ff);
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 1px solid var(--color-surface, #334155);
+  padding-bottom: 1rem;
+}
+
+.dateInfo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.day {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: var(--color-primary, #00c3ff);
+  line-height: 1;
+}
+
+.dateDetails {
+  display: flex;
+  flex-direction: column;
+}
+
+.dateDetails span:first-child {
+  color: var(--color-white, #fff);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.dateDetails span:last-child {
+  color: var(--color-text-dark, #94a3b8);
+  font-size: 0.85rem;
+}
+
+.cardActions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.actionBtn {
+  background: transparent;
+  border: 1px solid var(--color-surface, #334155);
+  color: var(--color-text-dark, #94a3b8);
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.actionBtn:hover {
+  color: var(--color-white, #fff);
+  border-color: var(--color-primary, #00c3ff);
+  background-color: rgba(0, 195, 255, 0.1);
+}
+
+.btnDelete:hover {
+  color: #ef4444;
+  border-color: #ef4444;
+  background-color: rgba(239, 68, 68, 0.1);
+}
+
+.cardBody h3 {
+  color: var(--color-white, #fff);
+  font-size: 1.15rem;
+  line-height: 1.4;
+  margin-bottom: 1.5rem;
+}
+
+.speakerPreview {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background-color: rgba(0, 0, 0, 0.2);
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+.speakerPhoto {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--color-primary, #00c3ff);
+}
+
+.speakerInfo h4 {
+  color: var(--color-white, #fff);
+  font-size: 0.95rem;
+  margin-bottom: 0.2rem;
+}
+
+.speakerInfo span {
+  color: var(--color-text-dark, #94a3b8);
+  font-size: 0.8rem;
+}
+
+/* ================== MODAL DE EDIÇÃO ================== */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 2rem;
+}
+
+.modalContent {
+  background-color: var(--color-bg-main, #1e293b);
+  border: 1px solid var(--color-surface, #334155);
+  border-radius: 12px;
+  width: 100%;
+  max-width: 800px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+}
+
+.modalHeader {
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid var(--color-surface, #334155);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modalHeader h2 {
+  color: var(--color-white, #fff);
+  font-size: 1.3rem;
+}
+
+.btnClose {
+  background: transparent;
+  border: none;
+  color: var(--color-text-dark, #94a3b8);
+  cursor: pointer;
+}
+
+.btnClose:hover {
+  color: #fff;
+}
+
+.modalBody {
+  padding: 2rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.formGroup.fullWidth {
+  grid-column: 1 / -1;
+}
+
+.formGroup label {
+  color: var(--color-text-dark, #94a3b8);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.formGroup input, .formGroup textarea {
+  background-color: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--color-surface, #334155);
+  color: var(--color-white, #fff);
+  padding: 0.8rem 1rem;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.95rem;
+}
+
+.formGroup input:focus, .formGroup textarea:focus {
+  outline: none;
+  border-color: var(--color-primary, #00c3ff);
+}
+
+.photoPreviewContainer {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.photoPreviewContainer img {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--color-primary, #00c3ff);
+}
+
+.modalFooter {
+  padding: 1.5rem 2rem;
+  border-top: 1px solid var(--color-surface, #334155);
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
+.btnCancel {
+  background: transparent;
+  border: 1px solid var(--color-surface, #334155);
+  color: var(--color-white, #fff);
+  padding: 0.8rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btnSave {
+  background-color: var(--color-primary, #00c3ff);
+  color: #0f172a;
+  border: none;
+  padding: 0.8rem 2rem;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+}

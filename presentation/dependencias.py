@@ -6,7 +6,8 @@ from infrastructure.database.supabase_repository import (
     SupabaseColaboradorRepository,
     SupabaseParticipacaoRepository,
     SupabaseQuizRepository,
-    SupabaseRelatorioRepository
+    SupabaseRelatorioRepository,
+    SupabaseEventoRepository
 )
 from application.use_cases.registrar_presenca_presencial import RegistrarPresencaPresencialUseCase
 from application.use_cases.submeter_resposta import SubmeterRespostaUseCase
@@ -40,6 +41,7 @@ colaborador_repo = SupabaseColaboradorRepository(supabase_client)
 participacao_repo = SupabaseParticipacaoRepository(supabase_client)
 quiz_repo = SupabaseQuizRepository(supabase_client)
 relatorio_repo = SupabaseRelatorioRepository(supabase_client)
+evento_repo = SupabaseEventoRepository(supabase_client)
 
 # ---------------------------------------------------------
 # Casos de Uso
@@ -76,3 +78,6 @@ def get_relatorio_repo():
 
 def get_colaborador_repo():
     return colaborador_repo
+
+def get_evento_repo():
+    return evento_repo
