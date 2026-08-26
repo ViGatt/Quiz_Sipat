@@ -1,7 +1,8 @@
 import { Info, Clock, MapPin, Users } from 'lucide-react';
 import { Navbar } from '../../components/Navbar/Navbar'; 
-import { Footer } from '../../components/Footer/Footer'; // Importação do seu Footer real ativada!
+import { Footer } from '../../components/Footer/Footer'; 
 import styles from './Programacao.module.css';
+import { BackgroundGlow } from '../../components/BackgroundGlow/BackgroundGlow';
 
 interface Evento {
   data: string;
@@ -94,6 +95,7 @@ export function Programacao() {
 
   return (
     <div className={styles.layout}>
+      <BackgroundGlow/>
       {/* CABEÇALHO */}
       <Navbar />
 

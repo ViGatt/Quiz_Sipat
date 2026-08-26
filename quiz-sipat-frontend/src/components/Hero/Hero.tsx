@@ -3,8 +3,6 @@ import { motion, type Variants } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import styles from './Hero.module.css';
 
-// IMPORTANTE: Ajuste o caminho abaixo para onde está a imagem da sua mascote!
-// Exemplo: import mascoteImg from '../../assets/mascote.png';
 import mascoteImg from '../../assets/MASCOTE-CIPA-MARI.png'; 
 
 export function Hero() {

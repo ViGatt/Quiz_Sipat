@@ -5,6 +5,7 @@ import { ParticipantSidebar } from '../../components/ParticipantSidebar/Particip
 import styles from './ParticipantQuizzes.module.css';
 import { api } from '../../services/api'; 
 import { useAuth } from '../../context/AuthContext';
+import { BackgroundGlow } from '../../components/BackgroundGlow/BackgroundGlow';
 
 // Tipagem para os dados que vêm da API
 interface QuizAPI {
@@ -51,6 +52,7 @@ export function ParticipantQuizzes() {
 
   return (
     <div className={styles.container}>
+      <BackgroundGlow/>
       <ParticipantSidebar />
       
       <main className={styles.mainContent}>

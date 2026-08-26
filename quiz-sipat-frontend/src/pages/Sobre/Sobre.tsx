@@ -3,8 +3,12 @@ import { Link } from 'react-router-dom';
 import { Navbar } from '../../components/Navbar/Navbar';
 import { Footer } from '../../components/Footer/Footer';
 import styles from './Sobre.module.css';
+import { BackgroundGlow } from '../../components/BackgroundGlow/BackgroundGlow';
+
+
 
 export function Sobre() {
+  
   const pilares = [
     {
       icon: <ShieldCheck size={26} />,
@@ -40,6 +44,7 @@ export function Sobre() {
 
   return (
     <div className={styles.layout}>
+      <BackgroundGlow />
       {/* NAVBAR SUPERIOR */}
       <Navbar />
 

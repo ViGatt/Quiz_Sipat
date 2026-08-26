@@ -1,0 +1,72 @@
+.glowContainer {
+  position: fixed; 
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  pointer-events: none; 
+  z-index: 0; 
+}
+
+.glowBlur {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  mix-blend-mode: screen; /* Faz a luz brilhar no fundo escuro */
+}
+
+/* 1. Azul Gigante Topo Esquerdo */
+.glow1 {
+  top: -10%;
+  left: -10%;
+  width: 45vw;
+  height: 45vw;
+  background-color: var(--color-primary);
+  opacity: 0.15;
+  filter: blur(120px);
+}
+
+/* 2. Verde Médio Topo Direito */
+.glow2 {
+  top: 15%;
+  right: -5%;
+  width: 35vw;
+  height: 35vw;
+  background-color: var(--color-secondary);
+  opacity: 0.12;
+  filter: blur(100px);
+}
+
+/* 3. Verde Base Esquerda */
+.glow3 {
+  bottom: -10%;
+  left: 5%;
+  width: 40vw;
+  height: 40vw;
+  background-color: var(--color-secondary);
+  opacity: 0.12;
+  filter: blur(130px);
+}
+
+/* 4. Azul Base Direita */
+.glow4 {
+  bottom: -5%;
+  right: -10%;
+  width: 50vw;
+  height: 50vw;
+  background-color: var(--color-primary);
+  opacity: 0.15;
+  filter: blur(140px);
+}
+
+/* 5. Centro Sutil (Preenche o meio da tela) */
+.glow5 {
+  top: 40%;
+  left: 30%;
+  width: 30vw;
+  height: 30vw;
+  background-color: var(--color-primary);
+  opacity: 0.08;
+  filter: blur(150px);
+}
