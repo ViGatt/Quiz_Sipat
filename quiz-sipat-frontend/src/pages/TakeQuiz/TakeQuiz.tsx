@@ -53,7 +53,7 @@ export function TakeQuiz() {
             if (Array.isArray(q.opcoes)) {
               // Se vier como Lista: ["Opcao A", "Opcao B"]
               const letters = ['A', 'B', 'C', 'D'];
-              optionsList = q.opcoes.map((opt, idx) => ({
+              optionsList = q.opcoes.map((opt: string, idx: number) => ({
                 id: letters[idx] || String(idx),
                 text: opt
               }));
