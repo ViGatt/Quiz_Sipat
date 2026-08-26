@@ -14,6 +14,7 @@ from application.use_cases.submeter_resposta import SubmeterRespostaUseCase
 from application.use_cases.iniciar_quiz_online import IniciarQuizOnlineUseCase
 from application.use_cases.gerar_relatorio_final import GerarRelatorioFinalUseCase 
 from application.use_cases.listar_quizzes import ListarQuizzesUseCase
+from application.use_cases.gerar_resumo_participante import GerarResumoParticipanteUseCase
 
 load_dotenv()
 
@@ -51,6 +52,7 @@ submeter_resposta_uc = SubmeterRespostaUseCase(participacao_repo, quiz_repo)
 iniciar_quiz_uc = IniciarQuizOnlineUseCase(participacao_repo, colaborador_repo, quiz_repo)
 gerar_relatorio_uc = GerarRelatorioFinalUseCase(relatorio_repo)
 listar_quizzes_uc = ListarQuizzesUseCase(quiz_repo) 
+gerar_resumo_participante_uc = GerarResumoParticipanteUseCase(relatorio_repo)
 
 # ---------------------------------------------------------
 # Dependências (Getters para injetar nos Routers)
@@ -81,3 +83,6 @@ def get_colaborador_repo():
 
 def get_evento_repo():
     return evento_repo
+
+def get_gerar_resumo_participante_uc():
+    return gerar_resumo_participante_uc

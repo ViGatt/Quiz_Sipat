@@ -1,7 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException
-from presentation.dependencias import get_gerar_relatorio_uc, get_relatorio_repo
+from presentation.dependencias import (
+    get_gerar_relatorio_uc, 
+    get_relatorio_repo, 
+    get_gerar_resumo_participante_uc  
+)
 from application.use_cases.gerar_relatorio_final import GerarRelatorioFinalUseCase
 from infrastructure.database.supabase_repository import SupabaseRelatorioRepository
+import time
 
 router = APIRouter(prefix="/relatorios", tags=["Relatórios Gerenciais"])
 
@@ -49,3 +54,18 @@ def obter_metricas_detalhadas_quiz(
         return dados
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao carregar métricas: {str(e)}")
+
+@router.get("/meu-resumo/{cpf}")
+def obter_meu_resumo(cpf: str, use_case = Depends(get_gerar_resumo_participante_uc)):
+    for tentativa in range(3):
+        try:
+            return use_case.executar(cpf)
+        except Exception as e:
+            erro_str = str(e)
+            if ("10035" in erro_str or "PGRST303" in erro_str) and tentativa < 2:
+                time.sleep(1)
+                continue
+            
+            import traceback
+            traceback.print_exc()
+            raise HTTPException(status_code=500, detail=f"Erro ao gerar resumo: {erro_str}")

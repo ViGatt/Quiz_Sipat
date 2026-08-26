@@ -523,6 +523,91 @@ class SupabaseRelatorioRepository:
         except Exception as e:
             print(f"Erro ao obter métricas do quiz {quiz_id}: {e}")
             return None
+    def obter_resumo_participante(self, cpf: str) -> dict:
+        # 1. Primeiro, descobrimos quais são os IDs de participação desse usuário
+        part_res = self.db.table("participacoes") \
+            .select("id, colaboradores!inner(cpf)") \
+            .eq("colaboradores.cpf", cpf) \
+            .execute()
+            
+        participacoes = part_res.data or []
+        
+        # Se ele não participou de nada ainda, retorna zerado
+        if not participacoes:
+            return {
+                "pontuacao_total": 0,
+                "numero_sorte": None,
+                "elegivel_sorteio": False,
+                "quizzes_respondidos": []
+            }
+            
+        participacao_ids = [p["id"] for p in participacoes]
+
+        # 2. Buscamos as respostas vinculadas a essas participações
+        # O Supabase usa as chaves estrangeiras (ícones de corrente) para puxar os textos das questões
+        res = self.db.table("respostas") \
+            .select("acertou, alternativa_escolhida, questoes(...)") \
+            .in_("participacao_id", participacao_ids) \
+            .execute()
+            
+        respostas = res.data or []
+
+        pontuacao_total = 0
+        total_acertos = 0
+        quizzes_map = {}
+
+        for r in respostas:
+            q = r.get("questoes") or {}
+            if not q: continue
+            
+            dia_sipat_id = q.get("dia_sipat_id")
+            quiz = q.get("quizzes") or {}
+            tema = quiz.get("tema", f"Quiz Dia {dia_sipat_id}")
+
+            if dia_sipat_id not in quizzes_map:
+                quizzes_map[dia_sipat_id] = {
+                    "dia_sipat_id": dia_sipat_id,
+                    "tema": tema,
+                    "acertos": 0,
+                    "total_questoes": 0,
+                    "erros": []
+                }
+            
+            quizzes_map[dia_sipat_id]["total_questoes"] += 1
+            
+            if r.get("acertou"):
+                quizzes_map[dia_sipat_id]["acertos"] += 1
+                pontuacao_total += 100  # 100 pontos por acerto
+                total_acertos += 1
+            else:
+                # Tratamento robusto para os diferentes formatos de 'opcoes' na sua tabela
+                opcoes = q.get("opcoes")
+                letra_correta = q.get("resposta_correta", "")
+                texto_correto = letra_correta
+                
+                # Se for um JSON do tipo {"A": "Resposta...", "B": "..."}
+                if isinstance(opcoes, dict) and letra_correta in opcoes:
+                    texto_correto = f"{letra_correta}) {opcoes[letra_correta]}"
+                
+                quizzes_map[dia_sipat_id]["erros"].append({
+                    "questao": q.get("texto", "Questão sem texto"),
+                    "resposta_correta": texto_correto
+                })
+        
+        # Regra: Elegível se acertou 10 ou mais questões em algum dos quizzes
+        elegivel = any(qm["acertos"] >= 10 for qm in quizzes_map.values())
+        
+        # Gera o número da sorte baseado no CPF e acertos
+        numero_sorte = None
+        if elegivel:
+            numero_sorte = f"SPT-{cpf[-4:]}-{total_acertos * 7}" 
+
+        return {
+            "pontuacao_total": pontuacao_total,
+            "numero_sorte": numero_sorte,
+            "elegivel_sorteio": elegivel,
+            "quizzes_respondidos": list(quizzes_map.values())
+        }
     
 class SupabaseEventoRepository:
     def __init__(self, client):

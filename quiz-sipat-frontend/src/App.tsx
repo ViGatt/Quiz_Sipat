@@ -18,6 +18,7 @@ import { Participants } from './pages/Participants/Participants';
 import { Programacao } from './pages/Programacao/Programacao';
 import { Sobre } from './pages/Sobre/Sobre';
 import { EventosAdmin } from './pages/EventosAdmin/EventosAdmin';
+import { MeuDesempenho } from './pages/MeuDesempenho/MeuDesempenho';
 
 function AppRoutes() {
   const location = useLocation();
@@ -47,6 +48,7 @@ function AppRoutes() {
           <Route element={<RequireAuth />}>
           <Route path="/meus-quizzes" element={<ParticipantQuizzes />} />
           <Route path="/meus-quizzes/:id" element={<ParticipantQuizDetails />} />
+          <Route path="/meu-desempenho" element={<MeuDesempenho />} />
           </Route>
 
 
