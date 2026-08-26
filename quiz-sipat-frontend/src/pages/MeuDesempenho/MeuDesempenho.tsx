@@ -37,7 +37,6 @@ export function MeuDesempenho() {
       if (!usuario) return;
       try {
         setLoading(true);
-        // ATENÇÃO: Essa rota precisará ser criada no seu back-end (Python/FastAPI)
         const response = await api.get(`/relatorios/meu-resumo/${usuario.cpf}`);
         setDados(response.data);
       } catch (error) {
@@ -88,7 +87,10 @@ export function MeuDesempenho() {
                 <div className={styles.statInfo}>
                   <h3>Número da Sorte</h3>
                   {dados.numero_sorte ? (
-                    <span className={styles.statValue}>{dados.numero_sorte}</span>
+                    <div className={styles.luckyContainer}>
+                      <span className={styles.luckyLabel}>Total gerados: 1</span>
+                      <span className={styles.luckyNumberSmall}>{dados.numero_sorte}</span>
+                    </div>
                   ) : (
                     <span className={styles.statPending}>
                       {dados.elegivel_sorteio ? 'Gerando...' : 'Faltam acertos'}
@@ -109,6 +111,7 @@ export function MeuDesempenho() {
                   {dados.quizzes_respondidos.map((quiz) => {
                     const porcentagem = Math.round((quiz.acertos / quiz.total_questoes) * 100);
                     const isExpanded = expandedQuiz === quiz.dia_sipat_id;
+                    const pontuacaoQuiz = quiz.acertos * 100; // Cálculo dinâmico da pontuação
 
                     return (
                       <div key={quiz.dia_sipat_id} className={styles.quizCard}>
@@ -118,6 +121,10 @@ export function MeuDesempenho() {
                             <div className={styles.quizMetrics}>
                               <span className={styles.accuracy}>
                                 <CheckCircle size={14} color="#22c55e" /> {quiz.acertos}/{quiz.total_questoes} Acertos ({porcentagem}%)
+                              </span>
+                              {/* NOVA LABEL DE PONTUAÇÃO */}
+                              <span className={styles.quizPointsLabel}>
+                                <Trophy size={14} color="#00c3ff" /> {pontuacaoQuiz} pts
                               </span>
                             </div>
                           </div>

@@ -1,4 +1,4 @@
-import { BookOpen,BarChart2 } from 'lucide-react';
+import { BookOpen, BarChart2 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import styles from './ParticipantSidebar.module.css';
 import logoImg from '../../assets/Ricambiental_logo-30 A.png';
@@ -20,10 +20,15 @@ export function ParticipantSidebar() {
           <BookOpen size={20} />
           <span>Meus Quizzes</span>
         </Link>
-        <Link to="/meu-desempenho" className={`${styles.menuItem} ${location.pathname.includes('/meu-desempenho') ? styles.active : ''}`}>
-            <BarChart2 size={20} />
-            <span>Meu Desempenho</span>
-</Link>
+        
+        {/* A CLASSE FOI CORRIGIDA PARA navItem AQUI 👇 */}
+        <Link 
+          to="/meu-desempenho" 
+          className={`${styles.navItem} ${location.pathname.includes('/meu-desempenho') ? styles.active : ''}`}
+        >
+          <BarChart2 size={20} />
+          <span>Meu Desempenho</span>
+        </Link>
       </nav>
     </aside>
   );
