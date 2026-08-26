@@ -594,8 +594,14 @@ class SupabaseRelatorioRepository:
                     "resposta_correta": texto_correto
                 })
         
-        # Regra: Elegível se acertou 10 ou mais questões em algum dos quizzes
-        elegivel = any(qm["acertos"] >= 10 for qm in quizzes_map.values())
+        # Regra Dinâmica: Elegível se acertou 70% ou mais em ALGUM dos quizzes
+        elegivel = False
+        for qm in quizzes_map.values():
+            if qm["total_questoes"] > 0:
+                percentual = (qm["acertos"] / qm["total_questoes"]) * 100
+                if percentual >= 70:
+                    elegivel = True
+                    break
         
         # Gera o número da sorte baseado no CPF e acertos
         numero_sorte = None

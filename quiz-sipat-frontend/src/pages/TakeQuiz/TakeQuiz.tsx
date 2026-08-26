@@ -26,7 +26,6 @@ export function TakeQuiz() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   
-  // Novos estados para o placar e modal final
   const [points, setPoints] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
   const [lives, setLives] = useState(3);
@@ -206,9 +205,10 @@ export function TakeQuiz() {
 
   if (questions.length === 0) return null;
 
-  // --- MODAL DE FINALIZAÇÃO DO JOGO ---
+ // --- MODAL DE FINALIZAÇÃO DO JOGO ---
   if (quizFinished) {
-    const isWinner = correctCount >= 10; // Regra dos 10 acertos para o sorteio
+    const userPercentage = (correctCount / questions.length) * 100;
+    const isWinner = userPercentage >= 70;
     const isGameOver = lives === 0;
 
     return (
