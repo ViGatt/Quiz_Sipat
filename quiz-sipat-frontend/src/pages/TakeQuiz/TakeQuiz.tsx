@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ChevronLeft, Flag, ChevronRight, Clock, Heart, AlertCircle } from 'lucide-react';
+import { ChevronLeft, Flag, ChevronRight, Clock, Heart, AlertCircle, Trophy, Target, BarChart2, ArrowLeft } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/api';
@@ -25,19 +25,20 @@ export function TakeQuiz() {
   
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  
+  // Novos estados para o placar e modal final
   const [points, setPoints] = useState(0);
+  const [correctCount, setCorrectCount] = useState(0);
   const [lives, setLives] = useState(3);
   const [timeLeft, setTimeLeft] = useState(60);
+  const [quizFinished, setQuizFinished] = useState(false);
 
-  // Busca as questões e inicia o Quiz no backend SOMENTE APÓS fechar as instruções
   useEffect(() => {
     const iniciarEBuscarQuiz = async () => {
       if (!usuario || !id || showInstructions) return;
 
       try {
         setLoading(true);
-        
-        // 1. Inicia o quiz E já aproveita as questões que o backend devolve!
         const response = await api.post('/quiz/iniciar', {
           cpf: usuario.cpf,
           dia_sipat_id: Number(id)
@@ -49,16 +50,13 @@ export function TakeQuiz() {
           const questoesFormatadas = data.questoes.map((q: any) => {
             let optionsList: {id: string, text: string}[] = [];
 
-            // Tratamento Inteligente para as Opções
             if (Array.isArray(q.opcoes)) {
-              // Se vier como Lista: ["Opcao A", "Opcao B"]
               const letters = ['A', 'B', 'C', 'D'];
               optionsList = q.opcoes.map((opt: string, idx: number) => ({
                 id: letters[idx] || String(idx),
                 text: opt
               }));
             } else if (typeof q.opcoes === 'object' && q.opcoes !== null) {
-              // Se vier como JSON: {"A": "Certa", "B": "Errada"}
               ['A', 'B', 'C', 'D'].forEach(letter => {
                 const optText = q.opcoes[letter] || q.opcoes[letter.toLowerCase()];
                 if (optText) {
@@ -66,7 +64,6 @@ export function TakeQuiz() {
                 }
               });
             } else {
-              // Fallback se vier da rota GET acidentalmente
               if (q.opcao_a) optionsList.push({ id: 'A', text: q.opcao_a });
               if (q.opcao_b) optionsList.push({ id: 'B', text: q.opcao_b });
               if (q.opcao_c) optionsList.push({ id: 'C', text: q.opcao_c });
@@ -75,7 +72,6 @@ export function TakeQuiz() {
 
             return {
               id: q.id,
-              // Tenta pegar o "texto" (do POST) ou "enunciado" (do GET)
               text: q.texto || q.enunciado || "Pergunta sem texto", 
               points: 100, 
               difficulty: 'Média', 
@@ -101,13 +97,12 @@ export function TakeQuiz() {
     iniciarEBuscarQuiz();
   }, [id, usuario, navigate, showInstructions]);
 
-  // Cronômetro
   useEffect(() => {
-    if (timeLeft > 0 && !loading && !showInstructions && questions.length > 0) {
+    if (timeLeft > 0 && !loading && !showInstructions && !quizFinished && questions.length > 0) {
       const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
       return () => clearTimeout(timer);
     }
-  }, [timeLeft, loading, showInstructions, questions]);
+  }, [timeLeft, loading, showInstructions, quizFinished, questions]);
 
   const handleNextQuestion = async () => {
     if (!selectedOption || submitting) return;
@@ -123,26 +118,30 @@ export function TakeQuiz() {
       });
 
       const acertou = res.data?.acertou; 
+      
+      let newPoints = points;
+      let newCorrectCount = correctCount;
+      let newLives = lives;
 
       if (acertou) {
-        setPoints(prev => prev + currentQuestion.points);
+        newPoints += currentQuestion.points;
+        newCorrectCount += 1;
+        setPoints(newPoints);
+        setCorrectCount(newCorrectCount);
       } else {
-        setLives(prev => prev - 1);
-        
-        if (lives - 1 === 0) {
-          alert("Fim de Jogo! Você perdeu todas as vidas.");
-          navigate('/meus-quizzes');
-          return; 
-        }
+        newLives -= 1;
+        setLives(newLives);
       }
       
-      if (currentQuestionIndex < questions.length - 1) {
+      const isGameOver = newLives === 0;
+      const isLastQuestion = currentQuestionIndex >= questions.length - 1;
+
+      if (isGameOver || isLastQuestion) {
+        setQuizFinished(true); // Aciona o pop-up maravilhoso!
+      } else {
         setCurrentQuestionIndex(prev => prev + 1);
         setSelectedOption(null);
         setTimeLeft(60); 
-      } else {
-        alert(`Quiz finalizado com sucesso! Você marcou ${points + (acertou ? currentQuestion.points : 0)} pontos.`);
-        navigate('/meus-quizzes');
       }
 
     } catch (err: any) {
@@ -159,8 +158,8 @@ export function TakeQuiz() {
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
-  // --- TELA DE INSTRUÇÕES (POP-UP / LOBBY) ---
   if (showInstructions) {
+    // ... [MANTENHA O SEU CÓDIGO DE INSTRUÇÕES IGUAL]
     return (
       <div className={styles.layout}>
         <header className={styles.header}>
@@ -188,10 +187,7 @@ export function TakeQuiz() {
               </div>
             </div>
 
-            <button 
-              className={styles.btnStartQuiz} 
-              onClick={() => setShowInstructions(false)}
-            >
+            <button className={styles.btnStartQuiz} onClick={() => setShowInstructions(false)}>
               Entendi, Começar Quiz!
             </button>
           </div>
@@ -200,7 +196,6 @@ export function TakeQuiz() {
     );
   }
 
-  // --- TELAS DE CARREGAMENTO E JOGO NORMAL ---
   if (loading) {
     return (
       <div className={styles.layout}>
@@ -210,6 +205,58 @@ export function TakeQuiz() {
   }
 
   if (questions.length === 0) return null;
+
+  // --- MODAL DE FINALIZAÇÃO DO JOGO ---
+  if (quizFinished) {
+    const isWinner = correctCount >= 10; // Regra dos 10 acertos para o sorteio
+    const isGameOver = lives === 0;
+
+    return (
+      <div className={styles.layout} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div className={styles.resultOverlay}>
+          <div className={styles.resultCard}>
+            
+            <div className={styles.resultIconWrapper} style={{ backgroundColor: isWinner ? 'rgba(34, 197, 94, 0.1)' : 'rgba(245, 158, 11, 0.1)' }}>
+              {isWinner ? <Trophy size={64} color="#22c55e" /> : <Target size={64} color="#f59e0b" />}
+            </div>
+            
+            <h2 className={styles.resultTitle}>
+              {isGameOver ? "Fim de Jogo!" : isWinner ? "Parabéns, excelente!" : "Bom esforço!"}
+            </h2>
+            
+            <p className={styles.resultMessage}>
+              {isGameOver 
+                ? "Você perdeu todas as suas vidas. Revise o material e tente ir mais longe no quiz de amanhã!"
+                : isWinner 
+                  ? "Você garantiu sua elegibilidade para o sorteio. Continue participando para aumentar suas chances!" 
+                  : "Você completou o quiz, mas não atingiu a pontuação mínima para o sorteio de hoje. Revise seus erros e amanhã tem mais!"}
+            </p>
+
+            <div className={styles.resultStats}>
+              <div className={styles.statBox}>
+                <span>Pontuação</span>
+                <strong>{points} <small>pts</small></strong>
+              </div>
+              <div className={styles.statBox}>
+                <span>Acertos</span>
+                <strong>{correctCount} / {questions.length}</strong>
+              </div>
+            </div>
+
+            <div className={styles.resultActions}>
+              <button className={styles.btnSecondary} onClick={() => navigate('/meus-quizzes')}>
+                <ArrowLeft size={18} /> Central de Quizzes
+              </button>
+              <button className={styles.btnPrimary} onClick={() => navigate('/meu-desempenho')}>
+                <BarChart2 size={18} /> Ver Meu Desempenho
+              </button>
+            </div>
+            
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const currentQuestion = questions[currentQuestionIndex];
   const progressPercentage = ((currentQuestionIndex + 1) / questions.length) * 100;
