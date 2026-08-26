@@ -18,9 +18,8 @@ export function TakeQuiz() {
   const { id } = useParams();
   const { usuario } = useAuth();
 
-  // Estados do Jogo
-  const [showInstructions, setShowInstructions] = useState(true); // Controla a tela de regras
-  const [loading, setLoading] = useState(false); // Inicia falso para não mostrar loading nas instruções
+  const [showInstructions, setShowInstructions] = useState(true); 
+  const [loading, setLoading] = useState(false); 
   const [questions, setQuestions] = useState<Question[]>([]);
   const [submitting, setSubmitting] = useState(false);
   
@@ -33,35 +32,56 @@ export function TakeQuiz() {
   // Busca as questões e inicia o Quiz no backend SOMENTE APÓS fechar as instruções
   useEffect(() => {
     const iniciarEBuscarQuiz = async () => {
-      // Se ainda estiver lendo as instruções ou sem dados, aborta a busca por enquanto
       if (!usuario || !id || showInstructions) return;
 
       try {
         setLoading(true);
         
-        // 1. Tenta iniciar o quiz no backend
-        await api.post('/quiz/iniciar', {
+        // 1. Inicia o quiz E já aproveita as questões que o backend devolve!
+        const response = await api.post('/quiz/iniciar', {
           cpf: usuario.cpf,
           dia_sipat_id: Number(id)
         });
 
-        // 2. Busca questões
-        const response = await api.get(`/quiz/${id}`);
         const data = response.data;
 
         if (data.questoes && data.questoes.length > 0) {
-          const questoesFormatadas = data.questoes.map((q: any) => ({
-            id: q.id,
-            text: q.texto || "Pergunta sem texto", 
-            points: 100, 
-            difficulty: 'Média', 
-            options: [
-              { id: 'A', text: q.opcoes?.A || '' },
-              { id: 'B', text: q.opcoes?.B || '' },
-              { id: 'C', text: q.opcoes?.C || '' },
-              { id: 'D', text: q.opcoes?.D || '' }
-            ].filter(opt => opt.text !== '')
-          }));
+          const questoesFormatadas = data.questoes.map((q: any) => {
+            let optionsList: {id: string, text: string}[] = [];
+
+            // Tratamento Inteligente para as Opções
+            if (Array.isArray(q.opcoes)) {
+              // Se vier como Lista: ["Opcao A", "Opcao B"]
+              const letters = ['A', 'B', 'C', 'D'];
+              optionsList = q.opcoes.map((opt, idx) => ({
+                id: letters[idx] || String(idx),
+                text: opt
+              }));
+            } else if (typeof q.opcoes === 'object' && q.opcoes !== null) {
+              // Se vier como JSON: {"A": "Certa", "B": "Errada"}
+              ['A', 'B', 'C', 'D'].forEach(letter => {
+                const optText = q.opcoes[letter] || q.opcoes[letter.toLowerCase()];
+                if (optText) {
+                  optionsList.push({ id: letter, text: optText });
+                }
+              });
+            } else {
+              // Fallback se vier da rota GET acidentalmente
+              if (q.opcao_a) optionsList.push({ id: 'A', text: q.opcao_a });
+              if (q.opcao_b) optionsList.push({ id: 'B', text: q.opcao_b });
+              if (q.opcao_c) optionsList.push({ id: 'C', text: q.opcao_c });
+              if (q.opcao_d) optionsList.push({ id: 'D', text: q.opcao_d });
+            }
+
+            return {
+              id: q.id,
+              // Tenta pegar o "texto" (do POST) ou "enunciado" (do GET)
+              text: q.texto || q.enunciado || "Pergunta sem texto", 
+              points: 100, 
+              difficulty: 'Média', 
+              options: optionsList.filter(opt => opt.text && opt.text.trim() !== '')
+            };
+          });
           
           setQuestions(questoesFormatadas);
         } else {
@@ -79,7 +99,7 @@ export function TakeQuiz() {
     };
 
     iniciarEBuscarQuiz();
-  }, [id, usuario, navigate, showInstructions]); // showInstructions adicionado nas dependências
+  }, [id, usuario, navigate, showInstructions]);
 
   // Cronômetro
   useEffect(() => {
@@ -158,9 +178,9 @@ export function TakeQuiz() {
             <h2 className={styles.instructionsTitle}>Como Jogar</h2>
             
             <div className={styles.instructionsList}>
-  <p><span>👉</span> <span>Você terá que responder <strong>15 questões</strong> sobre o tema do dia.</span></p>
-  <p><span>👉</span> <span>Você tem um total de <strong>3 vidas</strong> (corações). Se errar 3 vezes, o jogo acaba.</span></p>
-  <p><span>👉</span> <span>Você tem <strong>60 segundos</strong> para responder cada questão.</span></p>
+              <p><span>👉</span> <span>Você terá que responder <strong>15 questões</strong> sobre o tema do dia.</span></p>
+              <p><span>👉</span> <span>Você tem um total de <strong>3 vidas</strong> (corações). Se errar 3 vezes, o jogo acaba.</span></p>
+              <p><span>👉</span> <span>Você tem <strong>60 segundos</strong> para responder cada questão.</span></p>
               
               <div className={styles.instructionsWarning}>
                 <strong>Regra do Sorteio:</strong><br/>
