@@ -160,10 +160,9 @@ class SupabaseParticipacaoRepository:
                 raise e
 
     def questao_ja_respondida(self, participacao_id: uuid.UUID, questao_id: str) -> bool:
-        response = self.db.table("respostas")\
-            .select("id")\
-            .eq("participacao_id", str(participacao_id))\
-            .eq("questao_id", questao_id)\
+        res = self.db.table("respostas") \
+            .select("acertou, alternativa_escolhida, questoes(texto, resposta_correta, opcoes, dia_sipat_id, dias_sipat(tema))") \
+            .in_("participacao_id", participacao_ids) \
             .execute()
         return len(response.data) > 0
 
@@ -524,7 +523,7 @@ class SupabaseRelatorioRepository:
             print(f"Erro ao obter métricas do quiz {quiz_id}: {e}")
             return None
     def obter_resumo_participante(self, cpf: str) -> dict:
-        # 1. Primeiro, descobrimos quais são os IDs de participação desse usuário
+        # 1. Busca as participacoes do usuario
         part_res = self.db.table("participacoes") \
             .select("id, colaboradores!inner(cpf)") \
             .eq("colaboradores.cpf", cpf) \
@@ -532,7 +531,6 @@ class SupabaseRelatorioRepository:
             
         participacoes = part_res.data or []
         
-        # Se ele não participou de nada ainda, retorna zerado
         if not participacoes:
             return {
                 "pontuacao_total": 0,
@@ -543,26 +541,29 @@ class SupabaseRelatorioRepository:
             
         participacao_ids = [p["id"] for p in participacoes]
 
-        # 2. Buscamos as respostas vinculadas a essas participações
-        # O Supabase usa as chaves estrangeiras (ícones de corrente) para puxar os textos das questões
+        # 2. Busca as respostas (SEM OS TRÊS PONTINHOS E COM OS NOMES EXATOS DAS COLUNAS)
         res = self.db.table("respostas") \
-            .select("acertou, alternativa_escolhida, questoes(...)") \
+            .select("acertou, alternativa_escolhida, questoes(texto, resposta_correta, opcoes, dia_sipat_id)") \
             .in_("participacao_id", participacao_ids) \
             .execute()
             
         respostas = res.data or []
 
+        # 3. Busca os temas dos dias separadamente (Garante que nunca vai dar erro de Join no Supabase)
+        dias_res = self.db.table("dias_sipat").select("id, tema").execute()
+        temas_map = {d["id"]: d["tema"] for d in (dias_res.data or [])}
+
         pontuacao_total = 0
         total_acertos = 0
         quizzes_map = {}
 
+        # 4. Processa os resultados
         for r in respostas:
             q = r.get("questoes") or {}
             if not q: continue
             
             dia_sipat_id = q.get("dia_sipat_id")
-            quiz = q.get("quizzes") or {}
-            tema = quiz.get("tema", f"Quiz Dia {dia_sipat_id}")
+            tema = temas_map.get(dia_sipat_id, f"Quiz Dia {dia_sipat_id}")
 
             if dia_sipat_id not in quizzes_map:
                 quizzes_map[dia_sipat_id] = {
@@ -577,15 +578,13 @@ class SupabaseRelatorioRepository:
             
             if r.get("acertou"):
                 quizzes_map[dia_sipat_id]["acertos"] += 1
-                pontuacao_total += 100  # 100 pontos por acerto
+                pontuacao_total += 100 
                 total_acertos += 1
             else:
-                # Tratamento robusto para os diferentes formatos de 'opcoes' na sua tabela
                 opcoes = q.get("opcoes")
                 letra_correta = q.get("resposta_correta", "")
                 texto_correto = letra_correta
                 
-                # Se for um JSON do tipo {"A": "Resposta...", "B": "..."}
                 if isinstance(opcoes, dict) and letra_correta in opcoes:
                     texto_correto = f"{letra_correta}) {opcoes[letra_correta]}"
                 
