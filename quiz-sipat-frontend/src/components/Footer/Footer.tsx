@@ -1,5 +1,6 @@
 import { Mail, Phone, MapPin } from 'lucide-react';
 import { FaFacebook, FaTwitter, FaInstagram, FaLinkedin, FaYoutube } from 'react-icons/fa';
+import { Link } from 'react-router-dom'; // Importação necessária para navegação interna
 import styles from './Footer.module.css';
 
 export function Footer() {
@@ -21,26 +22,26 @@ export function Footer() {
           </div>
         </div>
 
-        {/* Coluna 2: Links Rápidos */}
+        {/* Coluna 2: Links Rápidos (Sincronizado com a Navbar) */}
         <div className={styles.linksCol}>
-          <h4 className={styles.colTitle}>Links Rápidos</h4>
-          <a href="#">Página Inicial</a>
-          <a href="#">Sobre nós</a>
-          <a href="#">Funcionalidades</a>
-          <a href="#">Contato</a>
+          <h4 className={styles.colTitle}>Navegação</h4>
+          <Link to="/">Início</Link>
+          <Link to="/meus-quizzes">Quizzes</Link>
+          <Link to="/programacao">Programação</Link>
+          <a href="#premios">Prêmios</a>
+          <Link to="/sobre">Sobre</Link>
         </div>
 
-        {/* Coluna 3: Administrador */}
+        {/* Coluna 3: Acesso e Administração */}
         <div className={styles.linksCol}>
-          <h4 className={styles.colTitle}>Administrador</h4>
-          <a href="#">Acesso</a>
-          <a href="#">Contato</a>
-          <a href="#">Informações</a>
+          <h4 className={styles.colTitle}>Acesso</h4>
+          <Link to="/login">Fazer Login</Link>
+          <Link to="/register">Criar Conta</Link>
         </div>
 
         {/* Coluna 4: Contatos */}
         <div className={styles.contactCol}>
-          <h4 className={styles.colTitle}>Contatos </h4>
+          <h4 className={styles.colTitle}>Contatos</h4>
           <div className={styles.contactItem}>
             <Mail size={16} color="var(--color-primary)" />
             <span>sac@ricambiental.com.br</span>
