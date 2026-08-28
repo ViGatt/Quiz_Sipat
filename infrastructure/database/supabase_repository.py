@@ -177,12 +177,19 @@ class SupabaseParticipacaoRepository:
         }).execute()
 
     def contar_respostas_dadas(self, participacao_id: uuid.UUID) -> int:
-        response = self.db.table("respostas").select("id", count="exact").eq("participacao_id", str(participacao_id)).execute()
-        return response.count
+        # Ao invés de usar count='exact', nós contamos o tamanho da lista que volta, garantindo o número
+        response = self.db.table("respostas").select("id").eq("participacao_id", str(participacao_id)).execute()
+        return len(response.data) if response.data else 0
 
     def contar_acertos(self, participacao_id: uuid.UUID) -> int:
-        response = self.db.table("respostas").select("id", count="exact").eq("participacao_id", str(participacao_id)).eq("acertou", True).execute()
-        return response.count
+        response = self.db.table("respostas").select("acertou").eq("participacao_id", str(participacao_id)).execute()
+        acertos = 0
+        for r in (response.data or []):
+            # Validação forte que funciona tanto se o banco devolver booleano ou string
+            acert = r.get("acertou")
+            if acert is True or str(acert).lower() == "true":
+                acertos += 1
+        return acertos
 
     def salvar_numero_sorte(self, numero_sorte: NumeroSorte) -> None:
         self.db.table("numeros_sorte").insert({
@@ -540,68 +547,69 @@ class SupabaseRelatorioRepository:
             print(f"Erro ao obter métricas do quiz {quiz_id}: {e}")
             return None
     def obter_resumo_participante(self, cpf: str) -> dict:
+        # 1. Busca todas as participações do usuário
         part_res = self.db.table("participacoes") \
-            .select("id, colaboradores!inner(cpf)") \
+            .select("id, dia_sipat_id, colaboradores!inner(cpf, id)") \
             .eq("colaboradores.cpf", cpf) \
             .execute()
             
         participacoes = part_res.data or []
         
         if not participacoes:
-            return {
-                "pontuacao_total": 0,
-                "numeros_sorte": [],
-                "elegivel_sorteio": False,
-                "quizzes_respondidos": []
-            }
+            return {"pontuacao_total": 0, "numeros_sorte": [], "elegivel_sorteio": False, "quizzes_respondidos": []}
             
         participacao_ids = [p["id"] for p in participacoes]
+        
+        # Pega o ID do colaborador para buscar na tabela de sorteios
+        colab_id = participacoes[0].get("colaboradores", {}).get("id")
 
-        # AGORA PUXAMOS OS PONTOS DA QUESTÃO
+        # 2. BUSCA OS NÚMEROS DA SORTE DIRETAMENTE NA TABELA FÍSICA (FONTE DA VERDADE)
+        numeros_sorte_bd = []
+        if colab_id:
+            ns_res = self.db.table("numeros_sorte").select("numero_gerado").eq("colaborador_id", colab_id).execute()
+            numeros_sorte_bd = [n["numero_gerado"] for n in (ns_res.data or [])]
+
+        # 3. Busca as respostas daquela tentativa
         res = self.db.table("respostas") \
-            .select("acertou, alternativa_escolhida, questoes(texto, resposta_correta, opcoes, dia_sipat_id, pontos, feedback_incorreto)") \
+            .select("participacao_id, acertou, alternativa_escolhida, questoes(texto, resposta_correta, opcoes, dia_sipat_id, pontos, feedback_incorreto)") \
             .in_("participacao_id", participacao_ids) \
             .execute()
             
         respostas = res.data or []
-
-        # AGORA BUSCAMOS A PONTUAÇÃO DE APROVAÇÃO DINÂMICA
-        dias_res = self.db.table("dias_sipat").select("id, tema, pontuacao_aprovacao").execute()
-        dias_map = {d["id"]: d for d in (dias_res.data or [])}
+        dias_res = self.db.table("dias_sipat").select("id, tema").execute()
+        dias_map = {d["id"]: d.get("tema", "") for d in (dias_res.data or [])}
 
         pontuacao_total = 0
-        total_acertos = 0
-        quizzes_map = {}
+        quizzes_map = {} 
 
+        # 4. Mapeia os acertos e os erros
         for r in respostas:
+            p_id = r.get("participacao_id")
             q = r.get("questoes") or {}
             if not q: continue
             
             dia_sipat_id = q.get("dia_sipat_id")
-            dia_info = dias_map.get(dia_sipat_id, {})
-            
-            tema = dia_info.get("tema", f"Quiz Dia {dia_sipat_id}")
-            pont_aprovacao = dia_info.get("pontuacao_aprovacao") or 70
-            pontos_questao = q.get("pontos") or 10
+            tema = dias_map.get(dia_sipat_id, f"Quiz Dia {dia_sipat_id}")
+            pontos_questao = int(q.get("pontos") or 10)
 
-            if dia_sipat_id not in quizzes_map:
-                quizzes_map[dia_sipat_id] = {
+            if p_id not in quizzes_map:
+                quizzes_map[p_id] = {
                     "dia_sipat_id": dia_sipat_id,
                     "tema": tema,
-                    "pontuacao_aprovacao": pont_aprovacao,
                     "acertos": 0,
                     "total_questoes": 0,
                     "pontuacao_quiz": 0,
                     "erros": []
                 }
             
-            quizzes_map[dia_sipat_id]["total_questoes"] += 1
+            quizzes_map[p_id]["total_questoes"] += 1
             
-            if r.get("acertou"):
-                quizzes_map[dia_sipat_id]["acertos"] += 1
-                quizzes_map[dia_sipat_id]["pontuacao_quiz"] += pontos_questao
+            # Tratamento blindado para o booleano do banco de dados
+            acertou = r.get("acertou")
+            if acertou is True or str(acertou).lower() == "true":
+                quizzes_map[p_id]["acertos"] += 1
+                quizzes_map[p_id]["pontuacao_quiz"] += pontos_questao
                 pontuacao_total += pontos_questao
-                total_acertos += 1
             else:
                 opcoes = q.get("opcoes")
                 letra_correta = q.get("resposta_correta", "")
@@ -610,28 +618,16 @@ class SupabaseRelatorioRepository:
                 if isinstance(opcoes, dict) and letra_correta in opcoes:
                     texto_correto = f"{letra_correta}) {opcoes[letra_correta]}"
                 
-                quizzes_map[dia_sipat_id]["erros"].append({
+                quizzes_map[p_id]["erros"].append({
                     "questao": q.get("texto", "Questão sem texto"),
                     "resposta_correta": texto_correto,
-                    "feedback_incorreto": q.get("feedback_incorreto", "") # <-- LINHA NOVA
+                    "feedback_incorreto": q.get("feedback_incorreto", "")
                 })
-        
-        # REGRA INTELIGENTE: Lê a nota de corte específica daquele quiz
-        numeros_sorte = []
-        for qm in quizzes_map.values():
-            if qm["total_questoes"] > 0:
-                percentual = (qm["acertos"] / qm["total_questoes"]) * 100
-                if percentual >= qm["pontuacao_aprovacao"]:
-                    num = f"SPT-{cpf[-4:]}-{qm['dia_sipat_id']}{qm['acertos']}"
-                    qm["numero_sorte"] = num
-                    numeros_sorte.append(num)
-        
-        elegivel = len(numeros_sorte) > 0
 
         return {
             "pontuacao_total": pontuacao_total,
-            "numeros_sorte": numeros_sorte,
-            "elegivel_sorteio": elegivel,
+            "numeros_sorte": numeros_sorte_bd,  # <-- Agora lê a lista de bilhetes real do banco!
+            "elegivel_sorteio": len(numeros_sorte_bd) > 0,
             "quizzes_respondidos": list(quizzes_map.values())
         }
     
