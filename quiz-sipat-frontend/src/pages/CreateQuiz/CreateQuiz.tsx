@@ -195,7 +195,6 @@ export function CreateQuiz() {
           >
             Salvar Rascunho
           </button>
-          <button className={styles.btnPrimary}>Prévia</button>
         </div>
       </header>
 

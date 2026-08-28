@@ -244,7 +244,6 @@ class SupabaseQuizRepository(QuizRepository):
             # Mapeia a coluna 'data' do banco para a variável 'criado_em' que o Front-end espera
             row['criado_em'] = row.get('data')
             
-            # Removemos os arrays brutos do dicionário para não pesar o JSON que vai para o Front-end
             row.pop('questoes', None)
             row.pop('participacoes', None)
             

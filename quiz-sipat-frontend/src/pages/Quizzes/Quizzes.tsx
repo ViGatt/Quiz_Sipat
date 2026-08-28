@@ -41,7 +41,7 @@ export function Quizzes() {
             questions: q.questoes ? q.questoes.length : (q.total_questoes || 0), 
             time: q.tempo_limite || 15, 
             participants: q.total_participantes || 0,
-            data_criacao: q.criado_em ? new Date(q.criado_em).toLocaleDateString() : 'Recentemente'
+            data_criacao: q.criado_em ? new Date(q.criado_em + 'T12:00:00').toLocaleDateString('pt-BR') : 'Recentemente'
           };
         });
 
