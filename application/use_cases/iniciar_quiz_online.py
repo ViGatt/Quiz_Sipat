@@ -1,3 +1,4 @@
+import random  # <-- NOVO IMPORT NECESSÁRIO
 from domain.exceptions import (
     ColaboradorNaoEncontradoError,
     AcessoBloqueadoError,
@@ -8,7 +9,7 @@ from domain.repositories.colaborador_repository import ColaboradorRepository
 from domain.repositories.quiz_repository import QuizRepository
 from domain.entities.participacao import Participacao
 import uuid
-from datetime import datetime, timezone  # <-- NOVO IMPORT NECESSÁRIO
+from datetime import datetime, timezone
 
 class IniciarQuizOnlineUseCase:
     def __init__(
@@ -32,17 +33,15 @@ class IniciarQuizOnlineUseCase:
         if not quiz_do_dia:
             raise Exception("Quiz não encontrado.")
             
-        # --- NOVA TRAVA DE SEGURANÇA (AGENDAMENTO) ---
+        # --- TRAVA DE SEGURANÇA (AGENDAMENTO) ---
         status_quiz = getattr(quiz_do_dia, 'status', 'Publicado')
         data_liberacao_str = getattr(quiz_do_dia, 'data_liberacao', None)
         
         if status_quiz == 'Programado' and data_liberacao_str:
-            # Converte a data que vem do banco (ISO 8601) para um objeto datetime em UTC
             data_liberacao = datetime.fromisoformat(data_liberacao_str.replace('Z', '+00:00'))
             agora = datetime.now(timezone.utc)
             
             if agora < data_liberacao:
-                # Se ainda não deu o horário, formata a data e bloqueia!
                 data_formatada = data_liberacao.strftime("%d/%m/%Y às %H:%M")
                 raise AcessoBloqueadoError(f"Acesso antecipado bloqueado. Este quiz só estará disponível a partir de {data_formatada}.")
         # ---------------------------------------------
@@ -62,7 +61,7 @@ class IniciarQuizOnlineUseCase:
                     "Você já iniciou ou concluiu o Quiz Online de hoje. É permitida apenas uma tentativa."
                 )
 
-        # 4. Criar a sessão de participação ONLINE (Agora é seguro criar!)
+        # 4. Criar a sessão de participação ONLINE
         nova_participacao = Participacao(
             id=uuid.uuid4(),
             colaborador_id=colaborador.id,
@@ -71,16 +70,24 @@ class IniciarQuizOnlineUseCase:
         )
         self.participacao_repo.salvar(nova_participacao)
 
-        # 5. Buscar as 15 perguntas vinculadas ao Quiz
+        # 5. Buscar as perguntas vinculadas ao Quiz
         questoes = self.quiz_repo.buscar_questoes_por_quiz(quiz_do_dia.id)
 
+        # --- NOVO: ALEATORIZAR QUESTÕES ---
+        # Verifica no banco se a opção de aleatorizar as perguntas está ligada
+        if getattr(quiz_do_dia, 'aleatorizar_questoes', True):
+            random.shuffle(questoes)
+        # ----------------------------------
+
         # 6. Retornar a estrutura inicial para o Front-end
-        # Nota: As alternativas corretas NÃO devem ser enviadas para o front-end por segurança
+        # Injetamos os feedbacks aqui para o Front-end exibir após a resposta do usuário
         questoes_sanitizadas = [
             {
                 "id": q.id,
                 "texto": q.texto,
-                "opcoes": q.opcoes
+                "opcoes": q.opcoes,
+                "feedback_correto": getattr(q, 'feedback_correto', None),
+                "feedback_incorreto": getattr(q, 'feedback_incorreto', None)
             } for q in questoes
         ]
 
@@ -88,5 +95,11 @@ class IniciarQuizOnlineUseCase:
             "participacao_id": nova_participacao.id,
             "colaborador_nome": colaborador.nome,
             "link_youtube": getattr(quiz_do_dia, 'link_youtube_palestra', ""),
+            
+            # --- NOVAS CONFIGURAÇÕES ENVIADAS AO FRONT-END ---
+            "pontuacao_aprovacao": getattr(quiz_do_dia, 'pontuacao_aprovacao', 70),
+            "aleatorizar_respostas": getattr(quiz_do_dia, 'aleatorizar_respostas', True),
+            "resultado_imediato": getattr(quiz_do_dia, 'resultado_imediato', True),
+            
             "questoes": questoes_sanitizadas
         }

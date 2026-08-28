@@ -1,9 +1,8 @@
 import { useState } from 'react';
-import { ChevronLeft, ChevronRight, Clock, CheckCircle2, Trash2, Plus, Circle, CheckCircle, Calendar } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Clock, CheckCircle2, Trash2, Plus, Circle, CheckCircle, Calendar, MessageSquare, AlertTriangle } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import styles from './CreateQuiz.module.css';
 import { api } from '../../services/api'; 
-
 
 export function CreateQuiz() {
   const [showSuccess, setShowSuccess] = useState(false);
@@ -16,13 +15,16 @@ export function CreateQuiz() {
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('Saúde');
   const [difficulty, setDifficulty] = useState('Médio');
-  const [randomize, setRandomize] = useState(true);
-  const [immediateResult, setImmediateResult] = useState(true);
-
-  // --- NOVOS ESTADOS PARA INTEGRAÇÃO COM O BANCO ---
+  
   const [tempoLimite, setTempoLimite] = useState(15);
   const [status, setStatus] = useState('Publicado');
   const [dataLiberacao, setDataLiberacao] = useState('');
+  
+  // NOVOS ESTADOS VINCULADOS
+  const [pontuacaoAprovacao, setPontuacaoAprovacao] = useState(70);
+  const [randomizeQuestions, setRandomizeQuestions] = useState(true);
+  const [randomizeAnswers, setRandomizeAnswers] = useState(true);
+  const [immediateResult, setImmediateResult] = useState(true);
 
   // Estados do Passo 2 (Carrossel de Questões)
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -32,6 +34,8 @@ export function CreateQuiz() {
       text: "",
       points: 10,
       type: "Multipla",
+      feedbackCorrect: "", // NOVO
+      feedbackIncorrect: "", // NOVO
       options: [
         { text: "", isCorrect: true },
         { text: "", isCorrect: false },
@@ -41,14 +45,12 @@ export function CreateQuiz() {
     }
   ]);
 
-  // Atualiza texto da questão atual
-  const updateQuestionText = (text: string) => {
+  const updateQuestionField = (field: string, value: any) => {
     const updated = [...questions];
-    updated[currentQuestionIndex].text = text;
+    updated[currentQuestionIndex] = { ...updated[currentQuestionIndex], [field]: value };
     setQuestions(updated);
   };
 
-  // Atualiza as opções (texto e resposta correta)
   const updateOption = (optIndex: number, field: string, value: any) => {
     const updated = [...questions];
     updated[currentQuestionIndex].options[optIndex] = {
@@ -56,7 +58,6 @@ export function CreateQuiz() {
       [field]: value
     };
 
-    // Se marcou como correta, desmarca as outras
     if (field === 'isCorrect' && value === true) {
       updated[currentQuestionIndex].options.forEach((opt, idx) => {
         if (idx !== optIndex) opt.isCorrect = false;
@@ -71,6 +72,8 @@ export function CreateQuiz() {
       text: "",
       points: 10,
       type: "Multipla",
+      feedbackCorrect: "",
+      feedbackIncorrect: "",
       options: [
         { text: "", isCorrect: true },
         { text: "", isCorrect: false },
@@ -99,7 +102,6 @@ export function CreateQuiz() {
 
   const currentQuestion = questions[currentQuestionIndex];
 
-  // --- O CORAÇÃO DO ENVIO PARA A API (ATUALIZADO) ---
   const handlePublish = async () => {
     if (!title || questions[0].text === "") {
       alert("Por favor, preencha o título e pelo menos uma questão!");
@@ -109,15 +111,18 @@ export function CreateQuiz() {
     try {
       setIsSubmitting(true);
 
-      // Formata os dados exatamente como o backend e o banco esperam
       const payload = {
         tema: title,
         descricao: description,
-        // Adicionando as configurações reais de tempo e status
         tempo_limite: Number(tempoLimite) || 15,
         status: status,
-        // Se for Programado, converte a data para o padrão ISO do banco (ex: 2026-08-12T10:00:00Z)
         data_liberacao: status === 'Programado' && dataLiberacao ? new Date(dataLiberacao).toISOString() : null,
+        
+        // NOVOS CAMPOS ENVIADOS AO BACKEND
+        pontuacao_aprovacao: Number(pontuacaoAprovacao) || 70,
+        aleatorizar_questoes: randomizeQuestions,
+        aleatorizar_respostas: randomizeAnswers,
+        resultado_imediato: immediateResult,
         
         questoes: questions.map(q => {
           const opcoesObj: Record<string, string> = {};
@@ -132,7 +137,10 @@ export function CreateQuiz() {
           return {
             texto: q.text,
             opcoes: opcoesObj,
-            resposta_correta: respostaCorreta
+            resposta_correta: respostaCorreta,
+            pontos: Number(q.points) || 10,
+            feedback_correto: q.feedbackCorrect, // NOVO
+            feedback_incorreto: q.feedbackIncorrect // NOVO
           };
         })
       };
@@ -141,7 +149,7 @@ export function CreateQuiz() {
       
       setShowSuccess(true); 
       setTimeout(() => {
-        navigate('/quizzes'); // Redirecionando para a Biblioteca de Quizzes ao invés do Dashboard
+        navigate('/quizzes'); 
       }, 3000);
 
     } catch (err) {
@@ -241,7 +249,6 @@ export function CreateQuiz() {
                 <p>Configure como seu Quiz funcionará</p>
               </div>
 
-              {/* TEMPO LIMITE AGORA LIGADO AO ESTADO */}
               <div className={styles.formGroup}>
                 <label>Tempo limite</label>
                 <div className={styles.inputWrapper}>
@@ -256,7 +263,6 @@ export function CreateQuiz() {
                 </div>
               </div>
 
-              {/* NOVOS CAMPOS: STATUS E AGENDAMENTO */}
               <div className={styles.formGroup}>
                 <label>Status de Publicação</label>
                 <select className={styles.selectField} value={status} onChange={(e) => setStatus(e.target.value)}>
@@ -284,7 +290,12 @@ export function CreateQuiz() {
                 <label>Pontuação para aprovação</label>
                 <div className={styles.inputWrapper}>
                   <CheckCircle2 size={18} className={styles.iconMuted} />
-                  <input type="number" defaultValue="70" className={styles.inputTransparent} />
+                  <input 
+                    type="number" 
+                    value={pontuacaoAprovacao} 
+                    onChange={(e) => setPontuacaoAprovacao(Number(e.target.value))}
+                    className={styles.inputTransparent} 
+                  />
                   <span className={styles.suffix}>%</span>
                 </div>
               </div>
@@ -295,8 +306,21 @@ export function CreateQuiz() {
                   <p>Mostre questões em ordens diferentes</p>
                 </div>
                 <div 
-                  className={`${styles.toggleSwitch} ${randomize ? styles.toggleOn : ''}`}
-                  onClick={() => setRandomize(!randomize)}
+                  className={`${styles.toggleSwitch} ${randomizeQuestions ? styles.toggleOn : ''}`}
+                  onClick={() => setRandomizeQuestions(!randomizeQuestions)}
+                >
+                  <div className={styles.toggleKnob}></div>
+                </div>
+              </div>
+
+              <div className={styles.switchGroup}>
+                <div>
+                  <label>Aleatorizar alternativas</label>
+                  <p>Embaralhe as opções de resposta</p>
+                </div>
+                <div 
+                  className={`${styles.toggleSwitch} ${randomizeAnswers ? styles.toggleOn : ''}`}
+                  onClick={() => setRandomizeAnswers(!randomizeAnswers)}
                 >
                   <div className={styles.toggleKnob}></div>
                 </div>
@@ -305,7 +329,7 @@ export function CreateQuiz() {
               <div className={styles.switchGroup}>
                 <div>
                   <label>Resultado Imediato</label>
-                  <p>Mostre o resultado de cada questão</p>
+                  <p>Mostre o feedback de cada questão</p>
                 </div>
                 <div 
                   className={`${styles.toggleSwitch} ${immediateResult ? styles.toggleOn : ''}`}
@@ -354,7 +378,12 @@ export function CreateQuiz() {
                   <h3>Pergunta {String(currentQuestionIndex + 1).padStart(2, '0')}</h3>
                   <div className={styles.questionSettings}>
                     <label>Pontos:</label>
-                    <input type="number" value={currentQuestion.points} readOnly className={styles.pointsInput} />
+                    <input 
+                      type="number" 
+                      value={currentQuestion.points} 
+                      onChange={(e) => updateQuestionField('points', Number(e.target.value))}
+                      className={styles.pointsInput} 
+                    />
                     <button 
                       className={styles.btnIconDanger} 
                       onClick={handleDelete}
@@ -372,7 +401,7 @@ export function CreateQuiz() {
                     className={styles.textareaField} 
                     rows={2}
                     value={currentQuestion.text}
-                    onChange={(e) => updateQuestionText(e.target.value)}
+                    onChange={(e) => updateQuestionField('text', e.target.value)}
                     placeholder="Digite sua pergunta aqui..."
                   />
                 </div>
@@ -399,7 +428,38 @@ export function CreateQuiz() {
                   ))}
                 </div>
 
-                <button className={styles.btnAddQuestion} onClick={handleAddQuestion}>
+                {/* NOVOS CAMPOS DE FEEDBACK */}
+                <div className={styles.feedbackSection} style={{ marginTop: '2rem', display: 'flex', gap: '1rem' }}>
+                  <div className={styles.formGroup} style={{ flex: 1 }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#22c55e' }}>
+                      <MessageSquare size={16} /> Feedback de Acerto
+                    </label>
+                    <textarea 
+                      className={styles.textareaField} 
+                      rows={2}
+                      value={currentQuestion.feedbackCorrect}
+                      onChange={(e) => updateQuestionField('feedbackCorrect', e.target.value)}
+                      placeholder="Ex: Excelente! EPIs salvam vidas..."
+                      style={{ borderColor: 'rgba(34, 197, 94, 0.3)' }}
+                    />
+                  </div>
+                  
+                  <div className={styles.formGroup} style={{ flex: 1 }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#ef4444' }}>
+                      <AlertTriangle size={16} /> Feedback de Erro
+                    </label>
+                    <textarea 
+                      className={styles.textareaField} 
+                      rows={2}
+                      value={currentQuestion.feedbackIncorrect}
+                      onChange={(e) => updateQuestionField('feedbackIncorrect', e.target.value)}
+                      placeholder="Ex: Resposta incorreta. Lembre-se que..."
+                      style={{ borderColor: 'rgba(239, 68, 68, 0.3)' }}
+                    />
+                  </div>
+                </div>
+
+                <button className={styles.btnAddQuestion} style={{ marginTop: '1.5rem' }} onClick={handleAddQuestion}>
                   <Plus size={18} /> Adicionar Nova Questão
                 </button>
               </div>

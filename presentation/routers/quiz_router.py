@@ -42,6 +42,9 @@ class NovaQuestaoRequest(BaseModel):
     texto: str
     opcoes: dict
     resposta_correta: str
+    pontos: int = 10
+    feedback_correto: Optional[str] = None
+    feedback_incorreto: Optional[str] = None
 
 class CriarQuizRequest(BaseModel):
     tema: str
@@ -49,6 +52,10 @@ class CriarQuizRequest(BaseModel):
     tempo_limite: int = 15
     status: str = "Publicado"
     data_liberacao: Optional[datetime] = None
+    pontuacao_aprovacao: int = 70
+    aleatorizar_questoes: bool = True
+    aleatorizar_respostas: bool = True
+    resultado_imediato: bool = True
     questoes: List[NovaQuestaoRequest]
 
 @router.get("/")
@@ -61,7 +68,7 @@ def listar_quizzes(use_case: ListarQuizzesUseCase = Depends(get_listar_quizzes_u
         except Exception as e:
             erro_str = str(e)
             if ("10035" in erro_str or "PGRST303" in erro_str or "future" in erro_str) and tentativa < 2:
-                time.sleep(1) # Espera 1 segundo para sincronizar e tenta de novo
+                time.sleep(1)
                 continue
             
             import traceback
@@ -76,6 +83,10 @@ def criar_novo_quiz(request: CriarQuizRequest, repo: SupabaseQuizRepository = De
         tempo_limite=request.tempo_limite,
         status=request.status,
         data_liberacao=request.data_liberacao,
+        pontuacao_aprovacao=request.pontuacao_aprovacao,
+        aleatorizar_questoes=request.aleatorizar_questoes,
+        aleatorizar_respostas=request.aleatorizar_respostas,
+        resultado_imediato=request.resultado_imediato,
         questoes=request.questoes
     )
     if not sucesso:

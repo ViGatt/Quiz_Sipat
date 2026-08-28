@@ -309,42 +309,47 @@ class SupabaseQuizRepository(QuizRepository):
         
         return [item["dia_sipat_id"] for item in response.data]
 
-    def criar_quiz_com_questoes(self, tema: str, descricao: str, tempo_limite: int, status: str, data_liberacao, questoes: list) -> bool:
+    def criar_quiz_com_questoes(self, tema: str, descricao: str, tempo_limite: int, status: str, data_liberacao, pontuacao_aprovacao: int, aleatorizar_questoes: bool, aleatorizar_respostas: bool, resultado_imediato: bool, questoes: list) -> bool:
         """
-        Cria um novo dia de SIPAT e insere todas as questões vinculadas a ele.
+        Cria um novo dia de SIPAT e insere todas as questões e configurações vinculadas.
         """
         try:
-            # --- PASSO EXTRA: Descobrir o próximo ID disponível ---
-            # Busca o maior ID que já existe na tabela
+            # --- Busca o maior ID ---
             resp_id = self.db.table("dias_sipat").select("id").order("id", desc=True).limit(1).execute()
             proximo_id = 1
             if resp_id.data:
                 proximo_id = resp_id.data[0]["id"] + 1
 
-            # 1. Cria o Novo Quiz (Dia da SIPAT) informando o novo ID e as novas configurações
+            # 1. Cria o Novo Quiz com as novas regras
             self.db.table("dias_sipat").insert({
                 "id": proximo_id, 
                 "tema": tema,
                 "descricao": descricao,
                 "data": datetime.now().date().isoformat(), 
                 "link_youtube_palestra": "",
-                "tempo_limite": tempo_limite,       # <-- NOVO CAMPO ADICIONADO AQUI
-                "status": status,                   # <-- NOVO CAMPO ADICIONADO AQUI
-                "data_liberacao": data_liberacao.isoformat() if data_liberacao else None  # <-- NOVO CAMPO
+                "tempo_limite": tempo_limite,
+                "status": status,
+                "data_liberacao": data_liberacao.isoformat() if data_liberacao else None,
+                "pontuacao_aprovacao": pontuacao_aprovacao,
+                "aleatorizar_questoes": aleatorizar_questoes,
+                "aleatorizar_respostas": aleatorizar_respostas,
+                "resultado_imediato": resultado_imediato
             }).execute()
 
-            # 2. Prepara as questões para inserir no banco atreladas a esse novo ID
+            # 2. Prepara as questões com os campos de feedback
             questoes_db = []
             for q in questoes:
                 questoes_db.append({
-                    "id": str(uuid.uuid4()), # Gera um ID único para a questão para evitar o mesmo erro
+                    "id": str(uuid.uuid4()),
                     "dia_sipat_id": proximo_id,
                     "texto": q.texto,
                     "opcoes": q.opcoes,
-                    "resposta_correta": q.resposta_correta
+                    "resposta_correta": q.resposta_correta,
+                    "feedback_correto": getattr(q, 'feedback_correto', None),
+                    "feedback_incorreto": getattr(q, 'feedback_incorreto', None)
                 })
 
-            # 3. Insere todas as questões de uma vez só!
+            # 3. Insere todas as questões de uma vez
             self.db.table("questoes").insert(questoes_db).execute()
             
             return True
