@@ -50,6 +50,7 @@ class CriarQuizRequest(BaseModel):
     tema: str
     descricao: str
     tempo_limite: int = 15
+    tempo_por_questao: int = 60 
     status: str = "Publicado"
     data_liberacao: Optional[datetime] = None
     pontuacao_aprovacao: int = 70
@@ -81,6 +82,7 @@ def criar_novo_quiz(request: CriarQuizRequest, repo: SupabaseQuizRepository = De
         tema=request.tema,
         descricao=request.descricao,
         tempo_limite=request.tempo_limite,
+        tempo_por_questao=request.tempo_por_questao,  # <-- REPASSANDO PRO REPOSITÓRIO
         status=request.status,
         data_liberacao=request.data_liberacao,
         pontuacao_aprovacao=request.pontuacao_aprovacao,

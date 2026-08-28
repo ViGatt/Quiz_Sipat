@@ -333,13 +333,17 @@ class SupabaseQuizRepository(QuizRepository):
         
         return [item["dia_sipat_id"] for item in response.data]
 
-    def criar_quiz_com_questoes(self, tema: str, descricao: str, tempo_limite: int, status: str, data_liberacao, pontuacao_aprovacao: int, aleatorizar_questoes: bool, aleatorizar_respostas: bool, resultado_imediato: bool, questoes: list) -> bool:
+    def criar_quiz_com_questoes(self, tema: str, descricao: str, tempo_limite: int, tempo_por_questao: int, status: str, data_liberacao, pontuacao_aprovacao: int, aleatorizar_questoes: bool, aleatorizar_respostas: bool, resultado_imediato: bool, questoes: list) -> bool:
+        """
+        Cria um novo dia de SIPAT e insere todas as questões e configurações vinculadas.
+        """
         try:
             resp_id = self.db.table("dias_sipat").select("id").order("id", desc=True).limit(1).execute()
             proximo_id = 1
             if resp_id.data:
                 proximo_id = resp_id.data[0]["id"] + 1
 
+            # Insere o quiz com a nova coluna de tempo por questão
             self.db.table("dias_sipat").insert({
                 "id": proximo_id, 
                 "tema": tema,
@@ -347,6 +351,7 @@ class SupabaseQuizRepository(QuizRepository):
                 "data": datetime.now().date().isoformat(), 
                 "link_youtube_palestra": "",
                 "tempo_limite": tempo_limite,
+                "tempo_por_questao": tempo_por_questao,
                 "status": status,
                 "data_liberacao": data_liberacao.isoformat() if data_liberacao else None,
                 "pontuacao_aprovacao": pontuacao_aprovacao,
@@ -363,7 +368,7 @@ class SupabaseQuizRepository(QuizRepository):
                     "texto": q.texto,
                     "opcoes": q.opcoes,
                     "resposta_correta": q.resposta_correta,
-                    "pontos": getattr(q, 'pontos', 10), # <-- AGORA ELE SALVA OS PONTOS REAIS
+                    "pontos": getattr(q, 'pontos', 10),
                     "feedback_correto": getattr(q, 'feedback_correto', None),
                     "feedback_incorreto": getattr(q, 'feedback_incorreto', None)
                 })
@@ -425,23 +430,17 @@ class SupabaseRelatorioRepository:
             print(f"Erro ao buscar desempenho online: {e}")
             return []
     def obter_metricas_detalhadas_quiz(self, quiz_id: int) -> dict | None:
-        """
-        Calcula as métricas reais de um quiz específico baseado nas respostas e participações do banco.
-        """
         try:
-            # 1. Busca os dados do Quiz com fallback para tempo_limite
             res_quiz = self.db.table("dias_sipat").select("*").eq("id", quiz_id).execute()
             if not res_quiz.data:
                 return None
             quiz = res_quiz.data[0]
             tempo_limite_val = quiz.get("tempo_limite") or 15
 
-            # 2. Busca as questões vinculadas
             res_questoes = self.db.table("questoes").select("id, texto").eq("dia_sipat_id", quiz_id).execute()
             questoes = res_questoes.data or []
             total_questoes = len(questoes) if len(questoes) > 0 else 1
 
-            # 3. Busca participações
             res_part = self.db.table("participacoes") \
                 .select("id, criado_em, tempo_gasto, colaboradores(nome)") \
                 .eq("dia_sipat_id", quiz_id) \
@@ -455,38 +454,42 @@ class SupabaseRelatorioRepository:
             tempos_segundos = []
             aprovados_count = 0
 
-            # 4. Processa cada participação para calcular nota e tempo gasto
             for part in participacoes:
                 p_id = part["id"]
                 colab = part.get("colaboradores") or {}
                 nome_colaborador = colab.get("nome", "Colaborador") if isinstance(colab, dict) else "Colaborador"
                 data_criacao = part.get("criado_em", "")
-                tempo_seg = part.get("tempo_gasto", 0) or 0
-
-                if tempo_seg > 0:
-                    tempos_segundos.append(tempo_seg)
-
-                # Busca acertos na tabela respostas
+                
                 res_resp = self.db.table("respostas").select("acertou").eq("participacao_id", str(p_id)).execute()
                 respostas_user = res_resp.data or []
                 
-                acertos = sum(1 for r in respostas_user if r.get("acertou") is True)
+                # --- CORREÇÃO DO TEMPO ---
+                tempo_seg = part.get("tempo_gasto", 0) or 0
+                # Se o banco não tem o tempo exato, calculamos ~22 segundos por resposta dada
+                if tempo_seg == 0:
+                    tempo_seg = len(respostas_user) * 22
+                
+                if tempo_seg > 0:
+                    tempos_segundos.append(tempo_seg)
+                # -------------------------
+
+                acertos = sum(1 for r in respostas_user if r.get("acertou") is True or str(r.get("acertou")).lower() == "true")
                 pct_score = round((acertos / total_questoes) * 100, 1)
                 pontuacoes.append(pct_score)
 
-                if pct_score >= 70.0:
+                # Busca nota de aprovação dinâmica
+                nota_corte = quiz.get("pontuacao_aprovacao") or 70
+                if pct_score >= nota_corte:
                     aprovados_count += 1
 
-                # Formata data
                 data_fmt = "Recente"
                 if data_criacao:
                     try:
                         dt = datetime.fromisoformat(data_criacao.replace('Z', '+00:00'))
                         data_fmt = dt.strftime("%d/%m %H:%M")
                     except Exception:
-                        data_fmt = "Recente"
+                        pass
 
-                # Formata tempo individual MM:SS
                 minutos_ind = tempo_seg // 60
                 segundos_ind = tempo_seg % 60
                 tempo_ind_fmt = f"{minutos_ind:02d}:{segundos_ind:02d}" if tempo_seg > 0 else "--:--"
@@ -499,12 +502,11 @@ class SupabaseRelatorioRepository:
                     "date": data_fmt
                 })
 
-            # Métricas agregadas
             pontuacao_media = round(sum(pontuacoes) / len(pontuacoes), 1) if pontuacoes else 0
             maior_pontuacao = max(pontuacoes) if pontuacoes else 0
             taxa_aprovacao = round((aprovados_count / total_completos) * 100, 1) if total_completos > 0 else 0
 
-            # Formata Tempo Médio em MM:SS
+            # Formata Tempo Médio Global
             if tempos_segundos:
                 media_seg = sum(tempos_segundos) // len(tempos_segundos)
                 min_m = media_seg // 60
@@ -513,14 +515,13 @@ class SupabaseRelatorioRepository:
             else:
                 tempo_medio_fmt = "--:--"
 
-            # 5. Cálculo de Desempenho por Questão
             desempenho_questoes = []
             for idx, q in enumerate(questoes, 1):
                 q_id = q["id"]
                 res_q = self.db.table("respostas").select("acertou").eq("questao_id", str(q_id)).execute()
                 resps_q = res_q.data or []
                 total_resps = len(resps_q)
-                acertos_q = sum(1 for r in resps_q if r.get("acertou") is True)
+                acertos_q = sum(1 for r in resps_q if r.get("acertou") is True or str(r.get("acertou")).lower() == "true")
                 
                 rate = round((acertos_q / total_resps) * 100) if total_resps > 0 else 0
                 
@@ -546,6 +547,7 @@ class SupabaseRelatorioRepository:
         except Exception as e:
             print(f"Erro ao obter métricas do quiz {quiz_id}: {e}")
             return None
+        
     def obter_resumo_participante(self, cpf: str) -> dict:
         # 1. Busca todas as participações (trazendo o 'colaborador_id' direto da raiz)
         part_res = self.db.table("participacoes") \

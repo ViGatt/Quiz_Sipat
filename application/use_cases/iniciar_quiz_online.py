@@ -96,10 +96,10 @@ class IniciarQuizOnlineUseCase:
             "colaborador_nome": colaborador.nome,
             "link_youtube": getattr(quiz_do_dia, 'link_youtube_palestra', ""),
             
-            # --- NOVAS CONFIGURAÇÕES ENVIADAS AO FRONT-END ---
             "pontuacao_aprovacao": getattr(quiz_do_dia, 'pontuacao_aprovacao', 70),
             "aleatorizar_respostas": getattr(quiz_do_dia, 'aleatorizar_respostas', True),
             "resultado_imediato": getattr(quiz_do_dia, 'resultado_imediato', True),
+            "tempo_por_questao": getattr(quiz_do_dia, 'tempo_por_questao', 60), 
             
             "questoes": questoes_sanitizadas
         }

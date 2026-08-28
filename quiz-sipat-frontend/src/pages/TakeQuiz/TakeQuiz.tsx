@@ -23,6 +23,7 @@ interface FeedbackState {
 }
 
 export function TakeQuiz() {
+  const [timePerQuestion, setTimePerQuestion] = useState(60);
   const navigate = useNavigate();
   const { id } = useParams();
   const { usuario } = useAuth();
@@ -63,6 +64,12 @@ export function TakeQuiz() {
         // Salva as configurações dinâmicas
         setPassingScore(data.pontuacao_aprovacao ?? 70);
         setImmediateResult(data.resultado_imediato ?? true);
+
+        // LÊ O TEMPO E JÁ APLICA NO CRONÔMETRO
+        const tempoQuestao = data.tempo_por_questao ?? 60;
+        setTimePerQuestion(tempoQuestao);
+        setTimeLeft(tempoQuestao); // Substitui os antigos 60 iniciais!
+        
         const shouldRandomizeAnswers = data.aleatorizar_respostas ?? true;
 
         if (data.questoes && data.questoes.length > 0) {
@@ -190,7 +197,7 @@ export function TakeQuiz() {
     } else {
       setCurrentQuestionIndex(prev => prev + 1);
       setSelectedOption(null);
-      setTimeLeft(60); 
+      setTimeLeft(timePerQuestion); 
     }
   };
 

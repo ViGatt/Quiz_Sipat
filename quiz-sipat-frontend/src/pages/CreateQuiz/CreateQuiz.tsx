@@ -17,6 +17,7 @@ export function CreateQuiz() {
   const [difficulty, setDifficulty] = useState('Médio');
   
   const [tempoLimite, setTempoLimite] = useState(15);
+  const [tempoPorQuestao, setTempoPorQuestao] = useState(60);
   const [status, setStatus] = useState('Publicado');
   const [dataLiberacao, setDataLiberacao] = useState('');
   
@@ -116,7 +117,8 @@ export function CreateQuiz() {
         tema: title,
         descricao: description,
         tempo_limite: Number(tempoLimite) || 15,
-        status: finalStatus, // <--- AQUI ESTAVA 'status: status', POR ISSO O ERRO
+        tempo_por_questao: Number(tempoPorQuestao) || 60,
+        status: finalStatus, 
         data_liberacao: finalStatus === 'Programado' && dataLiberacao ? new Date(dataLiberacao).toISOString() : null,
         
         // NOVOS CAMPOS ENVIADOS AO BACKEND
@@ -267,6 +269,19 @@ export function CreateQuiz() {
                   />
                   <span className={styles.suffix}>minutos</span>
                 </div>
+                <div className={styles.formGroup} style={{marginTop: '1rem'}}>
+            <label>Tempo por questão</label>
+            <div className={styles.inputWrapper}>
+              <Clock size={18} className={styles.iconMuted} />
+              <input 
+                type="number" 
+                value={tempoPorQuestao}
+                onChange={(e) => setTempoPorQuestao(Number(e.target.value))} 
+                className={styles.inputTransparent} 
+              />
+              <span className={styles.suffix}>segundos</span>
+            </div>
+          </div>
               </div>
 
               <div className={styles.formGroup}>
