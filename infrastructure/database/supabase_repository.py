@@ -559,7 +559,7 @@ class SupabaseRelatorioRepository:
 
         # AGORA PUXAMOS OS PONTOS DA QUESTÃO
         res = self.db.table("respostas") \
-            .select("acertou, alternativa_escolhida, questoes(texto, resposta_correta, opcoes, dia_sipat_id, pontos)") \
+            .select("acertou, alternativa_escolhida, questoes(texto, resposta_correta, opcoes, dia_sipat_id, pontos, feedback_incorreto)") \
             .in_("participacao_id", participacao_ids) \
             .execute()
             
@@ -612,7 +612,8 @@ class SupabaseRelatorioRepository:
                 
                 quizzes_map[dia_sipat_id]["erros"].append({
                     "questao": q.get("texto", "Questão sem texto"),
-                    "resposta_correta": texto_correto
+                    "resposta_correta": texto_correto,
+                    "feedback_incorreto": q.get("feedback_incorreto", "") # <-- LINHA NOVA
                 })
         
         # REGRA INTELIGENTE: Lê a nota de corte específica daquele quiz

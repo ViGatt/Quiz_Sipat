@@ -9,6 +9,7 @@ import styles from './MeuDesempenho.module.css';
 interface ErroQuiz {
   questao: string;
   resposta_correta: string;
+  feedback_incorreto?: string; 
 }
 
 interface ResumoQuiz {
@@ -151,7 +152,7 @@ export function MeuDesempenho() {
                                 <h5>O que você precisa revisar:</h5>
                                 <ul>
                                   {quiz.erros.map((erro, index) => (
-                                    <li key={index}>
+                                    <li key={index} style={{ marginBottom: '1.5rem' }}>
                                       <div className={styles.errorQuestion}>
                                         <XCircle size={16} color="#ef4444" style={{ flexShrink: 0, marginTop: '2px' }} />
                                         <span>{erro.questao}</span>
@@ -159,6 +160,12 @@ export function MeuDesempenho() {
                                       <div className={styles.correctAnswer}>
                                         <strong>Resposta correta:</strong> {erro.resposta_correta}
                                       </div>
+                                      {/* CAIXA DE FEEDBACK */}
+                                      {erro.feedback_incorreto && (
+                                        <div style={{ marginTop: '0.8rem', padding: '1rem', backgroundColor: 'rgba(239, 68, 68, 0.08)', borderLeft: '3px solid #ef4444', borderRadius: '4px', fontSize: '0.9rem', color: '#e2e8f0' }}>
+                                          <strong style={{ color: '#f87171' }}>Dica / Feedback:</strong> {erro.feedback_incorreto}
+                                        </div>
+                                      )}
                                     </li>
                                   ))}
                                 </ul>

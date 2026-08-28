@@ -88,13 +88,7 @@ export function TakeQuiz() {
 
             // EMBARALHAR ALTERNATIVAS SE A CONFIGURAÇÃO ESTIVER ATIVA
             if (shouldRandomizeAnswers) {
-              // 1. Extrai e embaralha apenas os textos
-              const shuffledTexts = optionsList.map(opt => opt.text).sort(() => Math.random() - 0.5);
-              
-              // 2. Devolve os textos embaralhados para as letras originais
-              optionsList.forEach((opt, idx) => {
-                opt.text = shuffledTexts[idx];
-              });
+              optionsList.sort(() => Math.random() - 0.5);
             }
 
             return {
@@ -365,16 +359,18 @@ export function TakeQuiz() {
           </div>
 
           <div className={styles.optionsGrid}>
-            {currentQuestion.options.map((opt) => {
+            {currentQuestion.options.map((opt, index) => {
+              const visualLetter = ['A', 'B', 'C', 'D'][index]; // Letra sequencial para a tela
               const isSelected = selectedOption === opt.id;
+              
               return (
                 <button 
                   key={opt.id} 
                   className={`${styles.optionBtn} ${isSelected ? styles.optionSelected : ''}`}
-                  onClick={() => setSelectedOption(opt.id)}
+                  onClick={() => setSelectedOption(opt.id)} // Envia a letra ORIGINAL pro backend!
                   disabled={submitting || feedback !== null}
                 >
-                  <span className={styles.optionLetter}>{opt.id}</span>
+                  <span className={styles.optionLetter}>{visualLetter}</span>
                   <span className={styles.optionText}>{opt.text}</span>
                 </button>
               );
