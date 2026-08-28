@@ -547,9 +547,9 @@ class SupabaseRelatorioRepository:
             print(f"Erro ao obter métricas do quiz {quiz_id}: {e}")
             return None
     def obter_resumo_participante(self, cpf: str) -> dict:
-        # 1. Busca todas as participações do usuário
+        # 1. Busca todas as participações (trazendo o 'colaborador_id' direto da raiz)
         part_res = self.db.table("participacoes") \
-            .select("id, dia_sipat_id, colaboradores!inner(cpf, id)") \
+            .select("id, dia_sipat_id, colaborador_id, colaboradores!inner(cpf)") \
             .eq("colaboradores.cpf", cpf) \
             .execute()
             
@@ -560,14 +560,15 @@ class SupabaseRelatorioRepository:
             
         participacao_ids = [p["id"] for p in participacoes]
         
-        # Pega o ID do colaborador para buscar na tabela de sorteios
-        colab_id = participacoes[0].get("colaboradores", {}).get("id")
+        # Pega o ID do colaborador com 100% de precisão
+        colab_id = participacoes[0].get("colaborador_id")
 
-        # 2. BUSCA OS NÚMEROS DA SORTE DIRETAMENTE NA TABELA FÍSICA (FONTE DA VERDADE)
+        # 2. BUSCA OS NÚMEROS DA SORTE DIRETAMENTE NA TABELA FÍSICA
         numeros_sorte_bd = []
         if colab_id:
-            ns_res = self.db.table("numeros_sorte").select("numero_gerado").eq("colaborador_id", colab_id).execute()
-            numeros_sorte_bd = [n["numero_gerado"] for n in (ns_res.data or [])]
+            ns_res = self.db.table("numeros_sorte").select("numero_gerado").eq("colaborador_id", str(colab_id)).execute()
+            # Mapeia extraindo exatamente o nome da coluna que nós salvamos
+            numeros_sorte_bd = [n.get("numero_gerado") for n in (ns_res.data or []) if n.get("numero_gerado")]
 
         # 3. Busca as respostas daquela tentativa
         res = self.db.table("respostas") \
@@ -604,7 +605,6 @@ class SupabaseRelatorioRepository:
             
             quizzes_map[p_id]["total_questoes"] += 1
             
-            # Tratamento blindado para o booleano do banco de dados
             acertou = r.get("acertou")
             if acertou is True or str(acertou).lower() == "true":
                 quizzes_map[p_id]["acertos"] += 1
@@ -626,7 +626,7 @@ class SupabaseRelatorioRepository:
 
         return {
             "pontuacao_total": pontuacao_total,
-            "numeros_sorte": numeros_sorte_bd,  # <-- Agora lê a lista de bilhetes real do banco!
+            "numeros_sorte": numeros_sorte_bd,
             "elegivel_sorteio": len(numeros_sorte_bd) > 0,
             "quizzes_respondidos": list(quizzes_map.values())
         }
