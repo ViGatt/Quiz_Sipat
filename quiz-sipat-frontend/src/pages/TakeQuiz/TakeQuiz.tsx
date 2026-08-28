@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ChevronLeft, Flag, ChevronRight, Clock, Heart, AlertCircle, Trophy, Target, BarChart2, ArrowLeft } from 'lucide-react';
+import { ChevronLeft, Flag, ChevronRight, Clock, Heart, AlertCircle, Trophy, Target, BarChart2, ArrowLeft, CheckCircle2, XCircle } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/api';
@@ -10,7 +10,16 @@ interface Question {
   text: string;
   points: number;
   difficulty: string;
+  feedbackCorrect: string;
+  feedbackIncorrect: string;
   options: { id: string; text: string }[];
+}
+
+interface FeedbackState {
+  isCorrect: boolean;
+  text: string;
+  isGameOver: boolean;
+  isLastQuestion: boolean;
 }
 
 export function TakeQuiz() {
@@ -26,11 +35,17 @@ export function TakeQuiz() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   
+  // Estados do Jogo
   const [points, setPoints] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
   const [lives, setLives] = useState(3);
   const [timeLeft, setTimeLeft] = useState(60);
   const [quizFinished, setQuizFinished] = useState(false);
+
+  // NOVOS ESTADOS VINDOS DO BACK-END
+  const [passingScore, setPassingScore] = useState(70);
+  const [immediateResult, setImmediateResult] = useState(true);
+  const [feedback, setFeedback] = useState<FeedbackState | null>(null);
 
   useEffect(() => {
     const iniciarEBuscarQuiz = async () => {
@@ -44,6 +59,11 @@ export function TakeQuiz() {
         });
 
         const data = response.data;
+
+        // Salva as configurações dinâmicas
+        setPassingScore(data.pontuacao_aprovacao ?? 70);
+        setImmediateResult(data.resultado_imediato ?? true);
+        const shouldRandomizeAnswers = data.aleatorizar_respostas ?? true;
 
         if (data.questoes && data.questoes.length > 0) {
           const questoesFormatadas = data.questoes.map((q: any) => {
@@ -62,19 +82,23 @@ export function TakeQuiz() {
                   optionsList.push({ id: letter, text: optText });
                 }
               });
-            } else {
-              if (q.opcao_a) optionsList.push({ id: 'A', text: q.opcao_a });
-              if (q.opcao_b) optionsList.push({ id: 'B', text: q.opcao_b });
-              if (q.opcao_c) optionsList.push({ id: 'C', text: q.opcao_c });
-              if (q.opcao_d) optionsList.push({ id: 'D', text: q.opcao_d });
+            }
+
+            optionsList = optionsList.filter(opt => opt.text && opt.text.trim() !== '');
+
+            // EMBARALHAR ALTERNATIVAS SE A CONFIGURAÇÃO ESTIVER ATIVA
+            if (shouldRandomizeAnswers) {
+              optionsList.sort(() => Math.random() - 0.5);
             }
 
             return {
               id: q.id,
               text: q.texto || q.enunciado || "Pergunta sem texto", 
-              points: 100, 
-              difficulty: 'Média', 
-              options: optionsList.filter(opt => opt.text && opt.text.trim() !== '')
+              points: q.pontos || 100, 
+              difficulty: 'Média',
+              feedbackCorrect: q.feedback_correto || "",
+              feedbackIncorrect: q.feedback_incorreto || "",
+              options: optionsList
             };
           });
           
@@ -86,7 +110,7 @@ export function TakeQuiz() {
 
       } catch (err: any) {
         console.error("Erro ao iniciar quiz:", err);
-        alert(err.response?.data?.detail || "Erro ao carregar o quiz. Você já participou hoje?");
+        alert(err.response?.data?.detail || "Erro ao carregar o quiz.");
         navigate('/meus-quizzes');
       } finally {
         setLoading(false);
@@ -96,12 +120,13 @@ export function TakeQuiz() {
     iniciarEBuscarQuiz();
   }, [id, usuario, navigate, showInstructions]);
 
+  // Cronômetro (pausa se o modal de feedback estiver aberto)
   useEffect(() => {
-    if (timeLeft > 0 && !loading && !showInstructions && !quizFinished && questions.length > 0) {
+    if (timeLeft > 0 && !loading && !showInstructions && !quizFinished && !feedback && questions.length > 0) {
       const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
       return () => clearTimeout(timer);
     }
-  }, [timeLeft, loading, showInstructions, quizFinished, questions]);
+  }, [timeLeft, loading, showInstructions, quizFinished, feedback, questions]);
 
   const handleNextQuestion = async () => {
     if (!selectedOption || submitting) return;
@@ -135,12 +160,19 @@ export function TakeQuiz() {
       const isGameOver = newLives === 0;
       const isLastQuestion = currentQuestionIndex >= questions.length - 1;
 
-      if (isGameOver || isLastQuestion) {
-        setQuizFinished(true); // Aciona o pop-up maravilhoso!
+      // Se resultado imediato está ativo, abre o modal de feedback
+      if (immediateResult) {
+        setFeedback({
+          isCorrect: acertou,
+          text: acertou 
+            ? (currentQuestion.feedbackCorrect || "Resposta Correta! Muito bem.")
+            : (currentQuestion.feedbackIncorrect || "Resposta Incorreta. Fique atento!"),
+          isGameOver,
+          isLastQuestion
+        });
       } else {
-        setCurrentQuestionIndex(prev => prev + 1);
-        setSelectedOption(null);
-        setTimeLeft(60); 
+        // Se estiver desligado, pula direto
+        proceedToNext(isGameOver, isLastQuestion);
       }
 
     } catch (err: any) {
@@ -151,6 +183,17 @@ export function TakeQuiz() {
     }
   };
 
+  const proceedToNext = (isGameOver: boolean, isLastQuestion: boolean) => {
+    setFeedback(null);
+    if (isGameOver || isLastQuestion) {
+      setQuizFinished(true);
+    } else {
+      setCurrentQuestionIndex(prev => prev + 1);
+      setSelectedOption(null);
+      setTimeLeft(60); 
+    }
+  };
+
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
@@ -158,7 +201,6 @@ export function TakeQuiz() {
   };
 
   if (showInstructions) {
-    // ... [MANTENHA O SEU CÓDIGO DE INSTRUÇÕES IGUAL]
     return (
       <div className={styles.layout}>
         <header className={styles.header}>
@@ -176,13 +218,12 @@ export function TakeQuiz() {
             <h2 className={styles.instructionsTitle}>Como Jogar</h2>
             
             <div className={styles.instructionsList}>
-              <p><span>👉</span> <span>Você terá que responder <strong>15 questões</strong> sobre o tema do dia.</span></p>
               <p><span>👉</span> <span>Você tem um total de <strong>3 vidas</strong> (corações). Se errar 3 vezes, o jogo acaba.</span></p>
               <p><span>👉</span> <span>Você tem <strong>60 segundos</strong> para responder cada questão.</span></p>
               
               <div className={styles.instructionsWarning}>
                 <strong>Regra do Sorteio:</strong><br/>
-                Atenção! É necessário acertar no mínimo <strong>10 das 15 questões</strong> para ser elegível aos prêmios e sorteios da SIPAT.
+                Atenção! É necessário acertar no mínimo <strong>{passingScore}% das questões</strong> para ser elegível aos prêmios e sorteios da SIPAT.
               </div>
             </div>
 
@@ -205,10 +246,10 @@ export function TakeQuiz() {
 
   if (questions.length === 0) return null;
 
- // --- MODAL DE FINALIZAÇÃO DO JOGO ---
+  // --- MODAL DE FINALIZAÇÃO DO JOGO ---
   if (quizFinished) {
     const userPercentage = (correctCount / questions.length) * 100;
-    const isWinner = userPercentage >= 70;
+    const isWinner = userPercentage >= passingScore; 
     const isGameOver = lives === 0;
 
     return (
@@ -229,7 +270,7 @@ export function TakeQuiz() {
                 ? "Você perdeu todas as suas vidas. Revise o material e tente ir mais longe no quiz de amanhã!"
                 : isWinner 
                   ? "Você garantiu sua elegibilidade para o sorteio. Continue participando para aumentar suas chances!" 
-                  : "Você completou o quiz, mas não atingiu a pontuação mínima para o sorteio de hoje. Revise seus erros e amanhã tem mais!"}
+                  : `Você não atingiu a pontuação mínima de ${passingScore}% para o sorteio de hoje. Revise seus erros e amanhã tem mais!`}
             </p>
 
             <div className={styles.resultStats}>
@@ -263,6 +304,26 @@ export function TakeQuiz() {
 
   return (
     <div className={styles.layout}>
+      
+      {/* MODAL DE FEEDBACK IMEDIATO */}
+      {feedback && (
+        <div className={styles.resultOverlay} style={{ zIndex: 2000 }}>
+          <div className={styles.feedbackCard} style={{ borderTop: `4px solid ${feedback.isCorrect ? '#22c55e' : '#ef4444'}` }}>
+            <div className={styles.feedbackHeader} style={{ color: feedback.isCorrect ? '#22c55e' : '#ef4444' }}>
+              {feedback.isCorrect ? <CheckCircle2 size={40} /> : <XCircle size={40} />}
+              <h2>{feedback.isCorrect ? 'Resposta Certa!' : 'Resposta Errada!'}</h2>
+            </div>
+            <p className={styles.feedbackMessage}>{feedback.text}</p>
+            <button 
+              className={styles.btnPrimary} 
+              onClick={() => proceedToNext(feedback.isGameOver, feedback.isLastQuestion)}
+            >
+              {feedback.isGameOver || feedback.isLastQuestion ? 'Ver Resultado Final' : 'Próxima Questão'} <ChevronRight size={18} />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* CABEÇALHO */}
       <header className={styles.header}>
         <button className={styles.backButton} onClick={() => navigate('/meus-quizzes')}>
@@ -272,7 +333,6 @@ export function TakeQuiz() {
       </header>
 
       <main className={styles.mainContent}>
-        {/* ÁREA PRINCIPAL DO QUIZ */}
         <section className={styles.quizArea}>
           
           <div className={styles.progressHeader}>
@@ -306,7 +366,7 @@ export function TakeQuiz() {
                   key={opt.id} 
                   className={`${styles.optionBtn} ${isSelected ? styles.optionSelected : ''}`}
                   onClick={() => setSelectedOption(opt.id)}
-                  disabled={submitting}
+                  disabled={submitting || feedback !== null}
                 >
                   <span className={styles.optionLetter}>{opt.id}</span>
                   <span className={styles.optionText}>{opt.text}</span>
@@ -316,15 +376,15 @@ export function TakeQuiz() {
           </div>
 
           <div className={styles.actionFooter}>
-            <button className={styles.btnSkip} disabled={submitting}>
+            <button className={styles.btnSkip} disabled={submitting || feedback !== null}>
               <Flag size={18} /> Pular
             </button>
             <button 
               className={styles.btnNext} 
               onClick={handleNextQuestion}
-              disabled={selectedOption === null || submitting}
+              disabled={selectedOption === null || submitting || feedback !== null}
             >
-              {submitting ? 'Enviando...' : 'Próxima Questão'} <ChevronRight size={18} />
+              {submitting ? 'Enviando...' : 'Confirmar Resposta'} <ChevronRight size={18} />
             </button>
           </div>
         </section>

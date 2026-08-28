@@ -188,7 +188,6 @@ export function CreateQuiz() {
         </div>
         <div className={styles.headerActions}>
           <button className={styles.btnOutline}>Salvar Rascunho</button>
-          <button className={styles.btnPrimary}>Prévia</button>
         </div>
       </header>
 
