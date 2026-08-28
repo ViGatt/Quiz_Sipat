@@ -626,7 +626,7 @@ class SupabaseRelatorioRepository:
 
         return {
             "pontuacao_total": pontuacao_total,
-            "numeros_sorte": numeros_sorte_bd,
+            "numero_sorte": numeros_sorte_bd,
             "elegivel_sorteio": len(numeros_sorte_bd) > 0,
             "quizzes_respondidos": list(quizzes_map.values())
         }
