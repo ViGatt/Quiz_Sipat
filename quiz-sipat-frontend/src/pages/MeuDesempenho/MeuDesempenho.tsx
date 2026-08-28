@@ -16,6 +16,7 @@ interface ResumoQuiz {
   tema: string;
   acertos: number;
   total_questoes: number;
+  pontuacao_quiz: number;
   erros: ErroQuiz[];
 }
 
@@ -115,7 +116,7 @@ export function MeuDesempenho() {
                   {dados.quizzes_respondidos.map((quiz) => {
                     const porcentagem = Math.round((quiz.acertos / quiz.total_questoes) * 100);
                     const isExpanded = expandedQuiz === quiz.dia_sipat_id;
-                    const pontuacaoQuiz = quiz.acertos * 100; // Cálculo dinâmico da pontuação
+                    const pontuacaoQuiz = quiz.pontuacao_quiz; // Pontuação real lida do back-end
 
                     return (
                       <div key={quiz.dia_sipat_id} className={styles.quizCard}>

@@ -327,17 +327,12 @@ class SupabaseQuizRepository(QuizRepository):
         return [item["dia_sipat_id"] for item in response.data]
 
     def criar_quiz_com_questoes(self, tema: str, descricao: str, tempo_limite: int, status: str, data_liberacao, pontuacao_aprovacao: int, aleatorizar_questoes: bool, aleatorizar_respostas: bool, resultado_imediato: bool, questoes: list) -> bool:
-        """
-        Cria um novo dia de SIPAT e insere todas as questões e configurações vinculadas.
-        """
         try:
-            # --- Busca o maior ID ---
             resp_id = self.db.table("dias_sipat").select("id").order("id", desc=True).limit(1).execute()
             proximo_id = 1
             if resp_id.data:
                 proximo_id = resp_id.data[0]["id"] + 1
 
-            # 1. Cria o Novo Quiz com as novas regras
             self.db.table("dias_sipat").insert({
                 "id": proximo_id, 
                 "tema": tema,
@@ -353,7 +348,6 @@ class SupabaseQuizRepository(QuizRepository):
                 "resultado_imediato": resultado_imediato
             }).execute()
 
-            # 2. Prepara as questões com os campos de feedback
             questoes_db = []
             for q in questoes:
                 questoes_db.append({
@@ -362,13 +356,12 @@ class SupabaseQuizRepository(QuizRepository):
                     "texto": q.texto,
                     "opcoes": q.opcoes,
                     "resposta_correta": q.resposta_correta,
+                    "pontos": getattr(q, 'pontos', 10), # <-- AGORA ELE SALVA OS PONTOS REAIS
                     "feedback_correto": getattr(q, 'feedback_correto', None),
                     "feedback_incorreto": getattr(q, 'feedback_incorreto', None)
                 })
 
-            # 3. Insere todas as questões de uma vez
             self.db.table("questoes").insert(questoes_db).execute()
-            
             return True
         except Exception as e:
             print(f"Erro ao criar quiz no banco: {e}")
@@ -547,7 +540,6 @@ class SupabaseRelatorioRepository:
             print(f"Erro ao obter métricas do quiz {quiz_id}: {e}")
             return None
     def obter_resumo_participante(self, cpf: str) -> dict:
-        # 1. Busca as participacoes do usuario
         part_res = self.db.table("participacoes") \
             .select("id, colaboradores!inner(cpf)") \
             .eq("colaboradores.cpf", cpf) \
@@ -558,43 +550,48 @@ class SupabaseRelatorioRepository:
         if not participacoes:
             return {
                 "pontuacao_total": 0,
-                "numero_sorte": None,
+                "numeros_sorte": [],
                 "elegivel_sorteio": False,
                 "quizzes_respondidos": []
             }
             
         participacao_ids = [p["id"] for p in participacoes]
 
-        # 2. Busca as respostas (SEM OS TRÊS PONTINHOS E COM OS NOMES EXATOS DAS COLUNAS)
+        # AGORA PUXAMOS OS PONTOS DA QUESTÃO
         res = self.db.table("respostas") \
-            .select("acertou, alternativa_escolhida, questoes(texto, resposta_correta, opcoes, dia_sipat_id)") \
+            .select("acertou, alternativa_escolhida, questoes(texto, resposta_correta, opcoes, dia_sipat_id, pontos)") \
             .in_("participacao_id", participacao_ids) \
             .execute()
             
         respostas = res.data or []
 
-        # 3. Busca os temas dos dias separadamente (Garante que nunca vai dar erro de Join no Supabase)
-        dias_res = self.db.table("dias_sipat").select("id, tema").execute()
-        temas_map = {d["id"]: d["tema"] for d in (dias_res.data or [])}
+        # AGORA BUSCAMOS A PONTUAÇÃO DE APROVAÇÃO DINÂMICA
+        dias_res = self.db.table("dias_sipat").select("id, tema, pontuacao_aprovacao").execute()
+        dias_map = {d["id"]: d for d in (dias_res.data or [])}
 
         pontuacao_total = 0
         total_acertos = 0
         quizzes_map = {}
 
-        # 4. Processa os resultados
         for r in respostas:
             q = r.get("questoes") or {}
             if not q: continue
             
             dia_sipat_id = q.get("dia_sipat_id")
-            tema = temas_map.get(dia_sipat_id, f"Quiz Dia {dia_sipat_id}")
+            dia_info = dias_map.get(dia_sipat_id, {})
+            
+            tema = dia_info.get("tema", f"Quiz Dia {dia_sipat_id}")
+            pont_aprovacao = dia_info.get("pontuacao_aprovacao") or 70
+            pontos_questao = q.get("pontos") or 10
 
             if dia_sipat_id not in quizzes_map:
                 quizzes_map[dia_sipat_id] = {
                     "dia_sipat_id": dia_sipat_id,
                     "tema": tema,
+                    "pontuacao_aprovacao": pont_aprovacao,
                     "acertos": 0,
                     "total_questoes": 0,
+                    "pontuacao_quiz": 0,
                     "erros": []
                 }
             
@@ -602,7 +599,8 @@ class SupabaseRelatorioRepository:
             
             if r.get("acertou"):
                 quizzes_map[dia_sipat_id]["acertos"] += 1
-                pontuacao_total += 100 
+                quizzes_map[dia_sipat_id]["pontuacao_quiz"] += pontos_questao
+                pontuacao_total += pontos_questao
                 total_acertos += 1
             else:
                 opcoes = q.get("opcoes")
@@ -617,22 +615,12 @@ class SupabaseRelatorioRepository:
                     "resposta_correta": texto_correto
                 })
         
-        # Regra Dinâmica: Elegível se acertou 70% ou mais em ALGUM dos quizzes
-        elegivel = False
-        for qm in quizzes_map.values():
-            if qm["total_questoes"] > 0:
-                percentual = (qm["acertos"] / qm["total_questoes"]) * 100
-                if percentual >= 70:
-                    elegivel = True
-                    break
-        
-        # Gera o número da sorte baseado no CPF e acertos
+        # REGRA INTELIGENTE: Lê a nota de corte específica daquele quiz
         numeros_sorte = []
         for qm in quizzes_map.values():
             if qm["total_questoes"] > 0:
                 percentual = (qm["acertos"] / qm["total_questoes"]) * 100
-                if percentual >= 70:
-                    # Gera um número único misturando o CPF, ID do quiz e acertos
+                if percentual >= qm["pontuacao_aprovacao"]:
                     num = f"SPT-{cpf[-4:]}-{qm['dia_sipat_id']}{qm['acertos']}"
                     qm["numero_sorte"] = num
                     numeros_sorte.append(num)
@@ -641,7 +629,7 @@ class SupabaseRelatorioRepository:
 
         return {
             "pontuacao_total": pontuacao_total,
-            "numeros_sorte": numeros_sorte, 
+            "numeros_sorte": numeros_sorte,
             "elegivel_sorteio": elegivel,
             "quizzes_respondidos": list(quizzes_map.values())
         }
