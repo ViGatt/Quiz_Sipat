@@ -227,12 +227,30 @@ class SupabaseQuizRepository(QuizRepository):
             ) for q in response.data
         ]
 
-    def listar_dias_sipat(self) -> List[Dict[str, Any]]:
+    def listar_dias_sipat(self) -> list[dict]:
         """
-        Faz um SELECT na tabela dias_sipat para buscar os quizzes.
+        Faz um SELECT na tabela dias_sipat trazendo também as questões e participações
+        atreladas para contagem de métricas.
         """
-        response = self.db.table('dias_sipat').select('*').order('id').execute()
-        return response.data
+        # O Supabase permite fazer subqueries passando o nome da tabela e as colunas desejadas entre parênteses
+        response = self.db.table('dias_sipat').select('*, questoes(id), participacoes(id)').order('id', desc=True).execute()
+        
+        quizzes = []
+        for row in response.data:
+            # O Supabase retorna listas nos relacionamentos. O tamanho da lista é a nossa contagem!
+            row['total_questoes'] = len(row.get('questoes') or [])
+            row['total_participantes'] = len(row.get('participacoes') or [])
+            
+            # Mapeia a coluna 'data' do banco para a variável 'criado_em' que o Front-end espera
+            row['criado_em'] = row.get('data')
+            
+            # Removemos os arrays brutos do dicionário para não pesar o JSON que vai para o Front-end
+            row.pop('questoes', None)
+            row.pop('participacoes', None)
+            
+            quizzes.append(row)
+            
+        return quizzes
 
     # --- NOVO MÉTODO ADICIONADO AQUI ---
     def obter_por_id(self, quiz_id: int) -> dict | None:
@@ -610,13 +628,21 @@ class SupabaseRelatorioRepository:
                     break
         
         # Gera o número da sorte baseado no CPF e acertos
-        numero_sorte = None
-        if elegivel:
-            numero_sorte = f"SPT-{cpf[-4:]}-{total_acertos * 7}" 
+        numeros_sorte = []
+        for qm in quizzes_map.values():
+            if qm["total_questoes"] > 0:
+                percentual = (qm["acertos"] / qm["total_questoes"]) * 100
+                if percentual >= 70:
+                    # Gera um número único misturando o CPF, ID do quiz e acertos
+                    num = f"SPT-{cpf[-4:]}-{qm['dia_sipat_id']}{qm['acertos']}"
+                    qm["numero_sorte"] = num
+                    numeros_sorte.append(num)
+        
+        elegivel = len(numeros_sorte) > 0
 
         return {
             "pontuacao_total": pontuacao_total,
-            "numero_sorte": numero_sorte,
+            "numeros_sorte": numeros_sorte, 
             "elegivel_sorteio": elegivel,
             "quizzes_respondidos": list(quizzes_map.values())
         }

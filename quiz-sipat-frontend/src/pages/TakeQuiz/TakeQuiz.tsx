@@ -88,7 +88,13 @@ export function TakeQuiz() {
 
             // EMBARALHAR ALTERNATIVAS SE A CONFIGURAÇÃO ESTIVER ATIVA
             if (shouldRandomizeAnswers) {
-              optionsList.sort(() => Math.random() - 0.5);
+              // 1. Extrai e embaralha apenas os textos
+              const shuffledTexts = optionsList.map(opt => opt.text).sort(() => Math.random() - 0.5);
+              
+              // 2. Devolve os textos embaralhados para as letras originais
+              optionsList.forEach((opt, idx) => {
+                opt.text = shuffledTexts[idx];
+              });
             }
 
             return {

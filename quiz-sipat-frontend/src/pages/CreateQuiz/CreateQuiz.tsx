@@ -102,7 +102,8 @@ export function CreateQuiz() {
 
   const currentQuestion = questions[currentQuestionIndex];
 
-  const handlePublish = async () => {
+  const handlePublish = async (overrideStatus?: string) => {
+    const finalStatus = overrideStatus || status;
     if (!title || questions[0].text === "") {
       alert("Por favor, preencha o título e pelo menos uma questão!");
       return;
@@ -115,8 +116,8 @@ export function CreateQuiz() {
         tema: title,
         descricao: description,
         tempo_limite: Number(tempoLimite) || 15,
-        status: status,
-        data_liberacao: status === 'Programado' && dataLiberacao ? new Date(dataLiberacao).toISOString() : null,
+        status: finalStatus, // <--- AQUI ESTAVA 'status: status', POR ISSO O ERRO
+        data_liberacao: finalStatus === 'Programado' && dataLiberacao ? new Date(dataLiberacao).toISOString() : null,
         
         // NOVOS CAMPOS ENVIADOS AO BACKEND
         pontuacao_aprovacao: Number(pontuacaoAprovacao) || 70,
@@ -187,7 +188,14 @@ export function CreateQuiz() {
           </div>
         </div>
         <div className={styles.headerActions}>
-          <button className={styles.btnOutline}>Salvar Rascunho</button>
+          <button 
+            className={styles.btnOutline} 
+            onClick={() => handlePublish('Rascunho')}
+            disabled={isSubmitting}
+          >
+            Salvar Rascunho
+          </button>
+          <button className={styles.btnPrimary}>Prévia</button>
         </div>
       </header>
 
@@ -483,7 +491,7 @@ export function CreateQuiz() {
           ) : (
             <button 
               className={styles.btnPrimary} 
-              onClick={handlePublish}
+              onClick={() => handlePublish()} 
               disabled={isSubmitting}
             >
               {isSubmitting ? 'Salvando...' : 'Finalizar e Salvar'}

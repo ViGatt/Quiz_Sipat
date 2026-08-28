@@ -21,7 +21,7 @@ interface ResumoQuiz {
 
 interface DesempenhoData {
   pontuacao_total: number;
-  numero_sorte: string | null;
+  numero_sorte: string[];
   elegivel_sorteio: boolean;
   quizzes_respondidos: ResumoQuiz[];
 }
@@ -85,15 +85,19 @@ export function MeuDesempenho() {
                   <Ticket size={32} />
                 </div>
                 <div className={styles.statInfo}>
-                  <h3>Número da Sorte</h3>
-                  {dados.numero_sorte ? (
+                  <h3>Números da Sorte</h3>
+                  {dados.numero_sorte && dados.numero_sorte.length > 0 ? (
                     <div className={styles.luckyContainer}>
-                      <span className={styles.luckyLabel}>Total gerados: 1</span>
-                      <span className={styles.luckyNumberSmall}>{dados.numero_sorte}</span>
+                      <span className={styles.luckyLabel}>Total gerados: {dados.numero_sorte.length}</span>
+                      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.3rem' }}>
+                        {dados.numero_sorte.map((num, idx) => (
+                          <span key={idx} className={styles.luckyNumberSmall}>{num}</span>
+                        ))}
+                      </div>
                     </div>
                   ) : (
                     <span className={styles.statPending}>
-                      {dados.elegivel_sorteio ? 'Gerando...' : 'Faltam acertos'}
+                      Faltam acertos
                     </span>
                   )}
                 </div>
