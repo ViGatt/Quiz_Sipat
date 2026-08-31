@@ -44,7 +44,7 @@ export function Dashboard() {
       // Executa as duas requisições sem barra no final e de forma independente
       const [resQuizzes, resRelatorio] = await Promise.allSettled([
         api.get('/quiz/'),
-        api.get('/relatorios/geral/')
+        api.get('/relatorios/geral')
       ]);
 
       // --- 1. PROCESSA QUIZZES (EXIBIDOS EM "EVENTOS RECENTES") ---
