@@ -19,7 +19,7 @@ export function Quizzes() {
       try {
         setLoading(true);
         // 1. Removida a barra do final
-        const response = await api.get('/quiz'); 
+        const response = await api.get('/quiz/'); 
         
         // 2. Verifica se é array direto ou se está dentro de uma propriedade "quizzes"
         const fetchedQuizzes = Array.isArray(response.data) 
