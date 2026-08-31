@@ -18,8 +18,13 @@ export function Quizzes() {
     const carregarQuizzes = async () => {
       try {
         setLoading(true);
-        const response = await api.get('/quiz/');
-        const fetchedQuizzes = response.data?.quizzes || [];
+        // 1. Removida a barra do final
+        const response = await api.get('/quiz'); 
+        
+        // 2. Verifica se é array direto ou se está dentro de uma propriedade "quizzes"
+        const fetchedQuizzes = Array.isArray(response.data) 
+          ? response.data 
+          : (response.data?.quizzes || []);
         
         const formattedQuizzes = fetchedQuizzes.map((q: any) => {
           // --- LÓGICA DO STATUS DINÂMICO ---

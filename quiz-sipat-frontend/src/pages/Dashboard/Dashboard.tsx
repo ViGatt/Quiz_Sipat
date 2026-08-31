@@ -37,28 +37,40 @@ export function Dashboard() {
   const [quizzes, setQuizzes] = useState<QuizRecente[]>([]);
 
   useEffect(() => {
-    const carregarDashboard = async () => {
-      try {
-        setLoading(true);
-        
-        const resQuizzes = await api.get('/quiz/');
-        const resRelatorio = await api.get('/relatorios/geral');
+  const carregarDashboard = async () => {
+    try {
+      setLoading(true);
+      
+      // Executa as duas requisições sem barra no final e de forma independente
+      const [resQuizzes, resRelatorio] = await Promise.allSettled([
+        api.get('/quiz'),
+        api.get('/relatorios/geral')
+      ]);
 
-        setQuizzes(resQuizzes.data?.quizzes || []);
+      // --- 1. PROCESSA QUIZZES (EXIBIDOS EM "EVENTOS RECENTES") ---
+      if (resQuizzes.status === 'fulfilled') {
+        const data = resQuizzes.value.data;
+        // Verifica se a API retornou um array direto ou um objeto { quizzes: [...] }
+        const listaQuizzes = Array.isArray(data) ? data : (data?.quizzes || []);
+        setQuizzes(listaQuizzes);
+      } else {
+        console.error("Erro ao carregar quizzes do dashboard:", resQuizzes.reason);
+      }
 
-        // --- 1. RESUMO GERAL DIRETO DO BANCO OTIMIZADO ---
-        const resumoBanco = resRelatorio.data?.resumo || {};
+      // --- 2. PROCESSA RELATÓRIOS E RANKING ---
+      if (resRelatorio.status === 'fulfilled') {
+        const data = resRelatorio.value.data;
+        const resumoBanco = data?.resumo || {};
         
         setResumo({
-          // Agora puxamos direto da nova coluna 'total_cadastros' e 'taxa_engajamento'
           total_colaboradores: Number(resumoBanco.total_cadastros || 0), 
           taxa_engajamento: Number(resumoBanco.taxa_engajamento || 0),
           total_online: Number(resumoBanco.total_online || 0),
           total_presenciais: Number(resumoBanco.total_presencial || 0),
         });
 
-        // --- 2. RANKING (MANTIDO IGUAL - FUNCIONANDO) ---
-        const listaDesempenho = resRelatorio.data?.desempenho || [];
+        // Lógica do Ranking (Mantida idêntica)
+        const listaDesempenho = data?.desempenho || [];
         const rankingAgrupado: Record<string, any> = {};
 
         listaDesempenho.forEach((item: any) => {
@@ -108,16 +120,19 @@ export function Dashboard() {
           .slice(0, 5);
 
         setRanking(top5);
-
-      } catch (err) {
-        console.error("Erro ao carregar dashboard:", err);
-      } finally {
-        setLoading(false);
+      } else {
+        console.error("Erro ao carregar relatórios do dashboard:", resRelatorio.reason);
       }
-    };
 
-    carregarDashboard();
-  }, []);
+    } catch (err) {
+      console.error("Erro crítico ao carregar dashboard:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  carregarDashboard();
+}, []);
   
   return (
     <div className={styles.layout}>

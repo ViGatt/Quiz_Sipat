@@ -34,8 +34,15 @@ export function EventosAdmin() {
   const fetchEventos = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/eventos/');
-      setEventos(response.data);
+      // 1. Removida a barra do final
+      const response = await api.get('/eventos');
+      
+      // 2. Evita que a tela quebre caso o backend mande um formato diferente
+      const dados = Array.isArray(response.data) 
+        ? response.data 
+        : (response.data?.eventos || response.data?.data || []);
+        
+      setEventos(dados);
     } catch (error) {
       console.error("Erro ao buscar eventos:", error);
     } finally {

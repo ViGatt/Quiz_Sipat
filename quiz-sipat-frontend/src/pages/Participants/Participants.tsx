@@ -5,6 +5,8 @@ import {
 } from 'lucide-react';
 import { Sidebar } from '../../components/Sidebar/Sidebar';
 import styles from './Participants.module.css';
+import { api } from '../../services/api';
+
 
 export function Participants() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -22,25 +24,24 @@ export function Participants() {
   const fetchParticipants = async () => {
     setIsLoadingList(true);
     try {
-      // Usando o dia 1 fixo por enquanto para testes
-      const response = await fetch("http://127.0.0.1:8000/recepcao/status/1");
-      if (response.ok) {
-        const data = await response.json();
-        setParticipants(data.participantes || []);
-      } else {
-        console.error("Erro ao buscar a lista do backend.");
-      }
+      // O Axios usa a baseURL configurada, então passamos apenas o caminho final
+      const response = await api.get('/recepcao/status/1');
+      
+      // O Axios armazena o resultado convertido em JSON dentro de "response.data"
+      setParticipants(response.data.participantes || []);
+      
     } catch (error) {
-      console.error("Erro de conexão com a API:", error);
+      // Qualquer erro de servidor ou rede cai automaticamente aqui
+      console.error("Erro ao buscar a lista do backend:", error);
     } finally {
       setIsLoadingList(false);
     }
-  };
+};
 
-  // Dispara a busca assim que a tela abre
-  useEffect(() => {
+// Dispara a busca assim que a tela abre
+useEffect(() => {
     fetchParticipants();
-  }, []);
+}, []);
 
   const filteredParticipants = participants.filter(p => 
     p.nome.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -48,37 +49,34 @@ export function Participants() {
   );
 
   // --- LÓGICA DO CHECK-IN PRESENCIAL ---
+  // --- LÓGICA DO CHECK-IN PRESENCIAL ---
   const handleCheckIn = async (id: string, nome: string, cpf: string) => {
     if (!window.confirm(`Confirmar presença presencial para ${nome} no dia de hoje?`)) {
       return;
     }
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/recepcao/registrar", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          cpf: cpf.replace(/\D/g, ''), 
-          nome_completo: nome,
-          dia_sipat_id: 1 
-        }),
+      // O Axios já transforma o objeto em JSON automaticamente
+      const response = await api.post('/recepcao/registrar', {
+        cpf: cpf.replace(/\D/g, ''), 
+        nome_completo: nome,
+        dia_sipat_id: 1 
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        setParticipants(prev => prev.map(p => 
-          p.id === id 
-            ? { ...p, statusHoje: 'PRESENCIAL', numeroSorte: String(data.numero_sorte) } 
-            : p
-        ));
-        alert(`Sucesso! O Número da Sorte gerado foi: ${data.numero_sorte}`);
-      } else {
-        alert(`Erro: ${data.detail}`);
-      }
-    } catch (error) {
+      // Se a requisição chegou até aqui, foi sucesso (status 200+)
+      // O Axios guarda o retorno do Back-end dentro de "response.data"
+      setParticipants(prev => prev.map(p => 
+        p.id === id 
+          ? { ...p, statusHoje: 'PRESENCIAL', numeroSorte: String(response.data.numero_sorte) } 
+          : p
+      ));
+      alert(`Sucesso! O Número da Sorte gerado foi: ${response.data.numero_sorte}`);
+      
+    } catch (error: any) {
       console.error(error);
-      alert("Erro de conexão com o servidor ao tentar fazer o check-in.");
+      // Pega a mensagem de erro específica do Back-end, se houver
+      const errorMessage = error.response?.data?.detail || "Erro de conexão com o servidor ao tentar fazer o check-in.";
+      alert(`Erro: ${errorMessage}`);
     }
   };
 
@@ -108,26 +106,22 @@ export function Participants() {
     formData.append("file", selectedFile);
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/recepcao/importar-rh", {
-        method: "POST",
-        body: formData,
-      });
+      // Basta passar a rota e o formData. O Axios cuida do resto!
+      const response = await api.post('/recepcao/importar-rh', formData);
 
-      const data = await response.json();
-
-      if (response.ok) {
-        alert(data.message); 
-        setShowImportModal(false); 
-        setSelectedFile(null); 
-        
-        // --- ATUALIZA A LISTA NA HORA APÓS IMPORTAR! ---
-        fetchParticipants();
-      } else {
-        alert(`Erro na importação: ${data.detail}`);
-      }
-    } catch (error) {
+      // Sucesso!
+      alert(response.data.message); 
+      setShowImportModal(false); 
+      setSelectedFile(null); 
+      
+      // --- ATUALIZA A LISTA NA HORA APÓS IMPORTAR! ---
+      fetchParticipants();
+      
+    } catch (error: any) {
       console.error(error);
-      alert("Erro de conexão com o servidor. Verifique se a API está rodando.");
+      // Captura o erro customizado do backend ou exibe o padrão
+      const errorMessage = error.response?.data?.detail || "Erro de conexão com o servidor. Verifique se a API está rodando.";
+      alert(`Erro na importação: ${errorMessage}`);
     } finally {
       setIsUploading(false);
     }
