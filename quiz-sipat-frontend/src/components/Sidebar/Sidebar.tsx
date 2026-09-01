@@ -53,16 +53,6 @@ export function Sidebar() {
         </Link>
       </nav>
 
-      <div className={styles.bottomMenu}>
-        <p className={styles.sectionTitle}>Gerenciamento</p>
-        <Link 
-          to="/configuracoes" 
-          className={`${styles.navItem} ${location.pathname === '/configuracoes' ? styles.active : ''}`}
-        >
-          <Settings size={20} />
-          <span>Configurações</span>
-        </Link>
-      </div>
     </aside>
   );
 }

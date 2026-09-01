@@ -85,3 +85,56 @@
   text-transform: uppercase;
   letter-spacing: 1px;
 }
+
+/* =========================================
+   RESPONSIVIDADE - MOBILE E TABLETS 
+========================================= */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 70px;
+    min-width: 70px;
+    padding: 1rem 0.25rem;
+    align-items: center;
+  }
+
+  /* Ajusta a logo para mostrar apenas 'SIPAT' centralizado */
+  .logoTitle {
+    font-size: 0.9rem;
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+  
+  .logoHighlight {
+    display: none; /* Esconde o "RIC AMBIENTAL" para caber */
+  }
+
+  /* Transforma a barra de pesquisa em apenas um ícone */
+  .searchContainer {
+    padding: 0.6rem;
+    justify-content: center;
+    background-color: transparent;
+  }
+
+  .searchInput {
+    display: none; /* Esconde o campo de digitar */
+  }
+
+  .searchIcon {
+    margin-right: 0; /* Remove a margem pois o ícone ficará sozinho */
+    color: var(--color-white);
+  }
+
+  /* Ajusta os botões do menu */
+  .navItem {
+    justify-content: center; /* Centraliza o ícone */
+    padding: 0.8rem;
+  }
+
+  .navItem span {
+    display: none; /* Esconde o texto do botão (Dashboard, Quizzes, etc) */
+  }
+
+  .sectionTitle {
+    display: none; /* Esconde a palavra "Gerenciamento" */
+  }
+}

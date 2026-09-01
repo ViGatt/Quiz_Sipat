@@ -337,3 +337,78 @@
   gap: 1rem;
   justify-content: flex-end;
 }
+
+/* =========================================
+   RESPONSIVIDADE - PARTICIPANTES (MOBILE)
+========================================= */
+@media (max-width: 768px) {
+  .container {
+    max-width: 100vw;
+  }
+
+  .mainContent {
+    margin-left: 0; 
+    padding: 1.2rem 0.8rem;
+    min-width: 0;
+    width: calc(100vw - 70px);
+  }
+
+  .header {
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+  }
+
+  .header > div {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 0.8rem;
+  }
+
+  .btnPrimary, .btnOutline {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .panel {
+    padding: 1rem;
+    width: 100%;
+  }
+
+  .searchWrapper {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  /* Faz apenas a tabela rolar internamente, sem estourar a página */
+  .tableWrapper {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .table {
+    width: 100%;
+  }
+
+  .table th, .table td {
+    padding: 0.8rem;
+    white-space: nowrap;
+  }
+
+  .modalContent {
+    padding: 1.2rem;
+    margin: 1rem;
+    max-width: calc(100vw - 2rem);
+  }
+
+  .modalActions {
+    flex-direction: column;
+  }
+
+  .modalActions button {
+    width: 100%;
+  }
+}
