@@ -182,9 +182,7 @@ export function Quizzes() {
                       Testar Quiz
                     </button>
                     
-                    <button className={styles.btnIcon} onClick={() => navigate(`/share-quiz/${quiz.id}`)}>
-                      <MoreVertical size={20} />
-                    </button>
+                    
                   </div>
                 </div>
               ))
