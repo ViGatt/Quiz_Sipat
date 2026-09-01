@@ -217,13 +217,7 @@ useEffect(() => {
                     </td>
 
                     <td className={styles.actionsCell}>
-                      <button 
-                        onClick={() => handleResetPassword(p.nome, p.cpf)}
-                        className={styles.btnReset}
-                        title="Resetar Senha para 4 primeiros dígitos do CPF"
-                      >
-                        <Key size={18} />
-                      </button>
+                      
 
                       <button 
                         onClick={() => handleCheckIn(p.id, p.nome, p.cpf)}
