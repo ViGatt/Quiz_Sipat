@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, BookOpen, Calendar, Users, BarChart2, Medal, ChevronRight, Home } from 'lucide-react';
+import { Plus, BookOpen, Calendar, Users, BarChart2, Medal, ChevronRight, Home, Download } from 'lucide-react';
 import { Sidebar } from '../../components/Sidebar/Sidebar';
 import styles from './Dashboard.module.css';
 import { Link, useNavigate } from 'react-router-dom';
@@ -134,6 +134,83 @@ export function Dashboard() {
   carregarDashboard();
 }, []);
   
+  // =========================================
+  // FUNÇÃO DE EXPORTAÇÃO DO DASHBOARD (XLS)
+  // =========================================
+  const handleExportDashboard = () => {
+    const htmlContent = `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+      <head><meta charset="UTF-8"></head>
+      <body>
+        <h2>Resumo Geral da SIPAT</h2>
+        <table border="1" style="border-collapse: collapse;">
+          <tr style="background-color: #6366f1; color: white; font-weight: bold;">
+            <th style="padding: 8px;">Métrica</th>
+            <th style="padding: 8px;">Valor</th>
+          </tr>
+          <tr><td style="padding: 6px;">Total de Colaboradores</td><td style="padding: 6px;">${resumo?.total_colaboradores || 0}</td></tr>
+          <tr><td style="padding: 6px;">Participação Online</td><td style="padding: 6px;">${resumo?.total_online || 0}</td></tr>
+          <tr><td style="padding: 6px;">Presenças Físicas</td><td style="padding: 6px;">${resumo?.total_presenciais || 0}</td></tr>
+          <tr><td style="padding: 6px;">Taxa de Engajamento</td><td style="padding: 6px;">${resumo?.taxa_engajamento ? Number(resumo.taxa_engajamento).toFixed(1) : 0}%</td></tr>
+        </table>
+        <br/>
+        
+        <h2>Ranking - Top Participantes</h2>
+        <table border="1" style="border-collapse: collapse;">
+          <tr style="background-color: #6366f1; color: white; font-weight: bold;">
+            <th style="padding: 8px;">Posição</th>
+            <th style="padding: 8px;">Colaborador</th>
+            <th style="padding: 8px;">Quizzes Respondidos</th>
+            <th style="padding: 8px;">Pontuação Total</th>
+          </tr>
+          ${ranking.map((part, index) => {
+            const nomeParticipante = part.nome_colaborador || part.nome || part.nome_completo || part.colaborador || `CPF ${part.cpf}`;
+            return `
+              <tr>
+                <td style="padding: 6px; text-align: center;">${index + 1}º</td>
+                <td style="padding: 6px; text-transform: capitalize;">${nomeParticipante.toLowerCase()}</td>
+                <td style="padding: 6px; text-align: center;">${part.quizzes_respondidos || 0}</td>
+                <td style="padding: 6px; text-align: center;">${part.total_pontos || 0}</td>
+              </tr>
+            `;
+          }).join('')}
+        </table>
+        <br/>
+
+        <h2>Quizzes Ativos</h2>
+        <table border="1" style="border-collapse: collapse;">
+          <tr style="background-color: #6366f1; color: white; font-weight: bold;">
+            <th style="padding: 8px;">Dia / ID</th>
+            <th style="padding: 8px;">Tema</th>
+            <th style="padding: 8px;">Descrição</th>
+          </tr>
+          ${quizzes.map(quiz => `
+            <tr>
+              <td style="padding: 6px; text-align: center;">Dia ${String(quiz.id).padStart(2, '0')}</td>
+              <td style="padding: 6px;">${quiz.tema || 'Sem tema'}</td>
+              <td style="padding: 6px;">${quiz.descricao || 'Sem descrição cadastrada'}</td>
+            </tr>
+          `).join('')}
+        </table>
+      </body>
+      </html>
+    `;
+
+    const blob = new Blob([htmlContent], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    
+    // Pega a data atual para colocar no nome do arquivo (ex: Relatorio_Dashboard_SIPAT_15-10-2023.xls)
+    const dataAtual = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
+    link.download = `Relatorio_Dashboard_SIPAT_${dataAtual}.xls`;
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+  
   return (
     <div className={styles.layout}>
       <Sidebar />
@@ -145,15 +222,24 @@ export function Dashboard() {
             <p className={styles.subtitle}>Bem vindo(a) de volta! Veja o que está acontecendo nos Quizzes</p>
           </div>
           
-          <div className={styles.headerActions}>
-            <Link to="/" className={styles.homeIconBtn} title="Voltar à Landing Page">
-              <Home size={20} />
-            </Link>
-            
-            <Link to="/create-quiz" className={styles.btnPrimary}>
-              <Plus size={20} /> Criar Novo Quiz
-            </Link>
-          </div>
+                  <div className={styles.headerActions}>
+          <Link to="/" className={styles.homeIconBtn} title="Voltar à Landing Page">
+            <Home size={20} />
+          </Link>
+          
+          {/* Novo Botão de Exportação */}
+          <button 
+            className={styles.btnOutline} 
+            onClick={handleExportDashboard}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+          >
+            <Download size={20} /> Exportar Relatório
+          </button>
+          
+          <Link to="/create-quiz" className={styles.btnPrimary}>
+            <Plus size={20} /> Criar Novo Quiz
+          </Link>
+        </div>
         </header>
 
         {loading ? (
