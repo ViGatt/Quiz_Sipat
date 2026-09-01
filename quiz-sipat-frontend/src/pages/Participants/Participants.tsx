@@ -14,6 +14,10 @@ export function Participants() {
   const [participants, setParticipants] = useState<any[]>([]);
   const [isLoadingList, setIsLoadingList] = useState(true);
 
+  // --- PAGINAÇÃO ---
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 15;
+
   // Estados do Modal de Importação
   const [showImportModal, setShowImportModal] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -47,6 +51,25 @@ useEffect(() => {
     p.nome.toLowerCase().includes(searchQuery.toLowerCase()) || 
     p.cpf.includes(searchQuery)
   );
+
+  const totalPages = Math.ceil(filteredParticipants.length / ITEMS_PER_PAGE);
+
+  const paginatedParticipants = filteredParticipants.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  // Sempre que a busca mudar, volta pra página 1
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
+  // Se a lista encolher (ex: filtro ou reimportação) e a página atual não existir mais, corrige
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages, currentPage]);
 
   // --- LÓGICA DO CHECK-IN PRESENCIAL ---
   const handleCheckIn = async (id: string, nome: string, cpf: string) => {
@@ -148,7 +171,7 @@ useEffect(() => {
             <Search className={styles.searchIcon} size={20} />
             <input 
               type="text" 
-              placeholder="Buscar por Nome, CPF ou Bipar Crachá..." 
+              placeholder="Buscar por Nome ou CPF..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className={styles.searchInput}
@@ -174,8 +197,8 @@ useEffect(() => {
                     <p style={{ marginTop: '10px' }}>Carregando colaboradores...</p>
                   </td>
                 </tr>
-              ) : filteredParticipants.length > 0 ? (
-                filteredParticipants.map((p) => (
+              ) : paginatedParticipants.length > 0 ? (
+                paginatedParticipants.map((p) => (
                   <tr key={p.id}>
                     <td>
                       <div className={styles.colaboradorNome}>{p.nome}</div>
@@ -230,6 +253,37 @@ useEffect(() => {
               )}
             </tbody>
           </table>
+
+          {!isLoadingList && filteredParticipants.length > 0 && (
+            <div className={styles.pagination}>
+              <span className={styles.paginationInfo}>
+                Mostrando {(currentPage - 1) * ITEMS_PER_PAGE + 1}–
+                {Math.min(currentPage * ITEMS_PER_PAGE, filteredParticipants.length)} de {filteredParticipants.length}
+              </span>
+
+              <div className={styles.paginationControls}>
+                <button
+                  className={styles.pageBtn}
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                >
+                  Anterior
+                </button>
+
+                <span className={styles.pageIndicator}>
+                  Página {currentPage} de {totalPages}
+                </span>
+
+                <button
+                  className={styles.pageBtn}
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  Próxima
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </main>
 
