@@ -1,12 +1,27 @@
+/* =========================================
+   SIDEBAR BASE
+========================================= */
 .sidebar {
-  width: 260px;
   min-height: 100vh;
   background-color: var(--color-bg-main, #0a0a0a);
   border-right: 1px solid var(--color-surface, #333333);
   padding: 2rem 1.5rem;
   display: flex;
   flex-direction: column;
-  flex-shrink: 0; 
+  flex-shrink: 0;
+  transition: width 0.25s ease, padding 0.25s ease;
+  overflow: hidden;
+}
+
+/* Estado retraído: só ícones, faixa estreita */
+.sidebarCollapsed {
+  width: 84px;
+  padding: 2rem 0.75rem;
+}
+
+/* Estado aberto (desktop): largura completa */
+.sidebarOpen {
+  width: 260px;
 }
 
 .logoContainer {
@@ -14,13 +29,19 @@
   justify-content: center;
   margin-bottom: 3rem;
   width: 100%;
+  min-height: 40px; /* evita "pulo" de altura ao trocar de estado */
 }
 
 .logo {
-  max-width: 160px; 
+  max-width: 160px;
   width: 100%;
   height: auto;
   object-fit: contain;
+  transition: opacity 0.2s ease;
+}
+
+.sidebarCollapsed .logo {
+  max-width: 36px;
 }
 
 .nav {
@@ -39,14 +60,132 @@
   border-radius: 8px;
   font-weight: 500;
   transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
 .navItem:hover {
   color: var(--color-white, #ffffff);
-  background-color: var(--color-surface-light, rgba(255,255,255,0.05));
+  background-color: var(--color-surface-light, rgba(255, 255, 255, 0.05));
 }
 
 .active {
   background-color: rgba(0, 195, 255, 0.1);
   color: var(--color-primary, #00c3ff);
+}
+
+.navIcon {
+  flex-shrink: 0;
+}
+
+.navLabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Estado retraído: some com o texto, centraliza o ícone */
+.sidebarCollapsed .navItem {
+  justify-content: center;
+  padding: 0.8rem 0.5rem;
+}
+
+.sidebarCollapsed .navLabel {
+  display: none;
+}
+
+/* =========================================
+   BOTÃO DE TOGGLE
+========================================= */
+.toggleBtn {
+  display: none; /* só aparece no mobile via media query abaixo */
+}
+
+/* =========================================
+   OVERLAY (usado só no mobile quando o menu abre)
+========================================= */
+.overlay {
+  display: none;
+}
+
+/* =========================================
+   RESPONSIVIDADE - MOBILE
+   Sidebar vira um drawer que flutua por cima do
+   conteúdo, sem empurrar o layout da página.
+========================================= */
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    z-index: 900;
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.4);
+  }
+
+  /* Retraído no mobile: fica praticamente escondido fora da tela,
+     deixando só o botão de toggle visível */
+  .sidebarCollapsed {
+    width: 0;
+    padding: 2rem 0;
+    border-right: none;
+  }
+
+  .sidebarCollapsed .logoContainer,
+  .sidebarCollapsed .nav {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* Aberto no mobile: nome + ícones visíveis, sem quebrar linha */
+  .sidebarOpen {
+    width: 240px;
+    padding: 2rem 1.25rem;
+  }
+
+  .sidebarOpen .navLabel {
+    display: inline;
+  }
+
+  .sidebarOpen .navItem {
+    justify-content: flex-start;
+  }
+
+  .toggleBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    background-color: var(--color-bg-main, #0a0a0a);
+    border: 1px solid var(--color-surface, #333333);
+    color: var(--color-white, #ffffff);
+    cursor: pointer;
+    z-index: 950; /* acima do drawer, funciona como botão de fechar também */
+    transition: left 0.25s ease, background-color 0.2s ease;
+  }
+
+  .toggleBtn:hover {
+    background-color: var(--color-surface-light, rgba(255, 255, 255, 0.05));
+  }
+
+  .overlay {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(2px);
+    z-index: 850;
+  }
+}
+
+@media (max-width: 380px) {
+  .sidebarOpen {
+    width: 200px;
+  }
 }

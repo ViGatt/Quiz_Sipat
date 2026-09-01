@@ -9,12 +9,7 @@
 
 /* --- CABEÇALHO --- */
 .header {
-  width: 100%;
-  max-width: 1200px;
-  display: flex;
-  align-items: center;
-  margin-bottom: 2rem;
-  position: relative;
+  padding: 0 0.5rem;
 }
 
 .backButton {
@@ -38,11 +33,10 @@
 }
 
 .title {
-  flex: 1;
-  text-align: center;
-  font-size: 1.2rem;
-  font-weight: 600;
-  color: var(--color-white);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 0 3rem;
 }
 
 /* --- GRID PRINCIPAL --- */
@@ -394,15 +388,109 @@
   box-shadow: 0 8px 25px rgba(21, 168, 224, 0.4);
 }
 
+/* --- AJUSTES GERAIS MOBILE --- */
 @media (max-width: 768px) {
-  .instructionsCard {
-    padding: 2.5rem 1.5rem;
+  .layout {
+    padding: 1rem;
   }
-  .instructionsTitle {
-    font-size: 1.8rem;
+
+  .header {
+    margin-bottom: 1.5rem;
   }
-  .instructionsList {
+
+  .title {
     font-size: 1rem;
+    padding: 0 2.8rem;
+  }
+
+  .backButton {
+    width: 38px;
+    height: 38px;
+  }
+
+  .mainContent {
+    gap: 1.25rem;
+  }
+
+  .questionCard {
+    padding: 1.25rem;
+    gap: 1.25rem;
+    border-radius: 12px;
+  }
+
+  .questionMeta {
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    justify-content: flex-start;
+  }
+
+  .badgePoints,
+  .badgeDifficulty {
+    padding: 0.35rem 0.8rem;
+    font-size: 0.8rem;
+  }
+
+  .timer {
+    font-size: 1rem;
+    order: 3; /* joga o tempo pra segunda linha do wrap se precisar */
+  }
+
+  .questionText {
+    font-size: 1.25rem;
+  }
+
+  .optionBtn {
+    padding: 1rem;
+    gap: 1rem;
+  }
+
+  .optionText {
+    font-size: 0.95rem;
+  }
+
+  .actionFooter {
+    flex-direction: column-reverse;
+    gap: 0.75rem;
+  }
+
+  .btnSkip,
+  .btnNext {
+    width: 100%;
+    justify-content: center;
+    padding: 0.9rem;
+  }
+
+  .statusCard {
+    padding: 1.25rem;
+    gap: 1rem;
+  }
+
+  /* Painel de status vira uma linha horizontal no mobile em vez de cards empilhados */
+  .statusCard {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .statusTitle {
+    width: 100%;
+    margin-bottom: 0;
+  }
+
+  .statusItem {
+    flex: 1;
+    min-width: 100px;
+    padding: 0.8rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .questionMeta {
+    justify-content: space-between;
+  }
+
+  .badgeDifficulty {
+    display: none; 
   }
 }
 
