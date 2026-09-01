@@ -2,18 +2,21 @@
   display: flex;
   min-height: 100vh;
   background-color: var(--color-bg-secondary);
+  overflow-x: hidden;
 }
 
 .mainContent {
   flex: 1;
   padding: 2.5rem 3rem;
   overflow-y: auto;
+  overflow-x: hidden;
   max-width: 1300px;
   margin: 0 auto;
   width: 100%;
   display: flex;
   flex-direction: column;
   gap: 2rem;
+  box-sizing: border-box;
 }
 
 /* --- HEADER --- */
@@ -21,15 +24,19 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
 .headerLeft {
   display: flex;
   align-items: center;
   gap: 1.5rem;
+  min-width: 0; /* permite que o texto encolha/quebre em vez de empurrar */
 }
 
 .backButton {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -43,25 +50,18 @@
   transition: background-color 0.2s;
 }
 
-.backButton:hover {
-  background-color: var(--color-surface);
-}
-
 .title {
   font-size: 1.5rem;
   font-weight: 700;
   color: var(--color-white);
   margin-bottom: 0.2rem;
-}
-
-.subtitle {
-  color: var(--color-text-dark);
-  font-size: 0.9rem;
+  word-break: break-word;
 }
 
 .headerActions {
   display: flex;
   gap: 1rem;
+  flex-wrap: wrap;
 }
 
 /* --- BOTÕES GERAIS --- */
@@ -145,8 +145,14 @@
 /* --- MIDDLE GRID --- */
 .middleGrid {
   display: grid;
-  grid-template-columns: 3fr 2fr; /* Tabela um pouco mais larga que as barras */
+  grid-template-columns: 3fr 2fr;
   gap: 1.5rem;
+}
+
+@media (max-width: 900px) {
+  .middleGrid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .panel {
@@ -235,6 +241,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
 /* --- ESTILOS DOS MODAIS (POP-UPS) --- */
@@ -392,4 +400,23 @@
   color: var(--color-text-dark);
   font-size: 0.9rem;
   max-width: 250px;
+}
+
+@media (max-width: 640px) {
+  .mainContent {
+    padding: 1.5rem 1rem;
+  }
+
+  .headerActions {
+    width: 100%;
+  }
+
+  .headerActions button {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .panel {
+    padding: 1.25rem;
+  }
 }
