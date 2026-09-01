@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { 
-  Search, Upload, UserCheck, Key, Ticket, 
+  Search, Upload, UserCheck, Ticket, 
   AlertCircle, CheckCircle, FileText, Loader2
 } from 'lucide-react';
 import { Sidebar } from '../../components/Sidebar/Sidebar';
@@ -49,7 +49,6 @@ useEffect(() => {
   );
 
   // --- LÓGICA DO CHECK-IN PRESENCIAL ---
-  // --- LÓGICA DO CHECK-IN PRESENCIAL ---
   const handleCheckIn = async (id: string, nome: string, cpf: string) => {
     if (!window.confirm(`Confirmar presença presencial para ${nome} no dia de hoje?`)) {
       return;
@@ -77,14 +76,6 @@ useEffect(() => {
       // Pega a mensagem de erro específica do Back-end, se houver
       const errorMessage = error.response?.data?.detail || "Erro de conexão com o servidor ao tentar fazer o check-in.";
       alert(`Erro: ${errorMessage}`);
-    }
-  };
-
-  // --- LÓGICA DE RESET DE SENHA (Apenas visual por enquanto) ---
-  const handleResetPassword = (nome: string, cpf: string) => {
-    if (window.confirm(`Redefinir a senha de ${nome}? A nova senha será os 4 primeiros dígitos do CPF.`)) {
-      const novaSenha = cpf.replace(/\D/g, '').substring(0, 4);
-      alert(`Senha redefinida com sucesso! A nova senha provisória é: ${novaSenha}`);
     }
   };
 
