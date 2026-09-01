@@ -127,7 +127,7 @@ export function TakeQuiz() {
     iniciarEBuscarQuiz();
   }, [id, usuario, navigate, showInstructions]);
 
-  // Cronômetro (pausa se o modal de feedback estiver aberto)
+  // Cronômetro (pausa se o feedback estiver visível)
   useEffect(() => {
     if (timeLeft > 0 && !loading && !showInstructions && !quizFinished && !feedback && questions.length > 0) {
       const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
@@ -167,7 +167,7 @@ export function TakeQuiz() {
       const isGameOver = newLives === 0;
       const isLastQuestion = currentQuestionIndex >= questions.length - 1;
 
-      // Se resultado imediato está ativo, abre o modal de feedback
+      // Se resultado imediato está ativo, mostra o feedback inline (tela colorida)
       if (immediateResult) {
         setFeedback({
           isCorrect: acertou,
@@ -253,7 +253,7 @@ export function TakeQuiz() {
 
   if (questions.length === 0) return null;
 
-  // --- MODAL DE FINALIZAÇÃO DO JOGO ---
+  // --- TELA DE FINALIZAÇÃO DO JOGO ---
   if (quizFinished) {
     const userPercentage = (correctCount / questions.length) * 100;
     const isWinner = userPercentage >= passingScore; 
@@ -309,27 +309,13 @@ export function TakeQuiz() {
   const currentQuestion = questions[currentQuestionIndex];
   const progressPercentage = ((currentQuestionIndex + 1) / questions.length) * 100;
 
+  // Classe que tinge a área da questão de vermelho/verde quando há feedback
+  const quizAreaFeedbackClass = feedback
+    ? (feedback.isCorrect ? styles.quizAreaCorrect : styles.quizAreaIncorrect)
+    : '';
+
   return (
     <div className={styles.layout}>
-      
-      {/* MODAL DE FEEDBACK IMEDIATO */}
-      {feedback && (
-        <div className={styles.resultOverlay} style={{ zIndex: 2000 }}>
-          <div className={styles.feedbackCard} style={{ borderTop: `4px solid ${feedback.isCorrect ? '#22c55e' : '#ef4444'}` }}>
-            <div className={styles.feedbackHeader} style={{ color: feedback.isCorrect ? '#22c55e' : '#ef4444' }}>
-              {feedback.isCorrect ? <CheckCircle2 size={40} /> : <XCircle size={40} />}
-              <h2>{feedback.isCorrect ? 'Resposta Certa!' : 'Resposta Errada!'}</h2>
-            </div>
-            <p className={styles.feedbackMessage}>{feedback.text}</p>
-            <button 
-              className={styles.btnPrimary} 
-              onClick={() => proceedToNext(feedback.isGameOver, feedback.isLastQuestion)}
-            >
-              {feedback.isGameOver || feedback.isLastQuestion ? 'Ver Resultado Final' : 'Próxima Questão'} <ChevronRight size={18} />
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* CABEÇALHO */}
       <header className={styles.header}>
@@ -340,7 +326,7 @@ export function TakeQuiz() {
       </header>
 
       <main className={styles.mainContent}>
-        <section className={styles.quizArea}>
+        <section className={`${styles.quizArea} ${quizAreaFeedbackClass}`}>
           
           <div className={styles.progressHeader}>
             <span>Questão {String(currentQuestionIndex + 1).padStart(2, '0')} de {questions.length}</span>
@@ -369,32 +355,69 @@ export function TakeQuiz() {
             {currentQuestion.options.map((opt, index) => {
               const visualLetter = ['A', 'B', 'C', 'D'][index]; // Letra sequencial para a tela
               const isSelected = selectedOption === opt.id;
+
+              // Depois de responder, colore só a alternativa escolhida (certa/errada)
+              let optionStateClass = '';
+              if (feedback && isSelected) {
+                optionStateClass = feedback.isCorrect ? styles.optionCorrect : styles.optionIncorrect;
+              } else if (isSelected) {
+                optionStateClass = styles.optionSelected;
+              }
               
               return (
                 <button 
                   key={opt.id} 
-                  className={`${styles.optionBtn} ${isSelected ? styles.optionSelected : ''}`}
+                  className={`${styles.optionBtn} ${optionStateClass}`}
                   onClick={() => setSelectedOption(opt.id)} // Envia a letra ORIGINAL pro backend!
                   disabled={submitting || feedback !== null}
                 >
                   <span className={styles.optionLetter}>{visualLetter}</span>
                   <span className={styles.optionText}>{opt.text}</span>
+                  {feedback && isSelected && (
+                    feedback.isCorrect
+                      ? <CheckCircle2 size={20} className={styles.optionResultIcon} />
+                      : <XCircle size={20} className={styles.optionResultIcon} />
+                  )}
                 </button>
               );
             })}
           </div>
 
+          {/* FEEDBACK INLINE: aparece logo abaixo das alternativas, sem pop-up */}
+          {feedback && (
+            <div className={`${styles.inlineFeedback} ${feedback.isCorrect ? styles.inlineFeedbackCorrect : styles.inlineFeedbackIncorrect}`}>
+              <div className={styles.inlineFeedbackHeader}>
+                {feedback.isCorrect ? <CheckCircle2 size={22} /> : <XCircle size={22} />}
+                <span>{feedback.isCorrect ? 'Resposta Certa!' : 'Resposta Errada!'}</span>
+              </div>
+              <p className={styles.inlineFeedbackText}>{feedback.text}</p>
+            </div>
+          )}
+
           <div className={styles.actionFooter}>
-            <button className={styles.btnSkip} disabled={submitting || feedback !== null}>
-              <Flag size={18} /> Pular
-            </button>
-            <button 
-              className={styles.btnNext} 
-              onClick={handleNextQuestion}
-              disabled={selectedOption === null || submitting || feedback !== null}
-            >
-              {submitting ? 'Enviando...' : 'Confirmar Resposta'} <ChevronRight size={18} />
-            </button>
+            {!feedback && (
+              <button className={styles.btnSkip} disabled={submitting}>
+                <Flag size={18} /> Pular
+              </button>
+            )}
+
+            {!feedback ? (
+              <button 
+                className={styles.btnNext} 
+                onClick={handleNextQuestion}
+                disabled={selectedOption === null || submitting}
+              >
+                {submitting ? 'Enviando...' : 'Confirmar Resposta'} <ChevronRight size={18} />
+              </button>
+            ) : (
+              <button 
+                className={`${styles.btnNext} ${feedback.isCorrect ? styles.btnNextCorrect : styles.btnNextIncorrect}`}
+                onClick={() => proceedToNext(feedback.isGameOver, feedback.isLastQuestion)}
+                style={{ marginLeft: 'auto' }}
+              >
+                {feedback.isGameOver || feedback.isLastQuestion ? 'Ver Resultado Final' : 'Próxima Questão'} <ChevronRight size={18} />
+              </button>
+            )}
           </div>
         </section>
 

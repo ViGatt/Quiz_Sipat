@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Plus, BookOpen, Clock, Users, MoreVertical } from 'lucide-react';
+import { Search, Plus, BookOpen, Clock, Users } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Sidebar } from '../../components/Sidebar/Sidebar';
 import { api } from '../../services/api';
