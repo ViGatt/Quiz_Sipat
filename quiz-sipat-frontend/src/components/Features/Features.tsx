@@ -3,11 +3,11 @@ import styles from './Features.module.css';
 
 export function Features() {
   const features = [
-    { id: 1, title: 'Aprendizado personalizado', desc: 'Testes adaptativos que se ajustam ao seu nível de conhecimento.', icon: <BookOpen size={24} color="var(--color-accent-purple)" /> },
-    { id: 2, title: 'Sorteio de premiação', desc: 'Ganhe pontos, medalhas e recompensas reais por suas conquistas.', icon: <Gift size={24} color="#FF6B6B" /> },
-    { id: 3, title: 'Dashboard de Acompanhamento', desc: 'Ferramentas abrangentes para educadores criarem e gerenciarem quizzes.', icon: <BarChart2 size={24} color="var(--color-accent-blue)" /> },
-    { id: 4, title: 'Monitoramento de evolução', desc: 'Testes adaptativos que se ajustam ao seu nível de conhecimento e ritmo.', icon: <TrendingUp size={24} color="var(--color-secondary)" /> },
-    { id: 5, title: 'Dashboard Competitivo', desc: 'Compita com outros jogadores e suba no ranking em várias categorias.', icon: <Trophy size={24} color="#FFC107" /> },
+    { id: 1, title: 'Aprendizado personalizado', desc: 'Testes para consolidar seu conhecimento e aprendizado', icon: <BookOpen size={24} color="var(--color-accent-purple)" /> },
+    { id: 2, title: 'Sorteio de premiação', desc: 'Ganhe pontos e números da sorte para concorrer a prêmios', icon: <Gift size={24} color="#FF6B6B" /> },
+    { id: 3, title: 'Dashboard de Acompanhamento', desc: 'Acompanhe o resultado dos quizzes e seu desempenho', icon: <BarChart2 size={24} color="var(--color-accent-blue)" /> },
+    { id: 4, title: 'Monitoramento de evolução', desc: 'Você poderá acompanhar sua trajetória diária de desenvolvimento', icon: <TrendingUp size={24} color="var(--color-secondary)" /> },
+    { id: 5, title: 'Dashboard Competitivo', desc: 'Compita com outros jogadores e suba no ranking geral de pontuação', icon: <Trophy size={24} color="#FFC107" /> },
     { id: 6, title: 'Amigável a dispositivo celular', desc: 'Acesse quizzes a qualquer hora, em qualquer lugar e em qualquer dispositivo.', icon: <Smartphone size={24} color="var(--color-text-muted)" /> },
   ];
 

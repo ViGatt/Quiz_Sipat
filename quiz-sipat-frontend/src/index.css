@@ -62,3 +62,13 @@ html, body {
 *, *::before, *::after {
   box-sizing: border-box;
 }
+
+html, body, main, .mainContent {
+  scroll-behavior: smooth;
+}
+
+.mainContent {
+  flex: 1;
+  overflow-y: auto;
+  scroll-behavior: smooth; 
+}
