@@ -69,6 +69,76 @@ export function QuizDetails() {
     user.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+// =========================================
+  // FUNÇÃO DE EXPORTAÇÃO PARA CSV
+  // =========================================
+  const handleExportData = () => {
+    const htmlContent = `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+      <head><meta charset="UTF-8"></head>
+      <body>
+        <h2>Métricas Gerais do Quiz</h2>
+        <table border="1" style="border-collapse: collapse;">
+          <tr style="background-color: #6366f1; color: white; font-weight: bold;">
+            <th style="padding: 8px;">Métrica</th>
+            <th style="padding: 8px;">Valor</th>
+          </tr>
+          <tr><td style="padding: 6px;">Título</td><td style="padding: 6px;">${quizInfo.title}</td></tr>
+          <tr><td style="padding: 6px;">Descrição</td><td style="padding: 6px;">${quizInfo.desc}</td></tr>
+          <tr><td style="padding: 6px;">Total Completos</td><td style="padding: 6px;">${quizInfo.totalCompletos}</td></tr>
+          <tr><td style="padding: 6px;">Taxa de Aprovação</td><td style="padding: 6px;">${quizInfo.taxaAprovacao}</td></tr>
+          <tr><td style="padding: 6px;">Tempo Limite</td><td style="padding: 6px;">${quizInfo.tempoLimite}</td></tr>
+          <tr><td style="padding: 6px;">Tempo Médio</td><td style="padding: 6px;">${quizInfo.tempoMedio}</td></tr>
+          <tr><td style="padding: 6px;">Pontuação Média</td><td style="padding: 6px;">${quizInfo.pontuacaoMedia}</td></tr>
+          <tr><td style="padding: 6px;">Maior Pontuação</td><td style="padding: 6px;">${quizInfo.maiorPontuacao}</td></tr>
+        </table>
+        <br/>
+        <h2>Desempenho por Questão</h2>
+        <table border="1" style="border-collapse: collapse;">
+          <tr style="background-color: #6366f1; color: white; font-weight: bold;">
+            <th style="padding: 8px;">Questão</th>
+            <th style="padding: 8px;">Taxa de Acerto</th>
+          </tr>
+          ${questionPerformance.map(q => `
+            <tr>
+              <td style="padding: 6px;">${q.question}</td>
+              <td style="padding: 6px;">${q.correctRate}%</td>
+            </tr>
+          `).join('')}
+        </table>
+        <br/>
+        <h2>Resultados dos Participantes</h2>
+        <table border="1" style="border-collapse: collapse;">
+          <tr style="background-color: #6366f1; color: white; font-weight: bold;">
+            <th style="padding: 8px;">Nome</th>
+            <th style="padding: 8px;">Pontuação</th>
+            <th style="padding: 8px;">Tempo Gasto</th>
+            <th style="padding: 8px;">Data de Conclusão</th>
+          </tr>
+          ${recentCompletions.map(u => `
+            <tr>
+              <td style="padding: 6px;">${u.name}</td>
+              <td style="padding: 6px;">${u.score}</td>
+              <td style="padding: 6px;">${u.time}</td>
+              <td style="padding: 6px;">${u.date}</td>
+            </tr>
+          `).join('')}
+        </table>
+      </body>
+      </html>
+    `;
+
+    const blob = new Blob([htmlContent], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `Relatorio_${quizInfo.title.replace(/\s+/g, '_')}.xls`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   if (loading) {
     return (
       <div className={styles.layout}>
@@ -111,8 +181,8 @@ export function QuizDetails() {
               <Share2 size={16} /> Compartilhar
             </button>
             
-            <button className={styles.btnPrimary}>
-              <Download size={16} /> Exportar Dados
+            <button className={styles.btnPrimary} onClick={handleExportData}>
+            <Download size={16} /> Exportar Dados
             </button>
           </div>
         </header>
