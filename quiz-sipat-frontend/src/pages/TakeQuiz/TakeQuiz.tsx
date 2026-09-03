@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ChevronLeft, Flag, ChevronRight, Clock, Heart, AlertCircle, Trophy, Target, BarChart2, ArrowLeft, CheckCircle2, XCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Clock, Heart, AlertCircle, Trophy, Target, BarChart2, ArrowLeft, CheckCircle2, XCircle } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/api';

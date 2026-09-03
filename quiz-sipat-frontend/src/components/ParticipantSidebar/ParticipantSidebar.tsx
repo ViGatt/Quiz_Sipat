@@ -33,7 +33,7 @@ export function ParticipantSidebar() {
         {isOpen ? <X size={22} /> : <Menu size={22} />}
       </button>
 
-      {/* Overlay escuro no mobile quando o menu está aberto */}
+      {/* Overlay escuro no mobile quando o menu está aberto */} 
       {isOpen && (
         <div
           className={styles.overlay}
@@ -44,7 +44,9 @@ export function ParticipantSidebar() {
 
       <aside className={`${styles.sidebar} ${isOpen ? styles.sidebarOpen : styles.sidebarCollapsed}`}>
         <div className={styles.logoContainer}>
-          <img src={logoImg} alt="SIPAT Logo" className={styles.logo} />
+          <Link to="/" className={styles.logoContainer}>
+  <img src={logoImg} alt="SIPAT Logo" className={styles.logo} />
+</Link>
         </div>
 
         <nav className={styles.nav}>
