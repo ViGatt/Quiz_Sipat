@@ -395,11 +395,6 @@ export function TakeQuiz() {
           )}
 
           <div className={styles.actionFooter}>
-            {!feedback && (
-              <button className={styles.btnSkip} disabled={submitting}>
-                <Flag size={18} /> Pular
-              </button>
-            )}
 
             {!feedback ? (
               <button 
