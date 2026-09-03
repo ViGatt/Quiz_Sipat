@@ -44,7 +44,7 @@ export function Hero() {
         </motion.div>
         
         <motion.h1 variants={itemVariants} className={styles.title}>
-          Aprenda, Responda, <br/><span className={styles.highlight}>Ganhe Prêmios</span>
+          Não existe tarefa tão urgente que valha o <br/><span className={styles.highlight}>risco de não voltar para casa</span>
         </motion.h1>
         
         <motion.p variants={itemVariants} className={styles.subtitle}>

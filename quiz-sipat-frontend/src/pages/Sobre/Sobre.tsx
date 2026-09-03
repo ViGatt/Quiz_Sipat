@@ -55,8 +55,8 @@ export function Sobre() {
         <header className={styles.heroSection}>
           <span className={styles.badge}>SIPAT RIC AMBIENTAL</span>
           <h1 className={styles.title}>
-            Segurança em Primeiro Lugar, <br />
-            <span className={styles.titleHighlight}>Sempre.</span>
+            Não existe tarefa tão urgente que valha o <br />
+            <span className={styles.titleHighlight}>risco de não voltar para casa.</span>
           </h1>
           <p className={styles.subtitle}>
             A Semana Interna de Prevenção de Acidentes do Trabalho é mais do que um compromisso legal: é a garantia de que cada colaborador volte para casa em segurança todos os dias.
