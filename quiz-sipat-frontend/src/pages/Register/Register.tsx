@@ -95,7 +95,7 @@ export function Register() {
         if (updatedData.is_comissao) {
           navigate('/dashboard');
         } else {
-          navigate('/take-quiz/1');
+          navigate('/meus-quizzes')
         }
       }, 3500);
 

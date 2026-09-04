@@ -6,12 +6,11 @@ import styles from './ShareQuiz.module.css';
 
 export function ShareQuiz() {
   const navigate = useNavigate();
-  const { id } = useParams(); // Pega o ID do quiz na URL (ex: /share-quiz/1)
+  const { id } = useParams(); 
   
   const [copied, setCopied] = useState(false);
 
 
-  // O caminho '/take-quiz/' ou '/meus-quizzes/' deve apontar para a rota real de onde o usuário responde o quiz.
   const quizLink = `${window.location.origin}/take-quiz/${id || '1'}`;
 
   const handleCopyLink = () => {
