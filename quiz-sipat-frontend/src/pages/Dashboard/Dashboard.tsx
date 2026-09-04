@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, BookOpen, Calendar, Users, BarChart2, Medal, ChevronRight, Home, Download } from 'lucide-react';
+import { Plus, BookOpen, Calendar, Users, BarChart2, Medal, ChevronRight, Home, Download, Maximize2, X } from 'lucide-react';
 import { Sidebar } from '../../components/Sidebar/Sidebar';
 import styles from './Dashboard.module.css';
 import { Link, useNavigate } from 'react-router-dom';
@@ -33,110 +33,104 @@ export function Dashboard() {
 
   const [loading, setLoading] = useState(true);
   const [resumo, setResumo] = useState<RelatorioGeral | null>(null);
-  const [ranking, setRanking] = useState<TopParticipante[]>([]);
+  const [rankingCompleto, setRankingCompleto] = useState<TopParticipante[]>([]);
   const [quizzes, setQuizzes] = useState<QuizRecente[]>([]);
 
+  // Estados de Controle de Expansão e Modal
+  const [mostrarTodosParticipantes, setMostrarTodosParticipantes] = useState(false);
+  const [modalRankingAberto, setModalRankingAberto] = useState(false);
+
   useEffect(() => {
-  const carregarDashboard = async () => {
-    try {
-      setLoading(true);
-      
-      // Executa as duas requisições sem barra no final e de forma independente
-      const [resQuizzes, resRelatorio] = await Promise.allSettled([
-        api.get('/quiz/'),
-        api.get('/relatorios/geral')
-      ]);
-
-      // --- 1. PROCESSA QUIZZES (EXIBIDOS EM "EVENTOS RECENTES") ---
-      if (resQuizzes.status === 'fulfilled') {
-        const data = resQuizzes.value.data;
-        // Verifica se a API retornou um array direto ou um objeto { quizzes: [...] }
-        const listaQuizzes = Array.isArray(data) ? data : (data?.quizzes || []);
-        setQuizzes(listaQuizzes);
-      } else {
-        console.error("Erro ao carregar quizzes do dashboard:", resQuizzes.reason);
-      }
-
-      // --- 2. PROCESSA RELATÓRIOS E RANKING ---
-      if (resRelatorio.status === 'fulfilled') {
-        const data = resRelatorio.value.data;
-        const resumoBanco = data?.resumo || {};
+    const carregarDashboard = async () => {
+      try {
+        setLoading(true);
         
-        setResumo({
-          total_colaboradores: Number(resumoBanco.total_cadastros || 0), 
-          taxa_engajamento: Number(resumoBanco.taxa_engajamento || 0),
-          total_online: Number(resumoBanco.total_online || 0),
-          total_presenciais: Number(resumoBanco.total_presencial || 0),
-        });
+        const [resQuizzes, resRelatorio] = await Promise.allSettled([
+          api.get('/quiz/'),
+          api.get('/relatorios/geral')
+        ]);
 
-        // Lógica do Ranking (Mantida idêntica)
-        const listaDesempenho = data?.desempenho || [];
-        const rankingAgrupado: Record<string, any> = {};
+        if (resQuizzes.status === 'fulfilled') {
+          const data = resQuizzes.value.data;
+          const listaQuizzes = Array.isArray(data) ? data : (data?.quizzes || []);
+          setQuizzes(listaQuizzes);
+        } else {
+          console.error("Erro ao carregar quizzes do dashboard:", resQuizzes.reason);
+        }
 
-        listaDesempenho.forEach((item: any) => {
-          const nomePessoa = item.nome_completo || item.nome_colaborador || item.nome || item.colaborador || 'Participante';
-          const chaveAgrupamento = item.cpf || nomePessoa;
+        if (resRelatorio.status === 'fulfilled') {
+          const data = resRelatorio.value.data;
+          const resumoBanco = data?.resumo || {};
+          
+          setResumo({
+            total_colaboradores: Number(resumoBanco.total_cadastros || 0), 
+            taxa_engajamento: Number(resumoBanco.taxa_engajamento || 0),
+            total_online: Number(resumoBanco.total_online || 0),
+            total_presenciais: Number(resumoBanco.total_presencial || 0),
+          });
 
-          let valorBruto: any = 0;
-          Object.keys(item).forEach(key => {
-            const k = key.toLowerCase();
-            if (k.includes('pont') || k.includes('nota') || k.includes('acert') || k.includes('score')) {
-              valorBruto = item[key];
+          const listaDesempenho = data?.desempenho || [];
+          const rankingAgrupado: Record<string, any> = {};
+
+          listaDesempenho.forEach((item: any) => {
+            const nomePessoa = item.nome_completo || item.nome_colaborador || item.nome || item.colaborador || 'Participante';
+            const chaveAgrupamento = item.cpf || nomePessoa;
+
+            let valorBruto: any = 0;
+            Object.keys(item).forEach(key => {
+              const k = key.toLowerCase();
+              if (k.includes('pont') || k.includes('nota') || k.includes('acert') || k.includes('score')) {
+                valorBruto = item[key];
+              }
+            });
+            
+            let pontos = Number(valorBruto);
+            if (isNaN(pontos)) {
+              pontos = parseFloat(String(valorBruto).replace(',', '.').replace(/[^\d.-]/g, '')) || 0;
+            }
+            
+            const diaId = item.dia_sipat_id || item.quiz_id || null;
+
+            if (!rankingAgrupado[chaveAgrupamento]) {
+              rankingAgrupado[chaveAgrupamento] = {
+                cpf: item.cpf || '',
+                nome_colaborador: nomePessoa,
+                total_pontos: 0,
+                dias_respondidos: new Set() 
+              };
+            }
+
+            rankingAgrupado[chaveAgrupamento].total_pontos += pontos;
+            
+            if (diaId) {
+              rankingAgrupado[chaveAgrupamento].dias_respondidos.add(diaId);
             }
           });
-          
-          let pontos = Number(valorBruto);
-          if (isNaN(pontos)) {
-            pontos = parseFloat(String(valorBruto).replace(',', '.').replace(/[^\d.-]/g, '')) || 0;
-          }
-          
-          const diaId = item.dia_sipat_id || item.quiz_id || null;
 
-          if (!rankingAgrupado[chaveAgrupamento]) {
-            rankingAgrupado[chaveAgrupamento] = {
-              cpf: item.cpf || '',
-              nome_colaborador: nomePessoa,
-              total_pontos: 0,
-              dias_respondidos: new Set() 
-            };
-          }
+          const rankingFinal: TopParticipante[] = Object.values(rankingAgrupado).map((part: any) => ({
+            cpf: part.cpf,
+            nome_colaborador: part.nome_colaborador,
+            total_pontos: part.total_pontos,
+            quizzes_respondidos: part.dias_respondidos.size > 0 ? part.dias_respondidos.size : 1
+          }));
 
-          rankingAgrupado[chaveAgrupamento].total_pontos += pontos;
-          
-          if (diaId) {
-            rankingAgrupado[chaveAgrupamento].dias_respondidos.add(diaId);
-          }
-        });
+          const rankingOrdenado = rankingFinal.sort((a, b) => b.total_pontos - a.total_pontos);
+          setRankingCompleto(rankingOrdenado);
 
-        const rankingFinal: TopParticipante[] = Object.values(rankingAgrupado).map((part: any) => ({
-          cpf: part.cpf,
-          nome_colaborador: part.nome_colaborador,
-          total_pontos: part.total_pontos,
-          quizzes_respondidos: part.dias_respondidos.size > 0 ? part.dias_respondidos.size : 1
-        }));
+        } else {
+          console.error("Erro ao carregar relatórios do dashboard:", resRelatorio.reason);
+        }
 
-        const top5 = rankingFinal
-          .sort((a, b) => b.total_pontos - a.total_pontos)
-          .slice(0, 5);
-
-        setRanking(top5);
-      } else {
-        console.error("Erro ao carregar relatórios do dashboard:", resRelatorio.reason);
+      } catch (err) {
+        console.error("Erro crítico ao carregar dashboard:", err);
+      } finally {
+        setLoading(false);
       }
+    };
 
-    } catch (err) {
-      console.error("Erro crítico ao carregar dashboard:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  carregarDashboard();
-}, []);
+    carregarDashboard();
+  }, []);
   
-  // =========================================
-  // FUNÇÃO DE EXPORTAÇÃO DO DASHBOARD (XLS)
-  // =========================================
   const handleExportDashboard = () => {
     const htmlContent = `
       <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
@@ -155,7 +149,7 @@ export function Dashboard() {
         </table>
         <br/>
         
-        <h2>Ranking - Top Participantes</h2>
+        <h2>Ranking - Participantes</h2>
         <table border="1" style="border-collapse: collapse;">
           <tr style="background-color: #6366f1; color: white; font-weight: bold;">
             <th style="padding: 8px;">Posição</th>
@@ -163,7 +157,7 @@ export function Dashboard() {
             <th style="padding: 8px;">Quizzes Respondidos</th>
             <th style="padding: 8px;">Pontuação Total</th>
           </tr>
-          ${ranking.map((part, index) => {
+          ${rankingCompleto.map((part, index) => {
             const nomeParticipante = part.nome_colaborador || part.nome || part.nome_completo || part.colaborador || `CPF ${part.cpf}`;
             return `
               <tr>
@@ -201,7 +195,6 @@ export function Dashboard() {
     const link = document.createElement("a");
     link.href = url;
     
-    // Pega a data atual para colocar no nome do arquivo (ex: Relatorio_Dashboard_SIPAT_15-10-2023.xls)
     const dataAtual = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
     link.download = `Relatorio_Dashboard_SIPAT_${dataAtual}.xls`;
     
@@ -222,24 +215,23 @@ export function Dashboard() {
             <p className={styles.subtitle}>Bem vindo(a) de volta! Veja o que está acontecendo nos Quizzes</p>
           </div>
           
-                  <div className={styles.headerActions}>
-          <Link to="/" className={styles.homeIconBtn} title="Voltar à Landing Page">
-            <Home size={20} />
-          </Link>
+          <div className={styles.headerActions}>
+            <Link to="/" className={styles.homeIconBtn} title="Voltar à Landing Page">
+              <Home size={20} />
+            </Link>
           
-          {/* Novo Botão de Exportação */}
-          <button 
-            className={styles.btnOutline} 
-            onClick={handleExportDashboard}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-          >
-            <Download size={20} /> Exportar Relatório
-          </button>
-          
-          <Link to="/create-quiz" className={styles.btnPrimary}>
-            <Plus size={20} /> Criar Novo Quiz
-          </Link>
-        </div>
+            <button 
+              className={styles.btnOutline} 
+              onClick={handleExportDashboard}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+            >
+              <Download size={20} /> Exportar Relatório
+            </button>
+            
+            <Link to="/create-quiz" className={styles.btnPrimary}>
+              <Plus size={20} /> Criar Novo Quiz
+            </Link>
+          </div>
         </header>
 
         {loading ? (
@@ -313,28 +305,85 @@ export function Dashboard() {
                 </div>
               </div>
 
-              <div className={styles.panel}>
-                <h3 className={styles.panelTitle}>Top Participantes</h3>
-                <p className={styles.panelSubtitle}>Ranking com maior pontuação</p>
+              {/* PAINEL DE TOP PARTICIPANTES */}
+              <div className={styles.panel} style={{ display: 'flex', flexDirection: 'column' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div>
+                    <h3 className={styles.panelTitle}>Top Participantes</h3>
+                    <p className={styles.panelSubtitle}>Ranking com maior pontuação</p>
+                  </div>
+                  
+                  {/* BOTÕES DE AÇÃO DO RANKING */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                    <button 
+                      onClick={() => setModalRankingAberto(true)}
+                      title="Expandir em Tela Cheia"
+                      style={{
+                        background: 'rgba(99, 102, 241, 0.1)',
+                        border: 'none',
+                        color: 'var(--color-primary)',
+                        padding: '6px 10px',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        fontSize: '0.85rem',
+                        fontWeight: '600'
+                      }}
+                    >
+                      <Maximize2 size={16} /> Expandir
+                    </button>
+
+                    {rankingCompleto.length > 5 && (
+                      <button 
+                        onClick={() => setMostrarTodosParticipantes(!mostrarTodosParticipantes)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: 'var(--color-primary)',
+                          cursor: 'pointer',
+                          fontSize: '0.85rem',
+                          fontWeight: 'bold',
+                          textDecoration: 'underline'
+                        }}
+                      >
+                        {mostrarTodosParticipantes ? 'Ver Menos' : 'Ver Todos'}
+                      </button>
+                    )}
+                  </div>
+                </div>
                 
-                <div className={styles.participantList}>
-                  {ranking && ranking.length > 0 ? (
-                    ranking.map((part, index) => (
+                {/* LISTA DE PARTICIPANTES NO CARD */}
+                <div 
+                  className={styles.participantList}
+                  style={{
+                    maxHeight: mostrarTodosParticipantes ? '380px' : 'auto', 
+                    overflowY: mostrarTodosParticipantes ? 'auto' : 'visible', 
+                    paddingRight: mostrarTodosParticipantes ? '6px' : '0', 
+                    marginTop: '1rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '1rem'
+                  }}
+                >
+                  {rankingCompleto && rankingCompleto.length > 0 ? (
+                    (mostrarTodosParticipantes ? rankingCompleto : rankingCompleto.slice(0, 5)).map((part, index) => (
                       <div key={part.cpf || index} className={styles.participantItem}>
                         <div className={styles.participantRank}>{index + 1}</div>
                         <div className={styles.participantAvatar}></div>
                         <div className={styles.participantInfo}>
-                        <h4 style={{ textTransform: 'capitalize' }}>
-                          {(
-                            part.nome_colaborador || 
-                            part.nome || 
-                            part.nome_completo || 
-                            part.colaborador || 
-                            `CPF ${part.cpf}`
-                          ).toLowerCase()}
-                        </h4>
-  <span>{part.quizzes_respondidos || 0} Quizzes respondidos</span>
-</div>
+                          <h4 style={{ textTransform: 'capitalize' }}>
+                            {(
+                              part.nome_colaborador || 
+                              part.nome || 
+                              part.nome_completo || 
+                              part.colaborador || 
+                              `CPF ${part.cpf}`
+                            ).toLowerCase()}
+                          </h4>
+                          <span>{part.quizzes_respondidos || 0} Quizzes respondidos</span>
+                        </div>
                         <div className={styles.participantScore}>
                           <Medal size={16} className={styles.medalIcon} />
                           {part.total_pontos || 0}
@@ -391,12 +440,117 @@ export function Dashboard() {
                   <h4>Criar Novo Quiz</h4>
                   <p>Adicione questões, limite de tempo, entre outros</p>
                 </Link>
-
               </div>
             </div>
           </>
         )}
       </main>
+
+      {/* MODAL / POPUP DE TELA CHEIA PARA O RANKING COMPLETO */}
+      {modalRankingAberto && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          backgroundColor: 'rgba(0, 0, 0, 0.65)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 9999
+        }}>
+          <div style={{
+            backgroundColor: '#ffffff',
+            borderRadius: '16px',
+            width: '90%',
+            maxWidth: '800px',
+            maxHeight: '85vh',
+            display: 'flex',
+            flexDirection: 'column',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+            overflow: 'hidden'
+          }}>
+            {/* Cabeçalho do Modal */}
+            <div style={{
+              padding: '1.5rem',
+              borderBottom: '1px solid #e5e7eb',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <div>
+                <h2 style={{ margin: 0, fontSize: '1.4rem', color: '#1f2937' }}>Ranking Completo de Participantes</h2>
+                <p style={{ margin: '4px 0 0 0', fontSize: '0.9rem', color: '#6b7280' }}>
+                  Total de {rankingCompleto.length} colaborador(es) com pontuação registrada
+                </p>
+              </div>
+              <button 
+                onClick={() => setModalRankingAberto(false)}
+                style={{
+                  background: '#f3f4f6',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '36px',
+                  height: '36px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  color: '#4b5563'
+                }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Conteúdo com Scroll do Modal */}
+            <div style={{ padding: '1.5rem', overflowY: 'auto', flex: 1 }}>
+              {rankingCompleto.length > 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  {rankingCompleto.map((part, index) => (
+                    <div 
+                      key={part.cpf || index} 
+                      className={styles.participantItem}
+                      style={{
+                        padding: '12px 16px',
+                        backgroundColor: index < 3 ? 'rgba(99, 102, 241, 0.05)' : '#f9fafb',
+                        borderRadius: '8px',
+                        border: '1px solid #f3f4f6'
+                      }}
+                    >
+                      <div className={styles.participantRank} style={{ fontWeight: 'bold' }}>{index + 1}º</div>
+                      <div className={styles.participantInfo} style={{ flex: 1, marginLeft: '12px' }}>
+                        <h4 style={{ textTransform: 'capitalize', margin: 0, fontSize: '1rem', color: '#111827' }}>
+                          {(
+                            part.nome_colaborador || 
+                            part.nome || 
+                            part.nome_completo || 
+                            part.colaborador || 
+                            `CPF ${part.cpf}`
+                          ).toLowerCase()}
+                        </h4>
+                        <span style={{ fontSize: '0.85rem', color: '#6b7280' }}>
+                          {part.quizzes_respondidos || 0} Quizzes respondidos
+                        </span>
+                      </div>
+                      <div className={styles.participantScore} style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>
+                        <Medal size={18} className={styles.medalIcon} />
+                        {part.total_pontos || 0} pts
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p style={{ textAlign: 'center', color: '#6b7280', padding: '2rem 0' }}>
+                  Nenhum registro encontrado.
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
