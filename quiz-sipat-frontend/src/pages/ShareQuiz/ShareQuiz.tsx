@@ -10,7 +10,9 @@ export function ShareQuiz() {
   
   const [copied, setCopied] = useState(false);
 
-  const quizLink = `https://quizmaster.com/quizzes/q${id || '1'}`;
+
+  // O caminho '/take-quiz/' ou '/meus-quizzes/' deve apontar para a rota real de onde o usuário responde o quiz.
+  const quizLink = `${window.location.origin}/take-quiz/${id || '1'}`;
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(quizLink);
@@ -42,7 +44,7 @@ export function ShareQuiz() {
             <ChevronLeft size={24} />
           </button>
           <div>
-            <h1 className={styles.title}>Compartilhar Quiz</h1>
+            <h1 className={styles.title}>Compartilhar Quiz (Dia {id})</h1>
             <p className={styles.subtitle}>Compartilhe o Quiz com seus colegas de equipe</p>
           </div>
         </header>
