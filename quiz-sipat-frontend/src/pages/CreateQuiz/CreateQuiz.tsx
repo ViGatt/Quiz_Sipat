@@ -237,7 +237,8 @@ export function CreateQuiz() {
                   <select className={styles.selectField} value={category} onChange={(e) => setCategory(e.target.value)}>
                     <option value="Saúde">Saúde</option>
                     <option value="EPI">EPI</option>
-                    <option value="Ergonomia">Ergonomia</option>
+                    <option value="Ergonomia">Segurança</option>
+                    <option value="Ergonomia">Conhecimento Geral</option>
                   </select>
                 </div>
                 <div className={styles.formGroup}>
