@@ -3,13 +3,15 @@ import { ChevronLeft, PlayCircle, CheckCircle, Clock, BookOpen, Edit3, Save, X, 
 import { useNavigate, useParams } from 'react-router-dom';
 import { ParticipantSidebar } from '../../components/ParticipantSidebar/ParticipantSidebar';
 import { useAuth } from '../../context/AuthContext';
-import { api } from '../../services/api'; 
+import { useToast } from '../../context/ToastContext';
+import { api } from '../../services/api';
 import styles from './ParticipantQuizDetails.module.css';
 
 export function ParticipantQuizDetails() {
   const navigate = useNavigate();
   const { id } = useParams();
   const { usuario } = useAuth();
+  const { showSuccess, showError } = useToast();
 
   // Estados de Carregamento
   const [loading, setLoading] = useState(true);
@@ -146,10 +148,10 @@ export function ParticipantQuizDetails() {
       setLectureDescription(tempDescription);
       setIsEditing(false);
       
-      alert("Alterações salvas com sucesso no banco de dados!");
+      showSuccess("Alterações salvas com sucesso!");
     } catch (err) {
       console.error("Erro ao salvar edição:", err);
-      alert("Ocorreu um erro ao tentar salvar as alterações.");
+      showError("Ocorreu um erro ao tentar salvar as alterações.");
     }
   };
 

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, X, Image as ImageIcon, MapPin, Clock, Upload, Loader2 } from 'lucide-react';
 import { Sidebar } from '../../components/Sidebar/Sidebar'; 
 import { api } from '../../services/api'; // Integração com sua API
+import { useToast } from '../../context/ToastContext';
 import styles from './EventosAdmin.module.css';
 
 interface Evento {
@@ -26,6 +27,7 @@ export function EventosAdmin() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEvento, setEditingEvento] = useState<Evento | null>(null);
   const [uploadingFoto, setUploadingFoto] = useState(false);
+  const { showSuccess, showError } = useToast();
 
   // Busca os eventos do banco de dados ao carregar a tela
   useEffect(() => {
@@ -79,7 +81,7 @@ export function EventosAdmin() {
       !editingEvento.horario || !editingEvento.tema || !editingEvento.palestrante ||
       !editingEvento.cargo || !editingEvento.bio || !editingEvento.local || !editingEvento.responsaveis
     ) {
-      alert("Por favor, preencha todos os campos obrigatórios.");
+      showError("Por favor, preencha todos os campos obrigatórios.");
       return;
     }
 
@@ -97,18 +99,18 @@ export function EventosAdmin() {
       if (editingEvento.id && editingEvento.id > 0) {
         // EDIÇÃO (PUT)
         await api.put(`/eventos/${editingEvento.id}`, payload);
-        alert("Evento atualizado com sucesso!");
+        showSuccess("Evento atualizado com sucesso!");
       } else {
         // CRIAÇÃO (POST)
         await api.post('/eventos/', payload);
-        alert("Evento criado com sucesso!");
+        showSuccess("Evento criado com sucesso!");
       }
       
       handleCloseModal();
       fetchEventos(); // Atualiza a lista com o banco
     } catch (error) {
       console.error("Erro ao salvar evento:", error);
-      alert("Erro ao salvar o evento. Verifique a conexão com o banco.");
+      showError("Erro ao salvar o evento. Verifique a conexão com o banco.");
     }
   };
 
@@ -123,7 +125,7 @@ export function EventosAdmin() {
       const { data } = await api.post('/eventos/upload-foto', formData);
       setEditingEvento(prev => prev ? { ...prev, fotoUrl: data.url } : prev);
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Erro ao enviar a foto. Tente novamente.');
+      showError(err.response?.data?.detail || 'Erro ao enviar a foto. Tente novamente.');
     } finally {
       setUploadingFoto(false);
       e.target.value = '';
@@ -134,11 +136,11 @@ export function EventosAdmin() {
     if(window.confirm('Tem certeza que deseja excluir este evento definitivamente?')) {
       try {
         await api.delete(`/eventos/${id}`);
-        alert("Evento excluído!");
+        showSuccess("Evento excluído!");
         fetchEventos(); // Atualiza a lista
       } catch (error) {
         console.error("Erro ao excluir:", error);
-        alert("Erro ao excluir o evento.");
+        showError("Erro ao excluir o evento.");
       }
     }
   };

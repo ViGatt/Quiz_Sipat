@@ -2,11 +2,13 @@ import { useState } from 'react';
 import { ChevronLeft, ChevronRight, Clock, CheckCircle2, Trash2, Plus, Circle, CheckCircle, Calendar, MessageSquare, AlertTriangle } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import styles from './CreateQuiz.module.css';
-import { api } from '../../services/api'; 
+import { api } from '../../services/api';
+import { useToast } from '../../context/ToastContext';
 
 export function CreateQuiz() {
   const [showSuccess, setShowSuccess] = useState(false);
   const navigate = useNavigate();
+  const { showError } = useToast();
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -106,7 +108,7 @@ export function CreateQuiz() {
   const handlePublish = async (overrideStatus?: string) => {
     const finalStatus = overrideStatus || status;
     if (!title || questions[0].text === "") {
-      alert("Por favor, preencha o título e pelo menos uma questão!");
+      showError("Por favor, preencha o título e pelo menos uma questão!");
       return;
     }
 
@@ -157,7 +159,7 @@ export function CreateQuiz() {
 
     } catch (err) {
       console.error("Erro ao publicar quiz:", err);
-      alert("Erro ao salvar o Quiz. Tente novamente.");
+      showError("Erro ao salvar o Quiz. Tente novamente.");
     } finally {
       setIsSubmitting(false);
     }

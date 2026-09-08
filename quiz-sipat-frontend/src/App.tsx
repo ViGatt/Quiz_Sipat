@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ProtectedRoute } from './components/ProtectedRoute/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
+import { ToastProvider } from './context/ToastContext';
 import { QuizDetails } from './pages/QuizDetails/QuizDetails';
 import { LandingPage } from './pages/LandingPage';
 import { Login } from './pages/Login/Login';
@@ -69,11 +70,13 @@ function AppRoutes() {
 
 function App() {
   return (
+    <ToastProvider>
     <AuthProvider>
     <BrowserRouter>
       <AppRoutes />
       </BrowserRouter>
       </AuthProvider>
+      </ToastProvider>
   );
 }
 

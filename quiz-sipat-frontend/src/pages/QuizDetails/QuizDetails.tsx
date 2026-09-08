@@ -6,11 +6,13 @@ import {
 import { useNavigate, useParams } from 'react-router-dom';
 import { Sidebar } from '../../components/Sidebar/Sidebar';
 import { api } from '../../services/api';
+import { useToast } from '../../context/ToastContext';
 import styles from './QuizDetails.module.css';
 
 export function QuizDetails() {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { showError } = useToast();
 
   const [loading, setLoading] = useState(true);
   const [showCompletionsModal, setShowCompletionsModal] = useState(false);
@@ -477,7 +479,7 @@ export function QuizDetails() {
                     navigate('/quizzes');
                   } catch (error) {
                     console.error("Erro ao excluir quiz:", error);
-                    alert("Não foi possível excluir o quiz.");
+                    showError("Não foi possível excluir o quiz.");
                     setIsDeleting(false);
                   }
                 }}

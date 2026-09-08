@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Clock, Heart, AlertCircle, Trophy, Target, BarChart2, ArrowLeft, CheckCircle2, XCircle } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 import { api } from '../../services/api';
 import styles from './TakeQuiz.module.css';
 
@@ -27,6 +28,7 @@ export function TakeQuiz() {
   const navigate = useNavigate();
   const { id } = useParams();
   const { usuario } = useAuth();
+  const { showError } = useToast();
 
   const [showInstructions, setShowInstructions] = useState(true); 
   const [loading, setLoading] = useState(false); 
@@ -131,13 +133,13 @@ export function TakeQuiz() {
           
           setQuestions(questoesFormatadas);
         } else {
-          alert("Nenhuma questão cadastrada para este dia.");
+          showError("Nenhuma questão cadastrada para este dia.");
           navigate('/meus-quizzes');
         }
 
       } catch (err: any) {
         console.error("Erro ao iniciar quiz:", err);
-        alert(err.response?.data?.detail || "Erro ao carregar o quiz.");
+        showError(err.response?.data?.detail || "Erro ao carregar o quiz.");
         navigate('/meus-quizzes');
       } finally {
         setLoading(false);
@@ -203,7 +205,7 @@ export function TakeQuiz() {
 
     } catch (err: any) {
       console.error("Erro ao submeter resposta:", err);
-      alert(err.response?.data?.detail || "Erro ao registrar sua resposta. Tente novamente.");
+      showError(err.response?.data?.detail || "Erro ao registrar sua resposta. Tente novamente.");
     } finally {
       setSubmitting(false);
     }

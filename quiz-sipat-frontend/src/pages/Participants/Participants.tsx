@@ -6,6 +6,7 @@ import {
 import { Sidebar } from '../../components/Sidebar/Sidebar';
 import styles from './Participants.module.css';
 import { api } from '../../services/api';
+import { useToast } from '../../context/ToastContext';
 
 
 export function Participants() {
@@ -15,6 +16,7 @@ export function Participants() {
   const [isLoadingList, setIsLoadingList] = useState(true);
   const [diaSipatId, setDiaSipatId] = useState<number | null>(null);
   const [erroDiaAtual, setErroDiaAtual] = useState<string | null>(null);
+  const { showSuccess, showError } = useToast();
 
   // --- PAGINAÇÃO ---
   const [currentPage, setCurrentPage] = useState(1);
@@ -94,7 +96,7 @@ useEffect(() => {
   // --- LÓGICA DO CHECK-IN PRESENCIAL ---
   const handleCheckIn = async (id: string, nome: string, cpf: string) => {
     if (!diaSipatId) {
-      alert("Não foi possível identificar o quiz/dia da SIPAT de hoje. Verifique se há um quiz cadastrado para a data de hoje.");
+      showError("Não foi possível identificar o quiz/dia da SIPAT de hoje. Verifique se há um quiz cadastrado para a data de hoje.");
       return;
     }
 
@@ -117,13 +119,13 @@ useEffect(() => {
           ? { ...p, statusHoje: 'PRESENCIAL', numeroSorte: String(response.data.numero_sorte) } 
           : p
       ));
-      alert(`Sucesso! O Número da Sorte gerado foi: ${response.data.numero_sorte}`);
+      showSuccess(`Sucesso! O Número da Sorte gerado foi: ${response.data.numero_sorte}`);
       
     } catch (error: any) {
       console.error(error);
       // Pega a mensagem de erro específica do Back-end, se houver
       const errorMessage = error.response?.data?.detail || "Erro de conexão com o servidor ao tentar fazer o check-in.";
-      alert(`Erro: ${errorMessage}`);
+      showError(`Erro: ${errorMessage}`);
     }
   };
 
@@ -136,7 +138,7 @@ useEffect(() => {
 
   const handleUploadFile = async () => {
     if (!selectedFile) {
-      alert("Por favor, selecione uma planilha (.xlsx ou .csv) primeiro.");
+      showError("Por favor, selecione uma planilha (.xlsx ou .csv) primeiro.");
       return;
     }
 
@@ -149,7 +151,7 @@ useEffect(() => {
       const response = await api.post('/recepcao/importar-rh', formData);
 
       // Sucesso!
-      alert(response.data.message); 
+      showSuccess(response.data.message);
       setShowImportModal(false); 
       setSelectedFile(null); 
       
@@ -162,7 +164,7 @@ useEffect(() => {
       console.error(error);
       // Captura o erro customizado do backend ou exibe o padrão
       const errorMessage = error.response?.data?.detail || "Erro de conexão com o servidor. Verifique se a API está rodando.";
-      alert(`Erro na importação: ${errorMessage}`);
+      showError(`Erro na importação: ${errorMessage}`);
     } finally {
       setIsUploading(false);
     }

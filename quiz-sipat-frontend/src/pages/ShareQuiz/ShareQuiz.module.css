@@ -74,6 +74,7 @@
 
 .linkInput {
   flex: 1;
+  min-width: 0;
   background-color: var(--color-bg-main);
   border: 1px solid var(--color-surface);
   border-radius: 8px;
@@ -142,4 +143,40 @@
 .btnOutline:hover {
   background-color: var(--color-surface);
   border-color: var(--color-text-muted);
+}
+
+/* =========================================
+   RESPONSIVIDADE - MOBILE
+========================================= */
+@media (max-width: 480px) {
+  .layout {
+    padding: 1.5rem 0.75rem;
+  }
+
+  .mainContent {
+    gap: 1.75rem;
+  }
+
+  .title {
+    font-size: 1.25rem;
+  }
+
+  .qrCard {
+    padding: 1.5rem;
+  }
+
+  .linkWrapper {
+    gap: 0.6rem;
+  }
+
+  .linkInput {
+    padding: 0.85rem 1rem;
+    font-size: 0.85rem;
+  }
+
+  .copyButton {
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+  }
 }
