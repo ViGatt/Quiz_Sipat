@@ -9,6 +9,7 @@ from presentation.dependencias import (
 )
 from application.use_cases.registrar_presenca_presencial import RegistrarPresencaPresencialUseCase
 from domain.exceptions import ParticipacaoDuplicadaError, ColaboradorNaoEncontradoError
+from presentation.auth_utils import exigir_comissao
 
 router = APIRouter(prefix="/recepcao", tags=["Recepção Presencial"])
 
@@ -21,7 +22,8 @@ class RegistroPresencaRequest(BaseModel):
 @router.post("/registrar")
 def registrar_presenca(
     request: RegistroPresencaRequest,
-    use_case: RegistrarPresencaPresencialUseCase = Depends(get_registrar_presenca_uc)
+    use_case: RegistrarPresencaPresencialUseCase = Depends(get_registrar_presenca_uc),
+    _comissao: dict = Depends(exigir_comissao),
 ):
     """
     Registra a presença física do colaborador e gera o Número da Sorte.
@@ -48,7 +50,8 @@ def registrar_presenca(
 @router.post("/importar-rh")
 async def importar_planilha_rh(
     file: UploadFile = File(...),
-    repo = Depends(get_colaborador_repo) 
+    repo = Depends(get_colaborador_repo),
+    _comissao: dict = Depends(exigir_comissao),
 ):
     """
     Recebe um arquivo Excel/CSV, extrai os dados dinamicamente e salva com segurança.
@@ -153,8 +156,9 @@ async def importar_planilha_rh(
 
 @router.get("/status/{dia_sipat_id}")
 def listar_status_recepcao(
-    dia_sipat_id: int, 
-    repo = Depends(get_colaborador_repo) # Use o mesmo getter que usou no importar-rh
+    dia_sipat_id: int,
+    repo = Depends(get_colaborador_repo), # Use o mesmo getter que usou no importar-rh
+    _comissao: dict = Depends(exigir_comissao),
 ):
     """
     Retorna a lista completa de colaboradores e seus status de presença no dia.

@@ -48,6 +48,26 @@ export function TakeQuiz() {
   const [immediateResult, setImmediateResult] = useState(true);
   const [feedback, setFeedback] = useState<FeedbackState | null>(null);
 
+  // Busca a configuração do quiz (ex: tempo por questão) assim que a tela abre,
+  // antes de o participante confirmar o início — só leitura, não registra tentativa.
+  useEffect(() => {
+    const buscarConfiguracaoDoQuiz = async () => {
+      if (!id) return;
+      try {
+        const response = await api.get(`/quiz/${id}`);
+        const tempo = response.data?.tempo_por_questao;
+        if (tempo) {
+          setTimePerQuestion(tempo);
+          setTimeLeft(tempo);
+        }
+      } catch (err) {
+        console.error('Erro ao buscar configuração do quiz:', err);
+      }
+    };
+
+    buscarConfiguracaoDoQuiz();
+  }, [id]);
+
   useEffect(() => {
     const iniciarEBuscarQuiz = async () => {
       if (!usuario || !id || showInstructions) return;
@@ -200,6 +220,15 @@ export function TakeQuiz() {
     }
   };
 
+  const handleSairDoQuiz = () => {
+    const confirmado = window.confirm(
+      'Tem certeza que deseja sair? Sua tentativa de hoje já foi iniciada e não será possível refazer o quiz depois.'
+    );
+    if (confirmado) {
+      navigate('/meus-quizzes');
+    }
+  };
+
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
@@ -225,7 +254,7 @@ export function TakeQuiz() {
             
             <div className={styles.instructionsList}>
               <p><span>👉</span> <span>Você tem um total de <strong>3 vidas</strong> (corações). Se errar 3 vezes, o jogo acaba.</span></p>
-              <p><span>👉</span> <span>Você tem <strong>60 segundos</strong> para responder cada questão.</span></p>
+              <p><span>👉</span> <span>Você tem <strong>{timePerQuestion} segundos</strong> para responder cada questão.</span></p>
               
               <div className={styles.instructionsWarning}>
                 <strong>Regra do Sorteio:</strong><br/>
@@ -318,7 +347,7 @@ export function TakeQuiz() {
 
       {/* CABEÇALHO */}
       <header className={styles.header}>
-        <button className={styles.backButton} onClick={() => navigate('/meus-quizzes')}>
+        <button className={styles.backButton} onClick={handleSairDoQuiz}>
           <ChevronLeft size={24} />
         </button>
         <h1 className={styles.title}>Quiz Dia {id?.padStart(2, '0') || '01'} - SIPAT</h1>

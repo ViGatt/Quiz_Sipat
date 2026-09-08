@@ -33,7 +33,8 @@ export function Login() {
         id: data.id,
         cpf: data.cpf,
         nome: data.nome,
-        is_comissao: data.is_comissao
+        is_comissao: data.is_comissao,
+        token: data.token
       });
 
       // Redireciona com base no perfil
@@ -82,9 +83,10 @@ export function Login() {
               <label>CPF</label>
               <div className={styles.inputWrapper}>
                 <Mail size={20} className={styles.inputIcon} />
-                <input 
-                  type="text" 
-                  placeholder="000.000.000-00" 
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="000.000.000-00"
                   value={cpf}
                   onChange={(e) => setCpf(e.target.value)}
                   maxLength={14}
@@ -97,9 +99,10 @@ export function Login() {
               <label>Senha</label>
               <div className={styles.inputWrapper}>
                 <Lock size={20} className={styles.inputIcon} />
-                <input 
-                  type={showPassword ? "text" : "password"} 
-                  placeholder="********" 
+                <input
+                  type={showPassword ? "text" : "password"}
+                  inputMode="numeric"
+                  placeholder="********"
                   value={senha}
                   onChange={(e) => setSenha(e.target.value)}
                   maxLength={4}

@@ -5,11 +5,12 @@ from typing import List, Optional
 import time
 from datetime import datetime
 from presentation.dependencias import (
-    get_iniciar_quiz_uc, 
-    get_submeter_resposta_uc, 
+    get_iniciar_quiz_uc,
+    get_submeter_resposta_uc,
     get_listar_quizzes_uc,
     get_quiz_repo
 )
+from presentation.auth_utils import exigir_comissao
 from infrastructure.database.supabase_repository import SupabaseQuizRepository
 from application.use_cases.iniciar_quiz_online import IniciarQuizOnlineUseCase
 from application.use_cases.submeter_resposta import SubmeterRespostaUseCase
@@ -77,7 +78,11 @@ def listar_quizzes(use_case: ListarQuizzesUseCase = Depends(get_listar_quizzes_u
             raise HTTPException(status_code=500, detail=f"Erro ao buscar quizzes: {erro_str}")
 
 @router.post("/")
-def criar_novo_quiz(request: CriarQuizRequest, repo: SupabaseQuizRepository = Depends(get_quiz_repo)):
+def criar_novo_quiz(
+    request: CriarQuizRequest,
+    repo: SupabaseQuizRepository = Depends(get_quiz_repo),
+    _comissao: dict = Depends(exigir_comissao),
+):
     sucesso = repo.criar_quiz_com_questoes(
         tema=request.tema,
         descricao=request.descricao,
@@ -131,7 +136,12 @@ def listar_quizzes_concluidos(cpf: str, repo: SupabaseQuizRepository = Depends(g
             raise HTTPException(status_code=500, detail=f"Erro ao buscar status: {erro_str}")
 
 @router.put("/{quiz_id}")
-def atualizar_quiz_admin(quiz_id: int, request: AtualizarQuizRequest, repo: SupabaseQuizRepository = Depends(get_quiz_repo)):
+def atualizar_quiz_admin(
+    quiz_id: int,
+    request: AtualizarQuizRequest,
+    repo: SupabaseQuizRepository = Depends(get_quiz_repo),
+    _comissao: dict = Depends(exigir_comissao),
+):
     sucesso = repo.atualizar_quiz(
         quiz_id=quiz_id,
         tema=request.tema,
@@ -187,7 +197,11 @@ def responder_questao(request: SubmeterRespostaRequest, use_case: SubmeterRespos
             raise HTTPException(status_code=500, detail="Erro interno ao processar a solicitação.")
 
 @router.delete("/{quiz_id}")
-def deletar_quiz(quiz_id: int, repo: SupabaseQuizRepository = Depends(get_quiz_repo)):
+def deletar_quiz(
+    quiz_id: int,
+    repo: SupabaseQuizRepository = Depends(get_quiz_repo),
+    _comissao: dict = Depends(exigir_comissao),
+):
     sucesso = repo.excluir_quiz_definitivo(quiz_id)
     if not sucesso:
         raise HTTPException(

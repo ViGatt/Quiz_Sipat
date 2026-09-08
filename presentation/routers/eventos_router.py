@@ -3,6 +3,7 @@ from pydantic import BaseModel
 import time
 from presentation.dependencias import get_evento_repo
 from infrastructure.database.supabase_repository import SupabaseEventoRepository
+from presentation.auth_utils import exigir_comissao
 
 router = APIRouter(prefix="/eventos", tags=["Eventos da Programacao"])
 
@@ -31,21 +32,34 @@ def listar_eventos(repo: SupabaseEventoRepository = Depends(get_evento_repo)):
             raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/")
-def criar_evento(request: EventoSchema, repo: SupabaseEventoRepository = Depends(get_evento_repo)):
+def criar_evento(
+    request: EventoSchema,
+    repo: SupabaseEventoRepository = Depends(get_evento_repo),
+    _comissao: dict = Depends(exigir_comissao),
+):
     novo_evento = repo.criar_evento(request.dict())
     if not novo_evento:
         raise HTTPException(status_code=500, detail="Erro ao criar evento.")
     return novo_evento
 
 @router.put("/{evento_id}")
-def atualizar_evento(evento_id: int, request: EventoSchema, repo: SupabaseEventoRepository = Depends(get_evento_repo)):
+def atualizar_evento(
+    evento_id: int,
+    request: EventoSchema,
+    repo: SupabaseEventoRepository = Depends(get_evento_repo),
+    _comissao: dict = Depends(exigir_comissao),
+):
     evento_atualizado = repo.atualizar_evento(evento_id, request.dict())
     if not evento_atualizado:
         raise HTTPException(status_code=400, detail="Erro ao atualizar evento.")
     return evento_atualizado
 
 @router.delete("/{evento_id}")
-def deletar_evento(evento_id: int, repo: SupabaseEventoRepository = Depends(get_evento_repo)):
+def deletar_evento(
+    evento_id: int,
+    repo: SupabaseEventoRepository = Depends(get_evento_repo),
+    _comissao: dict = Depends(exigir_comissao),
+):
     sucesso = repo.excluir_evento(evento_id)
     if not sucesso:
         raise HTTPException(status_code=500, detail="Erro ao excluir evento.")

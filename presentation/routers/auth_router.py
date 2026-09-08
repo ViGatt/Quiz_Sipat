@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from presentation.dependencias import get_colaborador_repo
+from presentation.auth_utils import gerar_token
 
 router = APIRouter(prefix="/auth", tags=["Autenticação"])
 
@@ -33,6 +34,7 @@ def _resposta_publica(dados: dict) -> dict:
         "cpf": dados["cpf"],
         "nome": dados["nome"],
         "is_comissao": dados["is_comissao"],
+        "token": gerar_token(dados["id"], dados["is_comissao"]),
     }
 
 

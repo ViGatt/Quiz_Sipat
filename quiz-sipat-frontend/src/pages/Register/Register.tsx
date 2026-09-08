@@ -56,7 +56,8 @@ export function Register() {
           id: updatedData.id,
           cpf: updatedData.cpf,
           nome: updatedData.nome,
-          is_comissao: updatedData.is_comissao
+          is_comissao: updatedData.is_comissao,
+          token: updatedData.token
         });
 
         if (updatedData.is_comissao) {
@@ -126,9 +127,10 @@ export function Register() {
                   <label>CPF</label>
                   <div className={styles.inputWrapper}>
                     <Mail size={20} className={styles.inputIcon} />
-                    <input 
-                      type="text" 
-                      placeholder="Ex: 111.111.111-11" 
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="Ex: 111.111.111-11"
                       value={cpf}
                       onChange={(e) => setCpf(e.target.value)}
                       maxLength={14}

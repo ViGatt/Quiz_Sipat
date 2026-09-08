@@ -6,13 +6,17 @@ from presentation.dependencias import (
 )
 from application.use_cases.gerar_relatorio_final import GerarRelatorioFinalUseCase
 from infrastructure.database.supabase_repository import SupabaseRelatorioRepository
+from presentation.auth_utils import exigir_comissao
 import time
 
 router = APIRouter(prefix="/relatorios", tags=["Relatórios Gerenciais"])
 
 # --- NOVA ROTA PARA O DASHBOARD ---
 @router.get("/geral")
-def obter_relatorio_dashboard(repo: SupabaseRelatorioRepository = Depends(get_relatorio_repo)):
+def obter_relatorio_dashboard(
+    repo: SupabaseRelatorioRepository = Depends(get_relatorio_repo),
+    _comissao: dict = Depends(exigir_comissao),
+):
     """
     Consome as views do banco de dados para alimentar os cards e o ranking do Dashboard.
     """
@@ -27,7 +31,8 @@ def obter_relatorio_dashboard(repo: SupabaseRelatorioRepository = Depends(get_re
 # --- SUA ROTA ORIGINAL MANTIDA ---
 @router.get("/consolidado")
 def obter_relatorio_consolidado(
-    use_case: GerarRelatorioFinalUseCase = Depends(get_gerar_relatorio_uc)
+    use_case: GerarRelatorioFinalUseCase = Depends(get_gerar_relatorio_uc),
+    _comissao: dict = Depends(exigir_comissao),
 ):
     """
     Retorna todos os dados consolidados da SIPAT. 
@@ -41,8 +46,9 @@ def obter_relatorio_consolidado(
 
 @router.get("/quiz/{quiz_id}")
 def obter_metricas_detalhadas_quiz(
-    quiz_id: int, 
-    repo: SupabaseRelatorioRepository = Depends(get_relatorio_repo)
+    quiz_id: int,
+    repo: SupabaseRelatorioRepository = Depends(get_relatorio_repo),
+    _comissao: dict = Depends(exigir_comissao),
 ):
     """
     Retorna os dados consolidados e métricas de desempenho de um quiz específico.

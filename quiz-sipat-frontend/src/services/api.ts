@@ -7,3 +7,18 @@ export const api = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
+// Anexa o token da sessão (obtido no login) em toda requisição, quando existir.
+// Rotas públicas simplesmente ignoram o header; rotas administrativas o exigem.
+api.interceptors.request.use((config) => {
+  try {
+    const usuarioSalvo = localStorage.getItem('@sipat:usuario');
+    const token = usuarioSalvo ? JSON.parse(usuarioSalvo)?.token : null;
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+  } catch {
+    // Sem token disponível, segue a requisição sem autenticação.
+  }
+  return config;
+});

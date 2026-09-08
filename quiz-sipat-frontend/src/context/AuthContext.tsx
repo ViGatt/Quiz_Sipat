@@ -6,6 +6,7 @@ type Usuario = {
   cpf: string;
   nome: string;
   is_comissao: boolean;
+  token: string;
 };
 
 interface AuthContextData {
