@@ -7,7 +7,6 @@ import logoImg from '../../assets/Ricambiental_logo-30 A.png';
 export function ParticipantSidebar() {
   const location = useLocation();
 
-  // Começa sempre retraído ao entrar na página
   const [isOpen, setIsOpen] = useState(false);
 
   // Fecha automaticamente ao trocar de rota (importante no mobile,
