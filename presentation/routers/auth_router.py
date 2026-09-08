@@ -49,7 +49,7 @@ def login(request: LoginRequest, repo = Depends(get_colaborador_repo)):
     dados = repo.buscar_dados_login_por_cpf(cpf_limpo)
 
     if not dados:
-        raise HTTPException(status_code=404, detail="CPF não encontrado na base do RH.")
+        raise HTTPException(status_code=401, detail="CPF não encontrado na base do RH.")
 
     if not dados.get("senha"):
         raise HTTPException(status_code=400, detail='Cadastro não ativado. Clique em "Ative sua conta" abaixo.')
