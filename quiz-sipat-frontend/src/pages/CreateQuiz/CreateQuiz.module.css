@@ -151,6 +151,51 @@
   font-weight: 500;
 }
 
+.formGroupSpaced {
+  margin-top: 1rem;
+}
+
+.formGroupFlex {
+  flex: 1;
+}
+
+/* --- SEÇÃO DE FEEDBACK (acerto/erro) --- */
+.feedbackSection {
+  margin-top: 2rem;
+  display: flex;
+  gap: 1rem;
+}
+
+.feedbackLabelCorrect {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #22c55e;
+}
+
+.feedbackLabelIncorrect {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #ef4444;
+}
+
+.feedbackTextareaCorrect {
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+.feedbackTextareaIncorrect {
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.btnAddQuestionTight {
+  margin-top: 1.5rem;
+}
+
+.navSpacer {
+  width: 85px;
+}
+
 .inputField, .textareaField, .selectField {
   background-color: var(--color-surface-light);
   border: 1px solid var(--color-surface);

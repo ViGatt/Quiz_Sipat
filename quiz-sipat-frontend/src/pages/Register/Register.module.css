@@ -39,6 +39,60 @@
   margin-bottom: 2.5rem;
 }
 
+/* --- TELA DE SUCESSO (pós-ativação) --- */
+.successBox {
+  text-align: center;
+  padding: 2rem 0;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.successIcon {
+  margin: 0 auto 1rem;
+}
+
+.successSubtitle {
+  margin-top: 1rem;
+  font-size: 1.1rem;
+}
+
+.successHint {
+  margin-top: 2rem;
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- CAIXA DE DICA (senha automática) --- */
+.tipBox {
+  background-color: rgba(56, 189, 248, 0.1);
+  border: 1px solid var(--color-primary);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 1.5rem;
+}
+
+.tipText {
+  font-size: 0.9rem;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.tipEmoji {
+  font-size: 1.2rem;
+  margin-right: 6px;
+}
+
+.errorMessage {
+  color: #ef4444;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
 .form {
   display: flex;
   flex-direction: column;
@@ -77,6 +131,18 @@
 .inputIcon {
   color: #999999;
   margin-right: 0.8rem;
+}
+
+.dropdownIcon {
+  transition: transform 0.2s;
+}
+
+.dropdownIconOpen {
+  transform: rotate(180deg);
+}
+
+.dropdownTrigger {
+  cursor: pointer;
 }
 
 .inputWrapper input,
@@ -311,4 +377,10 @@
   padding: 0.8rem 0;
   font-size: 1rem;
   text-align: left;
+  flex: 1;
+  color: #999999;
+}
+
+.dropdownSelectedTextFilled {
+  color: var(--color-black);
 }

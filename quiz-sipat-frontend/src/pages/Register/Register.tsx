@@ -94,13 +94,13 @@ export function Register() {
           
           {/* TELA DE SUCESSO (Aparece após ativar) */}
           {sucesso ? (
-            <div style={{ textAlign: 'center', padding: '2rem 0', animation: 'fadeIn 0.5s ease-in-out' }}>
-              <CheckCircle size={64} color="var(--color-primary)" style={{ margin: '0 auto', marginBottom: '1rem' }} />
+            <div className={styles.successBox}>
+              <CheckCircle size={64} color="var(--color-primary)" className={styles.successIcon} />
               <h2 className={styles.formTitle}>Cadastro Ativado!</h2>
-              <p className={styles.formSubtitle} style={{ marginTop: '1rem', fontSize: '1.1rem' }}>
+              <p className={`${styles.formSubtitle} ${styles.successSubtitle}`}>
                 Sua senha de acesso são os <strong>4 primeiros dígitos do seu CPF</strong>.
               </p>
-              <p style={{ marginTop: '2rem', fontSize: '0.9rem', color: 'var(--color-text-muted)' }}>
+              <p className={styles.successHint}>
                 Iniciando o quiz automaticamente...
               </p>
             </div>
@@ -112,16 +112,16 @@ export function Register() {
               <p className={styles.formSubtitle}>Ative sua conta para participar da SIPAT</p>
 
               {/* CAIXA DE DICA VISUAL (UX) */}
-              <div style={{ backgroundColor: 'rgba(56, 189, 248, 0.1)', border: '1px solid var(--color-primary)', borderRadius: '8px', padding: '12px', marginBottom: '1.5rem' }}>
-                <p style={{ fontSize: '0.9rem', lineHeight: '1.4', margin: 0 }}>
-                  <span style={{ fontSize: '1.2rem', marginRight: '6px' }}>💡</span>
+              <div className={styles.tipBox}>
+                <p className={styles.tipText}>
+                  <span className={styles.tipEmoji}>💡</span>
                   <strong>Não precisa criar senha!</strong><br/>
                   Sua senha de acesso será gerada automaticamente usando os <strong>4 primeiros dígitos do seu CPF</strong>.
                 </p>
               </div>
 
               <form className={styles.form} onSubmit={handleAtivacao}>
-                {erro && <div className={styles.errorMessage} style={{ color: '#ef4444', marginBottom: '1rem', fontSize: '0.9rem', fontWeight: '500' }}>{erro}</div>}
+                {erro && <div className={styles.errorMessage}>{erro}</div>}
 
                 <div className={styles.inputGroup}>
                   <label>CPF</label>
@@ -143,18 +143,16 @@ export function Register() {
                   <label>Unidade de Trabalho</label>
                   <div className={styles.customDropdownContainer}>
                     <div 
-                      className={styles.inputWrapper} 
+                      className={`${styles.inputWrapper} ${styles.dropdownTrigger}`}
                       onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                      style={{ cursor: 'pointer' }}
                     >
                       <Building size={20} className={styles.inputIcon} />
-                      <span 
-                        className={styles.dropdownSelectedText} 
-                        style={{ flex: 1, color: unidade ? 'var(--color-black)' : '#999999' }}
+                      <span
+                        className={`${styles.dropdownSelectedText} ${unidade ? styles.dropdownSelectedTextFilled : ''}`}
                       >
                         {unidade || "Selecione a Unidade..."}
                       </span>
-                      <ChevronDown size={20} className={styles.inputIcon} style={{ transform: isDropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+                      <ChevronDown size={20} className={`${styles.inputIcon} ${styles.dropdownIcon} ${isDropdownOpen ? styles.dropdownIconOpen : ''}`} />
                     </div>
                     
                     {isDropdownOpen && (

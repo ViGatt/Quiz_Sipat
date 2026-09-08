@@ -272,7 +272,7 @@ export function CreateQuiz() {
                   />
                   <span className={styles.suffix}>minutos</span>
                 </div>
-                <div className={styles.formGroup} style={{marginTop: '1rem'}}>
+                <div className={`${styles.formGroup} ${styles.formGroupSpaced}`}>
             <label>Tempo por questão</label>
             <div className={styles.inputWrapper}>
               <Clock size={18} className={styles.iconMuted} />
@@ -310,7 +310,7 @@ export function CreateQuiz() {
                 </div>
               )}
 
-              <div className={styles.formGroup} style={{marginTop: '1rem'}}>
+              <div className={`${styles.formGroup} ${styles.formGroupSpaced}`}>
                 <label>Pontuação para aprovação</label>
                 <div className={styles.inputWrapper}>
                   <CheckCircle2 size={18} className={styles.iconMuted} />
@@ -453,37 +453,35 @@ export function CreateQuiz() {
                 </div>
 
                 {/* NOVOS CAMPOS DE FEEDBACK */}
-                <div className={styles.feedbackSection} style={{ marginTop: '2rem', display: 'flex', gap: '1rem' }}>
-                  <div className={styles.formGroup} style={{ flex: 1 }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#22c55e' }}>
+                <div className={styles.feedbackSection}>
+                  <div className={`${styles.formGroup} ${styles.formGroupFlex}`}>
+                    <label className={styles.feedbackLabelCorrect}>
                       <MessageSquare size={16} /> Feedback de Acerto
                     </label>
-                    <textarea 
-                      className={styles.textareaField} 
+                    <textarea
+                      className={`${styles.textareaField} ${styles.feedbackTextareaCorrect}`}
                       rows={2}
                       value={currentQuestion.feedbackCorrect}
                       onChange={(e) => updateQuestionField('feedbackCorrect', e.target.value)}
                       placeholder="Ex: Excelente! EPIs salvam vidas..."
-                      style={{ borderColor: 'rgba(34, 197, 94, 0.3)' }}
                     />
                   </div>
-                  
-                  <div className={styles.formGroup} style={{ flex: 1 }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#ef4444' }}>
+
+                  <div className={`${styles.formGroup} ${styles.formGroupFlex}`}>
+                    <label className={styles.feedbackLabelIncorrect}>
                       <AlertTriangle size={16} /> Feedback de Erro
                     </label>
-                    <textarea 
-                      className={styles.textareaField} 
+                    <textarea
+                      className={`${styles.textareaField} ${styles.feedbackTextareaIncorrect}`}
                       rows={2}
                       value={currentQuestion.feedbackIncorrect}
                       onChange={(e) => updateQuestionField('feedbackIncorrect', e.target.value)}
                       placeholder="Ex: Resposta incorreta. Lembre-se que..."
-                      style={{ borderColor: 'rgba(239, 68, 68, 0.3)' }}
                     />
                   </div>
                 </div>
 
-                <button className={styles.btnAddQuestion} style={{ marginTop: '1.5rem' }} onClick={handleAddQuestion}>
+                <button className={`${styles.btnAddQuestion} ${styles.btnAddQuestionTight}`} onClick={handleAddQuestion}>
                   <Plus size={18} /> Adicionar Nova Questão
                 </button>
               </div>
@@ -498,7 +496,7 @@ export function CreateQuiz() {
               <ChevronLeft size={18} /> Anterior
             </button>
           ) : (
-            <div style={{ width: '85px' }}></div>
+            <div className={styles.navSpacer}></div>
           )}
           
           {step === 1 ? (

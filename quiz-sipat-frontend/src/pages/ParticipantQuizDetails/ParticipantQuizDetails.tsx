@@ -188,7 +188,7 @@ export function ParticipantQuizDetails() {
       <div className={styles.container}>
         <ParticipantSidebar />
         <main className={styles.mainContent}>
-          <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--color-primary)' }}>
+          <div className={styles.loadingState}>
             Carregando a sala de palestra...
           </div>
         </main>
@@ -201,7 +201,7 @@ export function ParticipantQuizDetails() {
       <div className={styles.container}>
         <ParticipantSidebar />
         <main className={styles.mainContent}>
-          <div style={{ padding: '3rem', textAlign: 'center', color: '#ef4444' }}>
+          <div className={styles.errorState}>
             {error}
             <br/><br/>
             <button className={styles.backButton} onClick={() => navigate('/meus-quizzes')}>
@@ -277,9 +277,9 @@ export function ParticipantQuizDetails() {
               <>
                 <div className={styles.videoWrapper}>
                   {videoUrl ? (
-                    <div id="yt-player-quiz" style={{ width: '100%', height: '100%' }}></div>
+                    <div id="yt-player-quiz" className={styles.videoPlayerBox}></div>
                   ) : (
-                    <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', backgroundColor: '#1e293b', color: '#64748b'}}>
+                    <div className={styles.videoPlaceholder}>
                       <PlayCircle size={48} />
                       <p>Vídeo não cadastrado para este dia.</p>
                     </div>
@@ -321,7 +321,7 @@ export function ParticipantQuizDetails() {
                 <div className={styles.completedBox}>
                   <CheckCircle size={40} color="#22c55e" />
                   <h4 className={styles.completedTitle}>Quiz Concluído!</h4>
-                  <p className={styles.completedText}>Sua pontuação: <strong style={{color: 'var(--color-white)'}}>{score}</strong></p>
+                  <p className={styles.completedText}>Sua pontuação: <strong className={styles.completedScoreValue}>{score}</strong></p>
                   <p className={styles.completedRule}>Você já garantiu sua participação hoje.</p>
                 </div>
               ) : (
@@ -330,72 +330,37 @@ export function ParticipantQuizDetails() {
                   
                   {/* --- BOTÃO COM APLICAÇÃO VISUAL DA TRAVA --- */}
                   <button
-                    className={styles.btnStart}
+                    className={`${styles.btnStart} ${botaoDesabilitado ? styles.btnStartDisabled : ''}`}
                     onClick={() => { if (!botaoDesabilitado) navigate(`/take-quiz/${id}`) }}
                     disabled={botaoDesabilitado}
-                    style={botaoDesabilitado ? {
-                      opacity: 0.5,
-                      cursor: 'not-allowed',
-                      backgroundColor: '#475569',
-                      boxShadow: 'none'
-                    } : {}}
                   >
                     <PlayCircle size={20} /> Iniciar Quiz Agora
                   </button>
 
                   {/* --- BANNER: SEM VÍDEO CADASTRADO --- */}
                   {semVideoCadastrado && (
-                    <div style={{
-                      marginTop: '1rem', padding: '0.85rem',
-                      backgroundColor: 'rgba(249, 115, 22, 0.1)',
-                      border: '1px solid rgba(249, 115, 22, 0.4)',
-                      borderRadius: '8px', color: '#f97316',
-                      display: 'flex', flexDirection: 'column',
-                      alignItems: 'center', justifyContent: 'center',
-                      gap: '4px', textAlign: 'center'
-                    }}>
-                      <Video size={22} style={{ marginBottom: '4px' }}/>
-                      <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>Vídeo Ainda Não Disponível</span>
-                      <span style={{ fontSize: '0.8rem', opacity: 0.9 }}>A palestra deste dia ainda não foi publicada. Volte em breve.</span>
+                    <div className={`${styles.infoBanner} ${styles.infoBannerOrange}`}>
+                      <Video size={22} className={styles.infoBannerIcon} />
+                      <span className={styles.infoBannerTitle}>Vídeo Ainda Não Disponível</span>
+                      <span className={styles.infoBannerSubtitle}>A palestra deste dia ainda não foi publicada. Volte em breve.</span>
                     </div>
                   )}
 
                   {/* --- BANNER ALARANJADO: AGENDAMENTO --- */}
                   {!semVideoCadastrado && isLocked && (
-                    <div style={{
-                      marginTop: '1rem',
-                      padding: '0.85rem',
-                      backgroundColor: 'rgba(249, 115, 22, 0.1)',
-                      border: '1px solid rgba(249, 115, 22, 0.4)',
-                      borderRadius: '8px',
-                      color: '#f97316',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '4px',
-                      textAlign: 'center'
-                    }}>
-                      <Clock size={22} style={{ marginBottom: '4px' }}/>
-                      <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>Acesso Antecipado Bloqueado</span>
-                      <span style={{ fontSize: '0.8rem', opacity: 0.9 }}>Disponível em: {dataFormatada}</span>
+                    <div className={`${styles.infoBanner} ${styles.infoBannerOrange}`}>
+                      <Clock size={22} className={styles.infoBannerIcon} />
+                      <span className={styles.infoBannerTitle}>Acesso Antecipado Bloqueado</span>
+                      <span className={styles.infoBannerSubtitle}>Disponível em: {dataFormatada}</span>
                     </div>
                   )}
 
                   {/* --- BANNER AZUL: PRECISA ASSISTIR O VÍDEO ATÉ O FIM --- */}
                   {precisaAssistirVideo && (
-                    <div style={{
-                      marginTop: '1rem', padding: '0.85rem',
-                      backgroundColor: 'rgba(56, 189, 248, 0.1)',
-                      border: '1px solid rgba(56, 189, 248, 0.4)',
-                      borderRadius: '8px', color: 'var(--color-primary)',
-                      display: 'flex', flexDirection: 'column',
-                      alignItems: 'center', justifyContent: 'center',
-                      gap: '4px', textAlign: 'center'
-                    }}>
-                      <PlayCircle size={22} style={{ marginBottom: '4px' }}/>
-                      <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>Assista o vídeo até o final</span>
-                      <span style={{ fontSize: '0.8rem', opacity: 0.9 }}>O botão de iniciar o quiz libera automaticamente quando o vídeo terminar.</span>
+                    <div className={`${styles.infoBanner} ${styles.infoBannerBlue}`}>
+                      <PlayCircle size={22} className={styles.infoBannerIcon} />
+                      <span className={styles.infoBannerTitle}>Assista o vídeo até o final</span>
+                      <span className={styles.infoBannerSubtitle}>O botão de iniciar o quiz libera automaticamente quando o vídeo terminar.</span>
                     </div>
                   )}
 

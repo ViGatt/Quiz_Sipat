@@ -176,3 +176,58 @@
   color: var(--color-primary, #00c3ff);
   background-color: rgba(0, 195, 255, 0.05); /* Fundo ciano bem suave */
 }
+
+/* --- ESTADOS DE CARREGAMENTO / ERRO --- */
+.loadingState { padding: 3rem; text-align: center; color: var(--color-primary); }
+.errorState { padding: 3rem; text-align: center; color: #ef4444; }
+
+/* --- PLAYER DE VÍDEO --- */
+.videoPlayerBox { width: 100%; height: 100%; }
+.videoPlaceholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  background-color: #1e293b;
+  color: #64748b;
+}
+
+.completedScoreValue { color: var(--color-white); }
+
+/* --- BOTÃO INICIAR QUIZ (estado travado) --- */
+.btnStartDisabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: #475569;
+  box-shadow: none;
+}
+
+/* --- BANNERS DE AVISO (vídeo ausente / agendamento / assistir até o fim) --- */
+.infoBanner {
+  margin-top: 1rem;
+  padding: 0.85rem;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  text-align: center;
+}
+
+.infoBannerOrange {
+  background-color: rgba(249, 115, 22, 0.1);
+  border: 1px solid rgba(249, 115, 22, 0.4);
+  color: #f97316;
+}
+
+.infoBannerBlue {
+  background-color: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  color: var(--color-primary);
+}
+
+.infoBannerIcon { margin-bottom: 4px; }
+.infoBannerTitle { font-size: 0.9rem; font-weight: 600; }
+.infoBannerSubtitle { font-size: 0.8rem; opacity: 0.9; }

@@ -220,10 +220,9 @@ export function Dashboard() {
               <Home size={20} />
             </Link>
           
-            <button 
-              className={styles.btnOutline} 
+            <button
+              className={`${styles.btnOutline} ${styles.btnOutlineIcon}`}
               onClick={handleExportDashboard}
-              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
             >
               <Download size={20} /> Exportar Relatório
             </button>
@@ -235,7 +234,7 @@ export function Dashboard() {
         </header>
 
         {loading ? (
-          <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--color-primary)' }}>
+          <div className={styles.loadingState}>
             Atualizando métricas em tempo real...
           </div>
         ) : (
@@ -287,11 +286,11 @@ export function Dashboard() {
                         <Calendar size={24} className={styles.eventIcon} />
                         <div className={styles.eventInfo}>
                           <h4>Dia {quiz.id} - {quiz.tema || 'Sem tema'}</h4>
-                          <span style={{ display: 'block', maxWidth: '200px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          <span className={styles.eventDescription}>
                             {quiz.descricao || "Sem descrição cadastrada"}
                           </span>
                         </div>
-                        <button 
+                        <button
                           className={styles.btnOutline}
                           onClick={() => navigate(`/meus-quizzes/${quiz.id}`)}
                         >
@@ -300,72 +299,43 @@ export function Dashboard() {
                       </div>
                     ))
                   ) : (
-                    <p style={{color: '#666'}}>Nenhum evento ativo.</p>
+                    <p className={styles.emptyText}>Nenhum evento ativo.</p>
                   )}
                 </div>
               </div>
 
               {/* PAINEL DE TOP PARTICIPANTES */}
-              <div className={styles.panel} style={{ display: 'flex', flexDirection: 'column' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div className={`${styles.panel} ${styles.panelColumn}`}>
+                <div className={styles.panelHeaderRow}>
                   <div>
                     <h3 className={styles.panelTitle}>Top Participantes</h3>
                     <p className={styles.panelSubtitle}>Ranking com maior pontuação</p>
                   </div>
-                  
+
                   {/* BOTÕES DE AÇÃO DO RANKING */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-                    <button 
+                  <div className={styles.panelActions}>
+                    <button
                       onClick={() => setModalRankingAberto(true)}
                       title="Expandir em Tela Cheia"
-                      style={{
-                        background: 'rgba(99, 102, 241, 0.1)',
-                        border: 'none',
-                        color: 'var(--color-primary)',
-                        padding: '6px 10px',
-                        borderRadius: '6px',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        fontSize: '0.85rem',
-                        fontWeight: '600'
-                      }}
+                      className={styles.btnExpandRanking}
                     >
                       <Maximize2 size={16} /> Expandir
                     </button>
 
                     {rankingCompleto.length > 5 && (
-                      <button 
+                      <button
                         onClick={() => setMostrarTodosParticipantes(!mostrarTodosParticipantes)}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          color: 'var(--color-primary)',
-                          cursor: 'pointer',
-                          fontSize: '0.85rem',
-                          fontWeight: 'bold',
-                          textDecoration: 'underline'
-                        }}
+                        className={styles.btnVerTodos}
                       >
                         {mostrarTodosParticipantes ? 'Ver Menos' : 'Ver Todos'}
                       </button>
                     )}
                   </div>
                 </div>
-                
+
                 {/* LISTA DE PARTICIPANTES NO CARD */}
-                <div 
-                  className={styles.participantList}
-                  style={{
-                    maxHeight: mostrarTodosParticipantes ? '380px' : 'auto', 
-                    overflowY: mostrarTodosParticipantes ? 'auto' : 'visible', 
-                    paddingRight: mostrarTodosParticipantes ? '6px' : '0', 
-                    marginTop: '1rem',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '1rem'
-                  }}
+                <div
+                  className={`${styles.participantList} ${styles.participantListWrapper} ${mostrarTodosParticipantes ? styles.participantListExpanded : ''}`}
                 >
                   {rankingCompleto && rankingCompleto.length > 0 ? (
                     (mostrarTodosParticipantes ? rankingCompleto : rankingCompleto.slice(0, 5)).map((part, index) => (
@@ -373,12 +343,12 @@ export function Dashboard() {
                         <div className={styles.participantRank}>{index + 1}</div>
                         <div className={styles.participantAvatar}></div>
                         <div className={styles.participantInfo}>
-                          <h4 style={{ textTransform: 'capitalize' }}>
+                          <h4 className={styles.nameCapitalize}>
                             {(
-                              part.nome_colaborador || 
-                              part.nome || 
-                              part.nome_completo || 
-                              part.colaborador || 
+                              part.nome_colaborador ||
+                              part.nome ||
+                              part.nome_completo ||
+                              part.colaborador ||
                               `CPF ${part.cpf}`
                             ).toLowerCase()}
                           </h4>
@@ -391,7 +361,7 @@ export function Dashboard() {
                       </div>
                     ))
                   ) : (
-                    <p style={{color: '#666'}}>Nenhuma participação registrada.</p>
+                    <p className={styles.emptyText}>Nenhuma participação registrada.</p>
                   )}
                 </div>
               </div>
@@ -406,7 +376,7 @@ export function Dashboard() {
 
               <div className={styles.quizzesGrid}>
                 {quizzes && quizzes.length > 0 && quizzes.map((quiz) => (
-                  <div key={quiz.id} className={styles.quizCard} onClick={() => navigate(`/meus-quizzes/${quiz.id}`)} style={{cursor: 'pointer'}}>
+                  <div key={quiz.id} className={styles.quizCard} onClick={() => navigate(`/meus-quizzes/${quiz.id}`)}>
                     <div className={styles.quizHeader}>
                       <h4>Quiz Dia {String(quiz.id).padStart(2, '0')}</h4>
                       <ChevronRight size={18} className={styles.arrowIcon} />
@@ -420,19 +390,18 @@ export function Dashboard() {
                     <div className={styles.progressSection}>
                       <div className={styles.progressLabels}>
                         <span>Status</span>
-                        <span style={{ color: 'var(--color-primary)' }}>Ativo</span>
+                        <span className={styles.statusActive}>Ativo</span>
                       </div>
                       <div className={styles.progressBarBg}>
-                        <div className={styles.progressBarFill} style={{ width: '100%', backgroundColor: 'var(--color-primary)' }}></div>
+                        <div className={styles.progressBarFill}></div>
                       </div>
                     </div>
                   </div>
                 ))}
 
-                <Link 
-                  to="/create-quiz" 
+                <Link
+                  to="/create-quiz"
                   className={`${styles.quizCard} ${styles.createQuizCard}`}
-                  style={{ textDecoration: 'none' }} 
                 >
                   <div className={styles.createIconWrapper}>
                     <Plus size={20} />
@@ -448,94 +417,47 @@ export function Dashboard() {
 
       {/* MODAL / POPUP DE TELA CHEIA PARA O RANKING COMPLETO */}
       {modalRankingAberto && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100vw',
-          height: '100vh',
-          backgroundColor: 'rgba(0, 0, 0, 0.65)',
-          backdropFilter: 'blur(4px)',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          zIndex: 9999
-        }}>
-          <div style={{
-            backgroundColor: '#ffffff',
-            borderRadius: '16px',
-            width: '90%',
-            maxWidth: '800px',
-            maxHeight: '85vh',
-            display: 'flex',
-            flexDirection: 'column',
-            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-            overflow: 'hidden'
-          }}>
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalBox}>
             {/* Cabeçalho do Modal */}
-            <div style={{
-              padding: '1.5rem',
-              borderBottom: '1px solid #e5e7eb',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center'
-            }}>
+            <div className={styles.modalHeader}>
               <div>
-                <h2 style={{ margin: 0, fontSize: '1.4rem', color: '#1f2937' }}>Ranking Completo de Participantes</h2>
-                <p style={{ margin: '4px 0 0 0', fontSize: '0.9rem', color: '#6b7280' }}>
-                  Total de {rankingCompleto.length} colaborador(es) com pontuação registrada
-                </p>
+                <h2>Ranking Completo de Participantes</h2>
+                <p>Total de {rankingCompleto.length} colaborador(es) com pontuação registrada</p>
               </div>
-              <button 
+              <button
                 onClick={() => setModalRankingAberto(false)}
-                style={{
-                  background: '#f3f4f6',
-                  border: 'none',
-                  borderRadius: '50%',
-                  width: '36px',
-                  height: '36px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  color: '#4b5563'
-                }}
+                className={styles.modalCloseBtn}
               >
                 <X size={20} />
               </button>
             </div>
 
             {/* Conteúdo com Scroll do Modal */}
-            <div style={{ padding: '1.5rem', overflowY: 'auto', flex: 1 }}>
+            <div className={styles.modalBody}>
               {rankingCompleto.length > 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div className={styles.modalList}>
                   {rankingCompleto.map((part, index) => (
-                    <div 
-                      key={part.cpf || index} 
-                      className={styles.participantItem}
-                      style={{
-                        padding: '12px 16px',
-                        backgroundColor: index < 3 ? 'rgba(99, 102, 241, 0.05)' : '#f9fafb',
-                        borderRadius: '8px',
-                        border: '1px solid #f3f4f6'
-                      }}
+                    <div
+                      key={part.cpf || index}
+                      className={`${styles.participantItem} ${styles.modalParticipantItem} ${index < 3 ? styles.modalParticipantItemTop3 : ''}`}
                     >
-                      <div className={styles.participantRank} style={{ fontWeight: 'bold' }}>{index + 1}º</div>
-                      <div className={styles.participantInfo} style={{ flex: 1, marginLeft: '12px' }}>
-                        <h4 style={{ textTransform: 'capitalize', margin: 0, fontSize: '1rem', color: '#111827' }}>
+                      <div className={`${styles.participantRank} ${styles.modalRank}`}>{index + 1}º</div>
+                      <div className={`${styles.participantInfo} ${styles.modalInfo}`}>
+                        <h4 className={`${styles.nameCapitalize} ${styles.modalName}`}>
                           {(
-                            part.nome_colaborador || 
-                            part.nome || 
-                            part.nome_completo || 
-                            part.colaborador || 
+                            part.nome_colaborador ||
+                            part.nome ||
+                            part.nome_completo ||
+                            part.colaborador ||
                             `CPF ${part.cpf}`
                           ).toLowerCase()}
                         </h4>
-                        <span style={{ fontSize: '0.85rem', color: '#6b7280' }}>
+                        <span className={styles.modalSubtext}>
                           {part.quizzes_respondidos || 0} Quizzes respondidos
                         </span>
                       </div>
-                      <div className={styles.participantScore} style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>
+                      <div className={`${styles.participantScore} ${styles.modalScore}`}>
                         <Medal size={18} className={styles.medalIcon} />
                         {part.total_pontos || 0} pts
                       </div>
@@ -543,7 +465,7 @@ export function Dashboard() {
                   ))}
                 </div>
               ) : (
-                <p style={{ textAlign: 'center', color: '#6b7280', padding: '2rem 0' }}>
+                <p className={styles.modalEmptyText}>
                   Nenhum registro encontrado.
                 </p>
               )}
