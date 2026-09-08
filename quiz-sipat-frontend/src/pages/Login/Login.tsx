@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Mail, Lock, Home, Eye, EyeOff } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import styles from './Login.module.css';
@@ -15,6 +15,18 @@ export function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [erro, setErro] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Se chegou aqui deslogado automaticamente por sessão expirada, avisa o motivo
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem('@sipat:sessao_expirada')) {
+        sessionStorage.removeItem('@sipat:sessao_expirada');
+        setErro('Sua sessão expirou. Faça login novamente.');
+      }
+    } catch {
+      // Sem acesso ao sessionStorage, apenas segue sem o aviso.
+    }
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();

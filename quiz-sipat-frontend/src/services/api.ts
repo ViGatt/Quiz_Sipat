@@ -24,3 +24,31 @@ api.interceptors.request.use((config) => {
   }
   return config;
 });
+
+// Se o token expirar/for inválido em qualquer requisição autenticada, desloga
+// automaticamente e manda pra tela de login (com aviso), em vez de deixar a
+// pessoa presa numa sessão morta tomando 401 silencioso em toda ação.
+// /auth/login e /auth/ativar ficam de fora: um 401 ali é credencial errada,
+// não sessão expirada, e cada tela já mostra essa mensagem por conta própria.
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const status = error.response?.status;
+    const url: string = error.config?.url || '';
+    const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/ativar');
+
+    if (status === 401 && !isAuthEndpoint) {
+      try {
+        localStorage.removeItem('@sipat:usuario');
+        sessionStorage.setItem('@sipat:sessao_expirada', '1');
+      } catch {
+        // Sem acesso ao storage, segue só com o redirecionamento.
+      }
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);

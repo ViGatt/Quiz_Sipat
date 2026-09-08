@@ -23,6 +23,10 @@ interface FeedbackState {
   isLastQuestion: boolean;
 }
 
+// Valor sentinela enviado quando o tempo acaba: nunca bate com uma alternativa
+// real (sempre "A"/"B"/"C"/"D"), então o backend naturalmente marca como erro.
+const RESPOSTA_TEMPO_ESGOTADO = '__TEMPO_ESGOTADO__';
+
 export function TakeQuiz() {
   const [timePerQuestion, setTimePerQuestion] = useState(60);
   const navigate = useNavigate();
@@ -157,8 +161,17 @@ export function TakeQuiz() {
     }
   }, [timeLeft, loading, showInstructions, quizFinished, feedback, questions]);
 
-  const handleNextQuestion = async () => {
-    if (!selectedOption || submitting) return;
+  // Quando o tempo acaba, envia automaticamente pra próxima questão (conta como erro, sem pontuação)
+  useEffect(() => {
+    if (timeLeft === 0 && !loading && !showInstructions && !quizFinished && !feedback && !submitting && questions.length > 0) {
+      handleNextQuestion(RESPOSTA_TEMPO_ESGOTADO);
+    }
+  }, [timeLeft, loading, showInstructions, quizFinished, feedback, submitting, questions]);
+
+  const handleNextQuestion = async (alternativaForcada?: string) => {
+    const alternativaEnviada = alternativaForcada ?? selectedOption;
+    if (!alternativaEnviada || submitting) return;
+    const foiTimeout = alternativaEnviada === RESPOSTA_TEMPO_ESGOTADO;
     const currentQuestion = questions[currentQuestionIndex];
 
     try {
@@ -167,11 +180,11 @@ export function TakeQuiz() {
         cpf: usuario?.cpf,
         dia_sipat_id: Number(id),
         questao_id: String(currentQuestion.id),
-        alternativa_escolhida: selectedOption
+        alternativa_escolhida: alternativaEnviada
       });
 
-      const acertou = res.data?.acertou; 
-      
+      const acertou = res.data?.acertou;
+
       let newPoints = points;
       let newCorrectCount = correctCount;
       let newLives = lives;
@@ -185,19 +198,21 @@ export function TakeQuiz() {
         newLives -= 1;
         setLives(newLives);
       }
-      
+
       const isGameOver = newLives === 0;
       const isLastQuestion = currentQuestionIndex >= questions.length - 1;
 
       // Se resultado imediato está ativo, mostra o feedback inline (tela colorida)
       if (immediateResult) {
   const customFeedback = acertou ? currentQuestion.feedbackCorrect : currentQuestion.feedbackIncorrect;
-  
+
   setFeedback({
     isCorrect: acertou,
-    text: customFeedback && customFeedback.trim() !== "" 
-      ? customFeedback 
-      : (acertou ? "Resposta Correta! Muito bem." : "Resposta Incorreta. Fique atento!"),
+    text: foiTimeout
+      ? "Tempo esgotado! Você não pontuou nesta questão."
+      : (customFeedback && customFeedback.trim() !== ""
+        ? customFeedback
+        : (acertou ? "Resposta Correta! Muito bem." : "Resposta Incorreta. Fique atento!")),
     isGameOver,
     isLastQuestion
   });
@@ -427,9 +442,9 @@ export function TakeQuiz() {
           <div className={styles.actionFooter}>
 
             {!feedback ? (
-              <button 
-                className={styles.btnNext} 
-                onClick={handleNextQuestion}
+              <button
+                className={styles.btnNext}
+                onClick={() => handleNextQuestion()}
                 disabled={selectedOption === null || submitting}
               >
                 {submitting ? 'Enviando...' : 'Confirmar Resposta'} <ChevronRight size={18} />
