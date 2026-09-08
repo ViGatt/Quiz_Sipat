@@ -169,18 +169,17 @@ export function TakeQuiz() {
 
       // Se resultado imediato está ativo, mostra o feedback inline (tela colorida)
       if (immediateResult) {
-        setFeedback({
-          isCorrect: acertou,
-          text: acertou 
-            ? (currentQuestion.feedbackCorrect || "Resposta Correta! Muito bem.")
-            : (currentQuestion.feedbackIncorrect || "Resposta Incorreta. Fique atento!"),
-          isGameOver,
-          isLastQuestion
-        });
-      } else {
-        // Se estiver desligado, pula direto
-        proceedToNext(isGameOver, isLastQuestion);
-      }
+  const customFeedback = acertou ? currentQuestion.feedbackCorrect : currentQuestion.feedbackIncorrect;
+  
+  setFeedback({
+    isCorrect: acertou,
+    text: customFeedback && customFeedback.trim() !== "" 
+      ? customFeedback 
+      : (acertou ? "Resposta Correta! Muito bem." : "Resposta Incorreta. Fique atento!"),
+    isGameOver,
+    isLastQuestion
+  });
+}
 
     } catch (err: any) {
       console.error("Erro ao submeter resposta:", err);

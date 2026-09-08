@@ -28,7 +28,6 @@ export function Footer() {
           <Link to="/">Início</Link>
           <Link to="/meus-quizzes">Quizzes</Link>
           <Link to="/programacao">Programação</Link>
-          <a href="#premios">Prêmios</a>
           <Link to="/sobre">Sobre</Link>
         </div>
 
