@@ -32,8 +32,11 @@ export function ParticipantQuizDetails() {
   const [tempDescription, setTempDescription] = useState('');
 
   // Simulação de status do participante (Em breve puxaremos isso do banco também)
-  const [isCompleted] = useState(false); 
+  const [isCompleted] = useState(false);
   const score = "0/15";
+
+  // --- CONTROLE DE VÍDEO ASSISTIDO (libera o botão só após o vídeo terminar) ---
+  const [assistiuVideoCompleto, setAssistiuVideoCompleto] = useState(false);
 
   // Busca os dados reais no FastAPI ao abrir a tela
   useEffect(() => {
@@ -72,29 +75,63 @@ export function ParticipantQuizDetails() {
     if (id) fetchQuizData();
   }, [id]);
 
-  // Função auxiliar para converter URLs normais do YouTube para formato Embed
-  const getEmbedUrl = (url: string) => {
+  // Extrai só o ID do vídeo (necessário para o YouTube IFrame Player API)
+  const getVideoId = (url: string): string => {
     if (!url) return '';
-    if (url.includes('embed/')) return url; 
+    if (url.includes('embed/')) {
+      return url.split('embed/')[1]?.split('?')[0] || '';
+    }
 
-    let videoId = '';
     try {
       const urlObj = new URL(url);
-      
       if (urlObj.hostname.includes('youtube.com')) {
-        videoId = urlObj.searchParams.get('v') || '';
-        if (!videoId && urlObj.pathname.startsWith('/shorts/')) {
-          videoId = urlObj.pathname.split('/')[2];
-        }
+        const v = urlObj.searchParams.get('v');
+        if (v) return v;
+        if (urlObj.pathname.startsWith('/shorts/')) return urlObj.pathname.split('/')[2] || '';
       } else if (urlObj.hostname === 'youtu.be') {
-        videoId = urlObj.pathname.slice(1);
+        return urlObj.pathname.slice(1);
       }
     } catch (e) {
       console.error("URL de vídeo inválida:", e);
     }
-
-    return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
+    return '';
   };
+
+  // Carrega o player oficial do YouTube (em vez de um <iframe> simples) para
+  // conseguir detectar quando o vídeo chega ao fim e então liberar o quiz.
+  useEffect(() => {
+    setAssistiuVideoCompleto(false);
+
+    const videoId = getVideoId(videoUrl);
+    if (!videoId || isEditing) return;
+
+    const criarPlayer = () => {
+      const YT = (window as any).YT;
+      if (!YT || !document.getElementById('yt-player-quiz')) return;
+      new YT.Player('yt-player-quiz', {
+        videoId,
+        events: {
+          onStateChange: (event: any) => {
+            if (event.data === YT.PlayerState.ENDED) {
+              setAssistiuVideoCompleto(true);
+            }
+          }
+        }
+      });
+    };
+
+    if ((window as any).YT && (window as any).YT.Player) {
+      criarPlayer();
+    } else {
+      if (!document.getElementById('youtube-iframe-api-script')) {
+        const tag = document.createElement('script');
+        tag.id = 'youtube-iframe-api-script';
+        tag.src = 'https://www.youtube.com/iframe_api';
+        document.body.appendChild(tag);
+      }
+      (window as any).onYouTubeIframeAPIReady = criarPlayer;
+    }
+  }, [videoUrl, isEditing]);
 
   const handleSaveEdit = async () => {
     try {
@@ -124,10 +161,11 @@ export function ParticipantQuizDetails() {
   };
 
   // --- LÓGICA DE BLOQUEIO VISUAL (FRONT-END) ---
-  let isLocked = false;
+  const semVideoCadastrado = !videoUrl;
+  let isLocked = semVideoCadastrado;
   let dataFormatada = '';
 
-  if (quizStatus === 'Programado' && dataLiberacao) {
+  if (!isLocked && quizStatus === 'Programado' && dataLiberacao) {
     const dataLibObj = new Date(dataLiberacao);
     if (dataLibObj > new Date()) {
       isLocked = true;
@@ -137,6 +175,10 @@ export function ParticipantQuizDetails() {
       });
     }
   }
+
+  // Só exige "assistir até o fim" quando já existe vídeo e o quiz não está travado por outro motivo
+  const precisaAssistirVideo = !isLocked && !assistiuVideoCompleto;
+  const botaoDesabilitado = isLocked || precisaAssistirVideo;
 
   // Telas de Feedback
   if (loading) {
@@ -233,15 +275,7 @@ export function ParticipantQuizDetails() {
               <>
                 <div className={styles.videoWrapper}>
                   {videoUrl ? (
-                    <iframe 
-                      width="100%" 
-                      height="100%" 
-                      src={getEmbedUrl(videoUrl)} 
-                      title="Palestra SIPAT" 
-                      frameBorder="0" 
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                      allowFullScreen
-                    ></iframe>
+                    <div id="yt-player-quiz" style={{ width: '100%', height: '100%' }}></div>
                   ) : (
                     <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', backgroundColor: '#1e293b', color: '#64748b'}}>
                       <PlayCircle size={48} />
@@ -293,22 +327,39 @@ export function ParticipantQuizDetails() {
                   <p className={styles.warningText}>* Atenção: Você tem apenas uma tentativa por CPF.</p>
                   
                   {/* --- BOTÃO COM APLICAÇÃO VISUAL DA TRAVA --- */}
-                  <button 
-                    className={styles.btnStart} 
-                    onClick={() => { if (!isLocked) navigate(`/take-quiz/${id}`) }}
-                    disabled={isLocked}
-                    style={isLocked ? { 
-                      opacity: 0.5, 
-                      cursor: 'not-allowed', 
-                      backgroundColor: '#475569', 
-                      boxShadow: 'none' 
+                  <button
+                    className={styles.btnStart}
+                    onClick={() => { if (!botaoDesabilitado) navigate(`/take-quiz/${id}`) }}
+                    disabled={botaoDesabilitado}
+                    style={botaoDesabilitado ? {
+                      opacity: 0.5,
+                      cursor: 'not-allowed',
+                      backgroundColor: '#475569',
+                      boxShadow: 'none'
                     } : {}}
                   >
                     <PlayCircle size={20} /> Iniciar Quiz Agora
                   </button>
 
-                  {/* --- BANNER ALARANJADO DE AVISO --- */}
-                  {isLocked && (
+                  {/* --- BANNER: SEM VÍDEO CADASTRADO --- */}
+                  {semVideoCadastrado && (
+                    <div style={{
+                      marginTop: '1rem', padding: '0.85rem',
+                      backgroundColor: 'rgba(249, 115, 22, 0.1)',
+                      border: '1px solid rgba(249, 115, 22, 0.4)',
+                      borderRadius: '8px', color: '#f97316',
+                      display: 'flex', flexDirection: 'column',
+                      alignItems: 'center', justifyContent: 'center',
+                      gap: '4px', textAlign: 'center'
+                    }}>
+                      <Video size={22} style={{ marginBottom: '4px' }}/>
+                      <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>Vídeo Ainda Não Disponível</span>
+                      <span style={{ fontSize: '0.8rem', opacity: 0.9 }}>A palestra deste dia ainda não foi publicada. Volte em breve.</span>
+                    </div>
+                  )}
+
+                  {/* --- BANNER ALARANJADO: AGENDAMENTO --- */}
+                  {!semVideoCadastrado && isLocked && (
                     <div style={{
                       marginTop: '1rem',
                       padding: '0.85rem',
@@ -328,7 +379,24 @@ export function ParticipantQuizDetails() {
                       <span style={{ fontSize: '0.8rem', opacity: 0.9 }}>Disponível em: {dataFormatada}</span>
                     </div>
                   )}
-                  
+
+                  {/* --- BANNER AZUL: PRECISA ASSISTIR O VÍDEO ATÉ O FIM --- */}
+                  {precisaAssistirVideo && (
+                    <div style={{
+                      marginTop: '1rem', padding: '0.85rem',
+                      backgroundColor: 'rgba(56, 189, 248, 0.1)',
+                      border: '1px solid rgba(56, 189, 248, 0.4)',
+                      borderRadius: '8px', color: 'var(--color-primary)',
+                      display: 'flex', flexDirection: 'column',
+                      alignItems: 'center', justifyContent: 'center',
+                      gap: '4px', textAlign: 'center'
+                    }}>
+                      <PlayCircle size={22} style={{ marginBottom: '4px' }}/>
+                      <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>Assista o vídeo até o final</span>
+                      <span style={{ fontSize: '0.8rem', opacity: 0.9 }}>O botão de iniciar o quiz libera automaticamente quando o vídeo terminar.</span>
+                    </div>
+                  )}
+
                 </div>
               )}
             </div>

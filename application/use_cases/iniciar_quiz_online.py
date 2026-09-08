@@ -46,6 +46,14 @@ class IniciarQuizOnlineUseCase:
                 raise AcessoBloqueadoError(f"Acesso antecipado bloqueado. Este quiz só estará disponível a partir de {data_formatada}.")
         # ---------------------------------------------
 
+        # --- TRAVA DE VÍDEO (evita iniciar o quiz antes da palestra estar disponível) ---
+        link_video = getattr(quiz_do_dia, 'link_youtube_palestra', None)
+        if not link_video or not link_video.strip():
+            raise AcessoBloqueadoError(
+                "O vídeo da palestra deste dia ainda não foi disponibilizado. Aguarde a publicação para iniciar o quiz."
+            )
+        # ---------------------------------------------------------------------------
+
         # 3. Verificar bloqueios cruzados e tentativas (Regra de Ouro)
         participacao_existente = self.participacao_repo.buscar_por_colaborador_e_dia(
             colaborador.id, dia_sipat_id
