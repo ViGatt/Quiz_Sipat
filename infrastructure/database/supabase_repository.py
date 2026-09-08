@@ -660,8 +660,37 @@ class SupabaseRelatorioRepository:
         }
     
 class SupabaseEventoRepository:
+    BUCKET_FOTOS_PALESTRANTES = "fotos-palestrantes"
+
     def __init__(self, client):
         self.client = client
+
+    def _garantir_bucket_fotos(self):
+        """Cria o bucket de fotos dos palestrantes (público) se ainda não existir."""
+        try:
+            self.client.storage.get_bucket(self.BUCKET_FOTOS_PALESTRANTES)
+        except Exception:
+            try:
+                self.client.storage.create_bucket(self.BUCKET_FOTOS_PALESTRANTES, options={"public": True})
+            except Exception as e:
+                print(f"Aviso: não foi possível garantir o bucket de fotos dos palestrantes: {e}")
+
+    def fazer_upload_foto_palestrante(self, nome_arquivo: str, conteudo: bytes, content_type: str) -> str:
+        """
+        Envia a foto para o Supabase Storage e retorna a URL pública para
+        salvar no campo fotoUrl do evento.
+        """
+        self._garantir_bucket_fotos()
+        extensao = nome_arquivo.rsplit('.', 1)[-1].lower() if '.' in nome_arquivo else 'jpg'
+        caminho = f"{uuid.uuid4()}.{extensao}"
+
+        self.client.storage.from_(self.BUCKET_FOTOS_PALESTRANTES).upload(
+            caminho,
+            conteudo,
+            file_options={"content-type": content_type or "image/jpeg"}
+        )
+
+        return self.client.storage.from_(self.BUCKET_FOTOS_PALESTRANTES).get_public_url(caminho)
 
     def listar_eventos(self):
         res = self.client.table("eventos").select("*").order("id").execute()

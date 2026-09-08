@@ -1,9 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from pydantic import BaseModel
 import time
 from presentation.dependencias import get_evento_repo
 from infrastructure.database.supabase_repository import SupabaseEventoRepository
 from presentation.auth_utils import exigir_comissao
+
+TIPOS_IMAGEM_PERMITIDOS = {"image/jpeg", "image/png", "image/webp", "image/gif"}
+TAMANHO_MAXIMO_BYTES = 5 * 1024 * 1024  # 5MB
 
 router = APIRouter(prefix="/eventos", tags=["Eventos da Programacao"])
 
@@ -30,6 +33,30 @@ def listar_eventos(repo: SupabaseEventoRepository = Depends(get_evento_repo)):
                 time.sleep(1)
                 continue
             raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/upload-foto")
+async def upload_foto_palestrante(
+    file: UploadFile = File(...),
+    repo: SupabaseEventoRepository = Depends(get_evento_repo),
+    _comissao: dict = Depends(exigir_comissao),
+):
+    """
+    Recebe uma foto do palestrante, envia para o Supabase Storage e devolve
+    a URL pública já pronta para ser salva no campo fotoUrl do evento.
+    """
+    if file.content_type not in TIPOS_IMAGEM_PERMITIDOS:
+        raise HTTPException(status_code=400, detail="Formato inválido. Envie uma imagem JPG, PNG, WEBP ou GIF.")
+
+    conteudo = await file.read()
+    if len(conteudo) > TAMANHO_MAXIMO_BYTES:
+        raise HTTPException(status_code=400, detail="Imagem muito grande. O limite é 5MB.")
+
+    try:
+        url = repo.fazer_upload_foto_palestrante(file.filename or "foto.jpg", conteudo, file.content_type)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao enviar a imagem: {str(e)}")
+
+    return {"url": url}
 
 @router.post("/")
 def criar_evento(

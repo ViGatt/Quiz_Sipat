@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, X, Image as ImageIcon, MapPin, Clock } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Image as ImageIcon, MapPin, Clock, Upload, Loader2 } from 'lucide-react';
 import { Sidebar } from '../../components/Sidebar/Sidebar'; 
 import { api } from '../../services/api'; // Integração com sua API
 import styles from './EventosAdmin.module.css';
@@ -25,6 +25,7 @@ export function EventosAdmin() {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEvento, setEditingEvento] = useState<Evento | null>(null);
+  const [uploadingFoto, setUploadingFoto] = useState(false);
 
   // Busca os eventos do banco de dados ao carregar a tela
   useEffect(() => {
@@ -108,6 +109,24 @@ export function EventosAdmin() {
     } catch (error) {
       console.error("Erro ao salvar evento:", error);
       alert("Erro ao salvar o evento. Verifique a conexão com o banco.");
+    }
+  };
+
+  const handleFotoFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !editingEvento) return;
+
+    setUploadingFoto(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const { data } = await api.post('/eventos/upload-foto', formData);
+      setEditingEvento(prev => prev ? { ...prev, fotoUrl: data.url } : prev);
+    } catch (err: any) {
+      alert(err.response?.data?.detail || 'Erro ao enviar a foto. Tente novamente.');
+    } finally {
+      setUploadingFoto(false);
+      e.target.value = '';
     }
   };
 
@@ -251,7 +270,7 @@ export function EventosAdmin() {
                 </div>
 
                 <div className={`${styles.formGroup} ${styles.fullWidth}`}>
-                  <label>URL da Foto (Deixe em branco para gerar avatar automático)</label>
+                  <label>Foto do Palestrante (Deixe em branco para gerar avatar automático)</label>
                   <div className={styles.photoPreviewContainer}>
                     {editingEvento.fotoUrl ? (
                       <img src={editingEvento.fotoUrl} alt="Preview" />
@@ -260,14 +279,30 @@ export function EventosAdmin() {
                         <ImageIcon size={24} color="#94a3b8" />
                       </div>
                     )}
-                    <input 
-                      type="text" 
-                      placeholder="Cole o link da imagem aqui..." 
+                    <input
+                      type="text"
+                      placeholder="Cole o link da imagem aqui..."
                       style={{ flex: 1 }}
-                      value={editingEvento.fotoUrl} 
-                      onChange={e => setEditingEvento({...editingEvento, fotoUrl: e.target.value})} 
+                      value={editingEvento.fotoUrl}
+                      onChange={e => setEditingEvento({...editingEvento, fotoUrl: e.target.value})}
                     />
                   </div>
+
+                  <label style={{
+                    display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
+                    marginTop: '0.6rem', fontSize: '0.85rem', color: 'var(--color-primary)',
+                    cursor: uploadingFoto ? 'wait' : 'pointer'
+                  }}>
+                    {uploadingFoto ? <Loader2 size={16} className="spin" /> : <Upload size={16} />}
+                    {uploadingFoto ? 'Enviando foto...' : 'Ou envie uma foto do seu computador'}
+                    <input
+                      type="file"
+                      accept="image/png, image/jpeg, image/webp, image/gif"
+                      onChange={handleFotoFileChange}
+                      disabled={uploadingFoto}
+                      style={{ display: 'none' }}
+                    />
+                  </label>
                 </div>
 
                 <div className={`${styles.formGroup} ${styles.fullWidth}`}>
