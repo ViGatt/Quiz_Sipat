@@ -95,6 +95,17 @@ def criar_novo_quiz(request: CriarQuizRequest, repo: SupabaseQuizRepository = De
         raise HTTPException(status_code=500, detail="Erro ao salvar o Quiz no banco de dados.")
     return {"message": "Quiz criado com sucesso!"}
 
+@router.get("/dia-atual")
+def obter_dia_atual(repo: SupabaseQuizRepository = Depends(get_quiz_repo)):
+    """
+    Retorna o dia_sipat (quiz) correspondente à data de hoje, para uso pela
+    tela de Recepção (evita ID fixo que quebraria a partir do 2º dia do evento).
+    """
+    dia = repo.obter_dia_atual()
+    if not dia:
+        raise HTTPException(status_code=404, detail="Nenhum quiz/dia da SIPAT cadastrado para a data de hoje.")
+    return dia
+
 @router.get("/{quiz_id}")
 def obter_quiz(quiz_id: int, repo: SupabaseQuizRepository = Depends(get_quiz_repo)):
     quiz = repo.obter_por_id(quiz_id)

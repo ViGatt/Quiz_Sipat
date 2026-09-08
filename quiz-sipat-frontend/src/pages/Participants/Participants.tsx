@@ -13,6 +13,8 @@ export function Participants() {
   // Agora a lista começa vazia e vai ser preenchida pelo Banco de Dados!
   const [participants, setParticipants] = useState<any[]>([]);
   const [isLoadingList, setIsLoadingList] = useState(true);
+  const [diaSipatId, setDiaSipatId] = useState<number | null>(null);
+  const [erroDiaAtual, setErroDiaAtual] = useState<string | null>(null);
 
   // --- PAGINAÇÃO ---
   const [currentPage, setCurrentPage] = useState(1);
@@ -25,15 +27,15 @@ export function Participants() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // --- NOVA FUNÇÃO: BUSCAR DADOS REAIS ---
-  const fetchParticipants = async () => {
+  const fetchParticipants = async (diaId: number) => {
     setIsLoadingList(true);
     try {
       // O Axios usa a baseURL configurada, então passamos apenas o caminho final
-      const response = await api.get('/recepcao/status/1');
-      
+      const response = await api.get(`/recepcao/status/${diaId}`);
+
       // O Axios armazena o resultado convertido em JSON dentro de "response.data"
       setParticipants(response.data.participantes || []);
-      
+
     } catch (error) {
       // Qualquer erro de servidor ou rede cai automaticamente aqui
       console.error("Erro ao buscar a lista do backend:", error);
@@ -42,9 +44,27 @@ export function Participants() {
     }
 };
 
+  // --- BUSCA QUAL É O DIA DA SIPAT DE HOJE E SÓ DEPOIS CARREGA A LISTA ---
+  const carregarDiaAtualEParticipantes = async () => {
+    setIsLoadingList(true);
+    try {
+      const response = await api.get('/quiz/dia-atual');
+      const id = response.data.id;
+      setDiaSipatId(id);
+      setErroDiaAtual(null);
+      await fetchParticipants(id);
+    } catch (error: any) {
+      console.error("Erro ao buscar o dia atual da SIPAT:", error);
+      setErroDiaAtual(
+        error.response?.data?.detail || "Nenhum quiz cadastrado para a data de hoje. Cadastre o quiz do dia antes de liberar a recepção."
+      );
+      setIsLoadingList(false);
+    }
+  };
+
 // Dispara a busca assim que a tela abre
 useEffect(() => {
-    fetchParticipants();
+    carregarDiaAtualEParticipantes();
 }, []);
 
   const filteredParticipants = participants.filter(p => 
@@ -73,6 +93,11 @@ useEffect(() => {
 
   // --- LÓGICA DO CHECK-IN PRESENCIAL ---
   const handleCheckIn = async (id: string, nome: string, cpf: string) => {
+    if (!diaSipatId) {
+      alert("Não foi possível identificar o quiz/dia da SIPAT de hoje. Verifique se há um quiz cadastrado para a data de hoje.");
+      return;
+    }
+
     if (!window.confirm(`Confirmar presença presencial para ${nome} no dia de hoje?`)) {
       return;
     }
@@ -80,9 +105,9 @@ useEffect(() => {
     try {
       // O Axios já transforma o objeto em JSON automaticamente
       const response = await api.post('/recepcao/registrar', {
-        cpf: cpf.replace(/\D/g, ''), 
+        cpf: cpf.replace(/\D/g, ''),
         nome_completo: nome,
-        dia_sipat_id: 1 
+        dia_sipat_id: diaSipatId
       });
 
       // Se a requisição chegou até aqui, foi sucesso (status 200+)
@@ -129,7 +154,9 @@ useEffect(() => {
       setSelectedFile(null); 
       
       // --- ATUALIZA A LISTA NA HORA APÓS IMPORTAR! ---
-      fetchParticipants();
+      if (diaSipatId) {
+        fetchParticipants(diaSipatId);
+      }
       
     } catch (error: any) {
       console.error(error);
@@ -165,6 +192,23 @@ useEffect(() => {
             Importar Planilha (RH)
           </button>
         </header>
+
+        {erroDiaAtual && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            background: 'rgba(239, 68, 68, 0.1)',
+            color: '#ef4444',
+            border: '1px solid rgba(239, 68, 68, 0.3)',
+            borderRadius: '8px',
+            padding: '12px 16px',
+            marginBottom: '16px',
+          }}>
+            <AlertCircle size={20} />
+            <span>{erroDiaAtual}</span>
+          </div>
+        )}
 
         <div className={styles.panel}>
           <div className={styles.searchWrapper}>

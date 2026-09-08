@@ -3,7 +3,7 @@ import { Mail, Home, ChevronDown, Building, CheckCircle } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import styles from './Register.module.css';
 import mascotImg from '../../assets/MASCOTE-CIPA-MARI_2.png';
-import { supabase } from '../../lib/supabase';
+import { api } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 
 export function Register() {
@@ -43,44 +43,11 @@ export function Register() {
     setLoading(true);
 
     try {
-      // 1. Verifica se o funcionário está na planilha do RH (no banco)
-      const { data: colaborador, error: fetchError } = await supabase
-        .from('colaboradores')
-        .select('*')
-        .eq('cpf', cpfLimpo)
-        .single();
+      // Ativação validada no backend (o front nunca consulta/atualiza a tabela
+      // de colaboradores diretamente, evitando expor dados de RH via chave anon)
+      const { data: updatedData } = await api.post('/auth/ativar', { cpf: cpfLimpo, unidade });
 
-      if (fetchError || !colaborador) {
-        setErro('CPF não encontrado na base de colaboradores da RIC Ambiental.');
-        setLoading(false);
-        return;
-      }
-
-      // 2. Verifica se a conta já foi ativada antes
-      if (colaborador.senha) {
-        setErro('Esta conta já está ativada. Por favor, vá para a tela de Login.');
-        setLoading(false);
-        return;
-      }
-
-      // 3. A MÁGICA: Gera a senha como os 4 primeiros dígitos do CPF
-      const senhaAutomatica = cpfLimpo.substring(0, 4);
-
-      // Atualiza o banco com a nova senha automática e unidade escolhida
-      const { data: updatedData, error: updateError } = await supabase
-        .from('colaboradores')
-        .update({ senha: senhaAutomatica, unidade: unidade })
-        .eq('id', colaborador.id)
-        .select()
-        .single();
-
-      if (updateError || !updatedData) {
-        setErro('Erro ao salvar suas informações. Tente novamente.');
-        setLoading(false);
-        return;
-      }
-
-      // 4. Exibe a tela de sucesso para o usuário ler a informação
+      // Exibe a tela de sucesso para o usuário ler a informação
       setSucesso(true);
 
       // Aguarda 3.5 segundos para ele ler a mensagem e então faz o login automático
@@ -99,8 +66,8 @@ export function Register() {
         }
       }, 3500);
 
-    } catch (err) {
-      setErro('Erro de conexão com o banco de dados.');
+    } catch (err: any) {
+      setErro(err.response?.data?.detail || 'Erro de conexão com o banco de dados.');
     } finally {
       if (!sucesso) setLoading(false);
     }

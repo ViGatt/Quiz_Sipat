@@ -25,6 +25,22 @@ class SupabaseColaboradorRepository:
             tipo=data["tipo"],
             is_comissao=data["is_comissao"]
         )
+    def buscar_dados_login_por_cpf(self, cpf: str) -> dict | None:
+        """
+        Busca os dados necessários para login/ativação (inclui a senha).
+        Uso restrito ao backend (chave privilegiada) — nunca exponha esta consulta
+        diretamente ao navegador com a chave anon.
+        """
+        response = self.db.table("colaboradores").select("id, cpf, nome, is_comissao, senha").eq("cpf", cpf).execute()
+        return response.data[0] if response.data else None
+
+    def ativar_cadastro(self, colaborador_id: str, senha: str, unidade: str) -> dict | None:
+        """
+        Define a senha (ativação de primeiro acesso) e a unidade do colaborador.
+        """
+        response = self.db.table("colaboradores").update({"senha": senha, "unidade": unidade}).eq("id", colaborador_id).execute()
+        return response.data[0] if response.data else None
+
     def importar_colaboradores_em_massa(self, lista_colaboradores: list[dict]) -> dict:
         """
         Recebe uma lista de dicionários e insere todos no Supabase.
@@ -378,6 +394,16 @@ class SupabaseQuizRepository(QuizRepository):
         except Exception as e:
             print(f"Erro ao criar quiz no banco: {e}")
             return False
+
+    def obter_dia_atual(self) -> dict | None:
+        """
+        Busca o dia_sipat (quiz) cuja data de criação corresponde à data de hoje.
+        Usado pela recepção para saber em qual dia registrar presença/consultar status,
+        em vez de um ID fixo.
+        """
+        hoje = datetime.now().date().isoformat()
+        response = self.db.table("dias_sipat").select("id, tema, data").eq("data", hoje).order("id", desc=True).limit(1).execute()
+        return response.data[0] if response.data else None
 
     def excluir_quiz_definitivo(self, quiz_id: int) -> bool:
         """

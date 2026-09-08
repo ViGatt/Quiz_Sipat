@@ -3,7 +3,7 @@ import { Mail, Lock, Home, Eye, EyeOff } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import styles from './Login.module.css';
 import mascotImg from '../../assets/MASCOTE-CIPA-MARI_2.png';
-import { supabase } from '../../lib/supabase';
+import { api } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 
 export function Login() {
@@ -25,33 +25,10 @@ export function Login() {
     const cpfLimpo = cpf.replace(/\D/g, '');
 
     try {
-      // 1. Busca o colaborador pelo CPF limpo diretamente na tabela
-      const { data, error } = await supabase
-        .from('colaboradores')
-        .select('*')
-        .eq('cpf', cpfLimpo)
-        .single();
+      // Login validado no backend (o front nunca consulta a tabela de colaboradores diretamente)
+      const { data } = await api.post('/auth/login', { cpf: cpfLimpo, senha });
 
-      if (error || !data) {
-        setErro('CPF não encontrado na base do RH.');
-        setLoading(false);
-        return;
-      }
-
-      // 2. Compara a senha (se ele não tiver senha salva, ele precisa ativar primeiro)
-      if (!data.senha) {
-        setErro('Cadastro não ativado. Clique em "Ative sua conta" abaixo.');
-        setLoading(false);
-        return;
-      }
-
-      if (data.senha !== senha) {
-        setErro('Senha incorreta.');
-        setLoading(false);
-        return;
-      }
-
-      // 3. Sucesso! Passamos os dados reais para o AuthContext salvar na sessão
+      // Sucesso! Passamos os dados reais para o AuthContext salvar na sessão
       login({
         id: data.id,
         cpf: data.cpf,
@@ -59,16 +36,16 @@ export function Login() {
         is_comissao: data.is_comissao
       });
 
-      // 4. Redireciona com base no perfil
+      // Redireciona com base no perfil
       if (data.is_comissao) {
-        navigate('/dashboard'); 
+        navigate('/dashboard');
       } else {
-        navigate('/meus-quizzes'); 
+        navigate('/meus-quizzes');
       }
 
-    } catch (err) {
+    } catch (err: any) {
       console.error('Erro no login:', err);
-      setErro('Ocorreu um erro de conexão. Tente novamente.');
+      setErro(err.response?.data?.detail || 'Ocorreu um erro de conexão. Tente novamente.');
     } finally {
       setLoading(false);
     }
