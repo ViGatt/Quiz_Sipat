@@ -32,7 +32,7 @@ export function TakeQuiz() {
   const navigate = useNavigate();
   const { id } = useParams();
   const { usuario } = useAuth();
-  const { showError } = useToast();
+  const { showToast, showError } = useToast();
 
   const [showInstructions, setShowInstructions] = useState(true); 
   const [loading, setLoading] = useState(false); 
@@ -48,6 +48,11 @@ export function TakeQuiz() {
   const [lives, setLives] = useState(3);
   const [timeLeft, setTimeLeft] = useState(60);
   const [quizFinished, setQuizFinished] = useState(false);
+
+  // Total de questões do quiz (fixo, mesmo retomando uma tentativa com só as
+  // questões restantes carregadas em `questions`) — usado no cálculo de
+  // progresso/pontuação final, que precisa refletir o quiz inteiro.
+  const [totalQuestoesOriginais, setTotalQuestoesOriginais] = useState(0);
 
   // NOVOS ESTADOS VINDOS DO BACK-END
   const [passingScore, setPassingScore] = useState(70);
@@ -95,8 +100,22 @@ export function TakeQuiz() {
         const tempoQuestao = data.tempo_por_questao ?? 60;
         setTimePerQuestion(tempoQuestao);
         setTimeLeft(tempoQuestao); // Substitui os antigos 60 iniciais!
-        
+
         const shouldRandomizeAnswers = data.aleatorizar_respostas ?? true;
+
+        // RETOMADA: se caiu a conexão no meio de uma tentativa, o backend devolve
+        // só as questões que faltam e o placar acumulado — continua daqui em vez
+        // de travar o colaborador pelo resto do dia.
+        if (data.retomando) {
+          setPoints(data.pontos_acumulados ?? 0);
+          setCorrectCount(data.acertos_acumulados ?? 0);
+          setLives(data.vidas_restantes ?? 3);
+          showToast(
+            `Continuando sua tentativa de onde parou: ${data.pontos_acumulados ?? 0} pontos, ${data.vidas_restantes ?? 3} vidas restantes.`,
+            'info'
+          );
+        }
+        setTotalQuestoesOriginais(data.total_questoes ?? (data.questoes?.length || 0));
 
         if (data.questoes && data.questoes.length > 0) {
           const questoesFormatadas = data.questoes.map((q: any) => {
@@ -300,7 +319,7 @@ export function TakeQuiz() {
 
   // --- TELA DE FINALIZAÇÃO DO JOGO ---
   if (quizFinished) {
-    const userPercentage = (correctCount / questions.length) * 100;
+    const userPercentage = (correctCount / totalQuestoesOriginais) * 100;
     const isWinner = userPercentage >= passingScore; 
     const isGameOver = lives === 0;
 
@@ -332,7 +351,7 @@ export function TakeQuiz() {
               </div>
               <div className={styles.statBox}>
                 <span>Acertos</span>
-                <strong>{correctCount} / {questions.length}</strong>
+                <strong>{correctCount} / {totalQuestoesOriginais}</strong>
               </div>
             </div>
 
@@ -352,7 +371,12 @@ export function TakeQuiz() {
   }
 
   const currentQuestion = questions[currentQuestionIndex];
-  const progressPercentage = ((currentQuestionIndex + 1) / questions.length) * 100;
+  // Se estiver retomando uma tentativa, algumas questões já foram respondidas
+  // antes da queda de conexão — soma esse offset pra mostrar a posição real
+  // dentro do quiz inteiro, não só dentro das que restam nesta sessão.
+  const questoesJaRespondidasAntes = Math.max(0, totalQuestoesOriginais - questions.length);
+  const questaoAtualAbsoluta = questoesJaRespondidasAntes + currentQuestionIndex + 1;
+  const progressPercentage = (questaoAtualAbsoluta / totalQuestoesOriginais) * 100;
 
   // Classe que tinge a área da questão de vermelho/verde quando há feedback
   const quizAreaFeedbackClass = feedback
@@ -374,7 +398,7 @@ export function TakeQuiz() {
         <section className={`${styles.quizArea} ${quizAreaFeedbackClass}`}>
           
           <div className={styles.progressHeader}>
-            <span>Questão {String(currentQuestionIndex + 1).padStart(2, '0')} de {questions.length}</span>
+            <span>Questão {String(questaoAtualAbsoluta).padStart(2, '0')} de {totalQuestoesOriginais}</span>
             <span>{Math.round(progressPercentage)}% Completo</span>
           </div>
           <div className={styles.progressBarBg}>
@@ -487,7 +511,7 @@ export function TakeQuiz() {
 
             <div className={styles.statusItem}>
               <span className={styles.statusLabel}>Progresso</span>
-              <span className={styles.statusValueWhite}>{currentQuestionIndex + 1}/{questions.length}</span>
+              <span className={styles.statusValueWhite}>{questaoAtualAbsoluta}/{totalQuestoesOriginais}</span>
             </div>
           </div>
         </aside>

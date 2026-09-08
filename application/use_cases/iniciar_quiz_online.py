@@ -58,16 +58,50 @@ class IniciarQuizOnlineUseCase:
         participacao_existente = self.participacao_repo.buscar_por_colaborador_e_dia(
             colaborador.id, dia_sipat_id
         )
-        
+
+        todas_questoes = self.quiz_repo.buscar_questoes_por_quiz(dia_sipat_id)
+        total_questoes = len(todas_questoes)
+
         if participacao_existente:
             if participacao_existente.modalidade == "PRESENCIAL":
                 raise AcessoBloqueadoError(
                     "Acesso bloqueado. Você já registrou presença física na SIPAT hoje."
                 )
-            else:
+
+            # --- RETOMADA: uma queda de conexão não pode travar o colaborador pro dia todo ---
+            # Só permite retomar se ainda sobrar questão para responder E o jogador ainda
+            # tiver vidas. Se já respondeu tudo ou já zerou as vidas, a tentativa acabou de
+            # verdade e cai no bloqueio de sempre.
+            respostas_dadas = self.participacao_repo.contar_respostas_dadas(participacao_existente.id)
+            acertos = self.participacao_repo.contar_acertos(participacao_existente.id)
+            erros = respostas_dadas - acertos
+            vidas_restantes = max(0, 3 - erros)
+
+            quiz_ja_encerrado = respostas_dadas >= total_questoes or vidas_restantes <= 0
+
+            if quiz_ja_encerrado:
                 raise ParticipacaoDuplicadaError(
                     "Você já iniciou ou concluiu o Quiz Online de hoje. É permitida apenas uma tentativa."
                 )
+
+            ids_respondidas = set(self.participacao_repo.listar_questoes_respondidas(participacao_existente.id))
+            questoes_restantes = [q for q in todas_questoes if q.id not in ids_respondidas]
+
+            if getattr(quiz_do_dia, 'aleatorizar_questoes', True):
+                random.shuffle(questoes_restantes)
+
+            questoes_sanitizadas = self._sanitizar_questoes(questoes_restantes)
+
+            return {
+                **self._dados_config_quiz(quiz_do_dia, colaborador),
+                "participacao_id": participacao_existente.id,
+                "questoes": questoes_sanitizadas,
+                "total_questoes": total_questoes,
+                "retomando": True,
+                "pontos_acumulados": self.participacao_repo.somar_pontos(participacao_existente.id),
+                "acertos_acumulados": acertos,
+                "vidas_restantes": vidas_restantes,
+            }
 
         # 4. Criar a sessão de participação ONLINE
         nova_participacao = Participacao(
@@ -78,18 +112,35 @@ class IniciarQuizOnlineUseCase:
         )
         self.participacao_repo.salvar(nova_participacao)
 
-        # 5. Buscar as perguntas vinculadas ao Quiz
-        questoes = self.quiz_repo.buscar_questoes_por_quiz(quiz_do_dia.id)
-
-        # --- NOVO: ALEATORIZAR QUESTÕES ---
-        # Verifica no banco se a opção de aleatorizar as perguntas está ligada
+        # 5. Aleatorizar questões, se configurado
+        questoes = list(todas_questoes)
         if getattr(quiz_do_dia, 'aleatorizar_questoes', True):
             random.shuffle(questoes)
-        # ----------------------------------
 
         # 6. Retornar a estrutura inicial para o Front-end
+        questoes_sanitizadas = self._sanitizar_questoes(questoes)
+
+        return {
+            **self._dados_config_quiz(quiz_do_dia, colaborador),
+            "participacao_id": nova_participacao.id,
+            "questoes": questoes_sanitizadas,
+            "total_questoes": total_questoes,
+            "retomando": False,
+        }
+
+    def _dados_config_quiz(self, quiz_do_dia, colaborador) -> dict:
+        return {
+            "colaborador_nome": colaborador.nome,
+            "link_youtube": getattr(quiz_do_dia, 'link_youtube_palestra', ""),
+            "pontuacao_aprovacao": getattr(quiz_do_dia, 'pontuacao_aprovacao', 70),
+            "aleatorizar_respostas": getattr(quiz_do_dia, 'aleatorizar_respostas', True),
+            "resultado_imediato": getattr(quiz_do_dia, 'resultado_imediato', True),
+            "tempo_por_questao": getattr(quiz_do_dia, 'tempo_por_questao', 60),
+        }
+
+    def _sanitizar_questoes(self, questoes: list) -> list[dict]:
         # Injetamos os feedbacks aqui para o Front-end exibir após a resposta do usuário
-        questoes_sanitizadas = [
+        return [
             {
                 "id": q.id,
                 "texto": q.texto,
@@ -98,16 +149,3 @@ class IniciarQuizOnlineUseCase:
                 "feedback_incorreto": getattr(q, 'feedback_incorreto', None)
             } for q in questoes
         ]
-
-        return {
-            "participacao_id": nova_participacao.id,
-            "colaborador_nome": colaborador.nome,
-            "link_youtube": getattr(quiz_do_dia, 'link_youtube_palestra', ""),
-            
-            "pontuacao_aprovacao": getattr(quiz_do_dia, 'pontuacao_aprovacao', 70),
-            "aleatorizar_respostas": getattr(quiz_do_dia, 'aleatorizar_respostas', True),
-            "resultado_imediato": getattr(quiz_do_dia, 'resultado_imediato', True),
-            "tempo_por_questao": getattr(quiz_do_dia, 'tempo_por_questao', 60), 
-            
-            "questoes": questoes_sanitizadas
-        }

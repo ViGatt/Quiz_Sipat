@@ -207,6 +207,24 @@ class SupabaseParticipacaoRepository:
                 acertos += 1
         return acertos
 
+    def listar_questoes_respondidas(self, participacao_id: uuid.UUID) -> list[str]:
+        response = self.db.table("respostas").select("questao_id").eq("participacao_id", str(participacao_id)).execute()
+        return [r["questao_id"] for r in (response.data or [])]
+
+    def somar_pontos(self, participacao_id: uuid.UUID) -> int:
+        response = self.db.table("respostas") \
+            .select("acertou, questoes(pontos)") \
+            .eq("participacao_id", str(participacao_id)) \
+            .execute()
+
+        total = 0
+        for r in (response.data or []):
+            acert = r.get("acertou")
+            if acert is True or str(acert).lower() == "true":
+                questao = r.get("questoes") or {}
+                total += int(questao.get("pontos") or 0)
+        return total
+
     def salvar_numero_sorte(self, numero_sorte: NumeroSorte) -> None:
         self.db.table("numeros_sorte").insert({
             "id": str(numero_sorte.id),

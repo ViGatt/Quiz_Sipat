@@ -33,5 +33,13 @@ class ParticipacaoRepository(ABC):
         pass
 
     @abstractmethod
+    def listar_questoes_respondidas(self, participacao_id: uuid.UUID) -> list[str]:
+        pass
+
+    @abstractmethod
+    def somar_pontos(self, participacao_id: uuid.UUID) -> int:
+        pass
+
+    @abstractmethod
     def salvar_numero_sorte(self, numero_sorte: NumeroSorte) -> None:
         pass
