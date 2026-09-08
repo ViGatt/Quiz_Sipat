@@ -249,7 +249,10 @@ class SupabaseQuizRepository(QuizRepository):
             dia_sipat_id=data["dia_sipat_id"],
             texto=data["texto"],
             opcoes=data["opcoes"],
-            resposta_correta=data["resposta_correta"]
+            resposta_correta=data["resposta_correta"],
+            pontos=data.get("pontos") or 10,
+            feedback_correto=data.get("feedback_correto"),
+            feedback_incorreto=data.get("feedback_incorreto")
         )
 
     def buscar_quiz_por_dia(self, dia_sipat_id: int):
@@ -264,7 +267,10 @@ class SupabaseQuizRepository(QuizRepository):
                 dia_sipat_id=q["dia_sipat_id"],
                 texto=q["texto"],
                 opcoes=q["opcoes"],
-                resposta_correta=q["resposta_correta"]
+                resposta_correta=q["resposta_correta"],
+                pontos=q.get("pontos") or 10,
+                feedback_correto=q.get("feedback_correto"),
+                feedback_incorreto=q.get("feedback_incorreto")
             ) for q in response.data
         ]
 

@@ -145,6 +145,7 @@ class IniciarQuizOnlineUseCase:
                 "id": q.id,
                 "texto": q.texto,
                 "opcoes": q.opcoes,
+                "pontos": getattr(q, 'pontos', 10),
                 "feedback_correto": getattr(q, 'feedback_correto', None),
                 "feedback_incorreto": getattr(q, 'feedback_incorreto', None)
             } for q in questoes
