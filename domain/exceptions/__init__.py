@@ -19,3 +19,7 @@ class ParticipacaoNaoEncontradaError(RegraNegocioError):
 class AcessoBloqueadoError(RegraNegocioError):
     """Erro lançado quando um bloqueio cruzado impede o acesso."""
     pass
+
+class SorteioSemParticipantesError(RegraNegocioError):
+    """Erro lançado quando não há mais números da sorte elegíveis para sortear no grupo escolhido."""
+    pass

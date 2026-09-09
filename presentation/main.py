@@ -8,7 +8,7 @@ if sys.platform == "win32":
 import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware 
-from presentation.routers import recepcao_router, quiz_router, relatorio_router, eventos_router, auth_router
+from presentation.routers import recepcao_router, quiz_router, relatorio_router, eventos_router, auth_router, sorteio_router
 
 app = FastAPI(
     title="Quiz SIPAT API - RIC Ambiental",
@@ -39,6 +39,7 @@ app.include_router(quiz_router.router)
 app.include_router(relatorio_router.router)
 app.include_router(eventos_router.router)
 app.include_router(auth_router.router)
+app.include_router(sorteio_router.router)
 
 @app.get("/")
 def health_check():

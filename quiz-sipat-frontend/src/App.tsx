@@ -20,6 +20,7 @@ import { Programacao } from './pages/Programacao/Programacao';
 import { Sobre } from './pages/Sobre/Sobre';
 import { EventosAdmin } from './pages/EventosAdmin/EventosAdmin';
 import { MeuDesempenho } from './pages/MeuDesempenho/MeuDesempenho';
+import { Sorteio } from './pages/Sorteio/Sorteio';
 function AppRoutes() {
   const location = useLocation();
   const isCreateQuiz = location.pathname === '/create-quiz';
@@ -59,6 +60,7 @@ function AppRoutes() {
           <Route path="/quizzes/:id" element={<QuizDetails />} />
           <Route path="/share-quiz/:id" element={<ShareQuiz />} />
           <Route path="/participantes" element={<Participants />} />
+          <Route path="/sorteio" element={<Sorteio />} />
           <Route path="/admin/eventos" element={<EventosAdmin />} />
 
           </Route>

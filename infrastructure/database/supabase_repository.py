@@ -5,8 +5,10 @@ from domain.entities.participacao import Participacao
 from domain.entities.questao import Questao
 from domain.entities.numero_sorte import NumeroSorte
 import uuid
+import secrets
 from datetime import datetime
 from domain.repositories.quiz_repository import QuizRepository
+from domain.exceptions import SorteioSemParticipantesError, RegraNegocioError
 
 class SupabaseColaboradorRepository:
     def __init__(self, supabase_client: Client):
@@ -731,4 +733,128 @@ class SupabaseEventoRepository:
     def excluir_evento(self, evento_id: int):
         res = self.client.table("eventos").delete().eq("id", evento_id).execute()
         return True if res.data else False
-    
+
+
+class SupabaseSorteioRepository:
+    """
+    Repositório responsável pelo sorteio pós-evento dos Números da Sorte.
+    Cada linha da tabela física 'numeros_sorte' é um bilhete: um por presença
+    física (check-in na recepção) e um por quiz online concluído com nota de
+    aprovação. Vencedores ficam persistidos na tabela 'sorteios', para que o
+    sorteio sobreviva a um refresh de página ou queda de conexão durante o evento.
+    """
+    def __init__(self, supabase_client: Client):
+        self.db = supabase_client
+
+    def _listar_bilhetes(self, dia_sipat_id: int | None) -> list[dict]:
+        query = self.db.table("numeros_sorte").select(
+            "id, colaborador_id, dia_sipat_id, numero_gerado, criado_em, colaboradores(nome, cpf)"
+        )
+        if dia_sipat_id is not None:
+            query = query.eq("dia_sipat_id", dia_sipat_id)
+
+        response = query.order("criado_em").execute()
+
+        bilhetes = []
+        for row in (response.data or []):
+            colab = row.get("colaboradores") or {}
+            bilhetes.append({
+                "numero_sorte_id": row["id"],
+                "colaborador_id": row["colaborador_id"],
+                "dia_sipat_id": row["dia_sipat_id"],
+                "numero_gerado": row["numero_gerado"],
+                "colaborador_nome": colab.get("nome", "Colaborador"),
+                "cpf": colab.get("cpf", ""),
+            })
+        return bilhetes
+
+    def _numeros_ja_vencedores(self) -> set[str]:
+        response = self.db.table("sorteios").select("numero_sorte_id").execute()
+        return {r["numero_sorte_id"] for r in (response.data or [])}
+
+    def _colaboradores_ja_vencedores(self) -> set[str]:
+        response = self.db.table("sorteios").select("colaborador_id").execute()
+        return {r["colaborador_id"] for r in (response.data or [])}
+
+    def listar_participantes_sorteio(self, dia_sipat_id: int | None = None) -> list[dict]:
+        """
+        Lista todos os bilhetes (números da sorte) do grupo escolhido, já marcando
+        quais seguem elegíveis (nenhum colaborador do bilhete já venceu antes).
+        """
+        bilhetes = self._listar_bilhetes(dia_sipat_id)
+        ja_sorteados = self._numeros_ja_vencedores()
+        colaboradores_vencedores = self._colaboradores_ja_vencedores()
+
+        for b in bilhetes:
+            b["ja_foi_sorteado"] = b["numero_sorte_id"] in ja_sorteados
+            b["colaborador_ja_venceu"] = b["colaborador_id"] in colaboradores_vencedores
+            b["elegivel"] = not b["ja_foi_sorteado"] and not b["colaborador_ja_venceu"]
+
+        return bilhetes
+
+    def listar_vencedores(self, dia_sipat_id: int | None = None) -> list[dict]:
+        query = self.db.table("sorteios").select("*")
+        if dia_sipat_id is not None:
+            query = query.eq("dia_sipat_id", dia_sipat_id)
+        response = query.order("criado_em", desc=True).execute()
+        return response.data or []
+
+    def realizar_sorteio(self, dia_sipat_id: int | None, premio: str | None, impedir_repeticao: bool = True) -> dict:
+        """
+        Sorteia aleatoriamente (secrets.choice, adequado para sorteios reais) um
+        bilhete elegível do grupo escolhido e persiste o resultado. Nunca sorteia
+        de novo um bilhete que já venceu; se impedir_repeticao=True, também tira
+        do grupo qualquer bilhete de quem já ganhou em outro sorteio (mesmo que
+        de outro dia/escopo), garantindo que ninguém leve dois prêmios.
+        """
+        from postgrest.exceptions import APIError
+
+        bilhetes = self._listar_bilhetes(dia_sipat_id)
+        ja_sorteados = self._numeros_ja_vencedores()
+        bilhetes = [b for b in bilhetes if b["numero_sorte_id"] not in ja_sorteados]
+
+        if impedir_repeticao:
+            colaboradores_vencedores = self._colaboradores_ja_vencedores()
+            bilhetes = [b for b in bilhetes if b["colaborador_id"] not in colaboradores_vencedores]
+
+        if not bilhetes:
+            raise SorteioSemParticipantesError(
+                "Não há participantes elegíveis para o sorteio neste grupo."
+            )
+
+        vencedor = secrets.choice(bilhetes)
+
+        registro = {
+            "id": str(uuid.uuid4()),
+            "numero_sorte_id": vencedor["numero_sorte_id"],
+            "colaborador_id": vencedor["colaborador_id"],
+            "colaborador_nome": vencedor["colaborador_nome"],
+            "cpf": vencedor["cpf"],
+            "numero_gerado": vencedor["numero_gerado"],
+            "dia_sipat_id": dia_sipat_id,
+            "escopo": "DIA" if dia_sipat_id is not None else "GERAL",
+            "premio": premio,
+        }
+
+        try:
+            response = self.db.table("sorteios").insert(registro).execute()
+        except APIError as e:
+            # 23505 = Unique Violation: alguém já clicou "Sortear" duas vezes rápido
+            # e esse bilhete específico já tinha acabado de vencer.
+            if e.code == "23505":
+                raise RegraNegocioError(
+                    "Esse bilhete acabou de ser sorteado em outra requisição. Sorteie novamente."
+                )
+            raise
+
+        # Usa a linha devolvida pelo Supabase (inclui o criado_em gerado pelo
+        # banco via now()) em vez do dict local, que nunca teve esse campo.
+        return response.data[0] if response.data else registro
+
+    def remover_vencedor(self, sorteio_id: str) -> bool:
+        """
+        Desfaz um sorteio (ex.: vencedor não estava presente na hora do prêmio),
+        devolvendo o bilhete para o grupo de elegíveis.
+        """
+        response = self.db.table("sorteios").delete().eq("id", sorteio_id).execute()
+        return len(response.data or []) > 0

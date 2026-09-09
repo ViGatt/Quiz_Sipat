@@ -1,4 +1,4 @@
-import { Search, LayoutDashboard, BookOpen, Calendar, Users } from 'lucide-react';
+import { Search, LayoutDashboard, BookOpen, Calendar, Users, Gift } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import styles from './Sidebar.module.css';
 
@@ -44,12 +44,20 @@ export function Sidebar() {
           <span>Eventos</span>
         </Link>
 
-        <Link 
-          to="/participantes" 
+        <Link
+          to="/participantes"
           className={`${styles.navItem} ${location.pathname === '/participantes' ? styles.active : ''}`}
         >
           <Users size={20} />
           <span>Participantes</span>
+        </Link>
+
+        <Link
+          to="/sorteio"
+          className={`${styles.navItem} ${location.pathname === '/sorteio' ? styles.active : ''}`}
+        >
+          <Gift size={20} />
+          <span>Sorteio</span>
         </Link>
       </nav>
 
