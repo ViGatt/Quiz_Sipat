@@ -63,7 +63,7 @@ O fluxo de dependência aponta sempre de fora para dentro: a camada de domínio 
 - **Importação em massa via planilha (Excel/CSV):** upload de planilha do RH com normalização automática de cabeçalhos (remove acentuação/caixa), extração dinâmica de colunas opcionais (tipo de trabalhador, admissão, tempo de empresa, nascimento) e gravação via *upsert* (evita duplicidade por CPF).
 - **Check-in presencial:** tela dedicada (aba **Participantes**) que lista todos os colaboradores importados, cruzando com as participações do dia para exibir o status (`Pendente`, `Presencial`, `Online`) e permitir o check-in físico com um clique.
 - **Geração automática do Número da Sorte** no momento do check-in presencial.
-- Busca por nome ou CPF, com paginação da listagem.
+- Busca por nome ou CPF, com paginação da listagem, com o CPF sempre exibido formatado (`000.000.000-00`) para melhor leitura, sem alterar o valor usado internamente nas buscas e no check-in.
 
 ### 3.2 Quiz Online
 
@@ -129,6 +129,17 @@ Módulo dedicado (aba **Sorteio**, abaixo de Participantes) para a comissão rea
 - Página pública de **Programação** com a grade de palestras/eventos da semana.
 - Painel administrativo de eventos: cadastro, edição e exclusão de palestras (tema, palestrante, cargo, biografia, horário, local, responsáveis) com **upload de foto do palestrante** (validação de tipo e tamanho de arquivo, armazenamento em bucket público no Supabase Storage).
 
+### 3.7 Vídeos das Palestras *(módulo novo)*
+
+Nova aba pública no menu principal (entre Programação e Sobre) que reúne os vídeos de todas as palestras da semana, permitindo assistir ao conteúdo **sem precisar acessar o quiz** — uma forma alternativa de consumo para quem só quer rever a palestra, ou decidir se quer responder ao quiz depois.
+
+- Reaproveita o mesmo endpoint público (`GET /quiz/`) já usado pela listagem de quizzes, extraindo o vídeo de cada dia a partir do campo `link_youtube_palestra` já cadastrado pela comissão — nenhum cadastro adicional é necessário.
+- Compatível com link padrão do YouTube, link curto (`youtu.be`) e **YouTube Shorts** (formato usado atualmente pela comissão).
+- Exibidos apenas os quizzes com status efetivamente publicado e que possuem vídeo cadastrado.
+- Cada palestra aparece em um cartão com miniatura real do vídeo, selo do dia ("Dia 01", "Dia 02"...), tema e descrição da palestra, seguindo a mesma paleta visual do restante do site.
+- Clicar na miniatura ou no botão **Assistir** abre um pop-up com o vídeo incorporado, sem sair da página.
+- Botão **Ir para o Quiz** (na miniatura e dentro do pop-up) leva diretamente para o quiz daquele dia, incentivando a conversão de quem assistiu ao vídeo em participação registrada.
+
 ---
 
 ## 4. Fluxo de Dados — Resumo
@@ -152,6 +163,8 @@ Após o evento
                                                        │
                                                        └── Resultado persistido e auditável
 ```
+
+A aba **Vídeos** opera em paralelo a esse fluxo: qualquer visitante pode assistir à palestra de cada dia a qualquer momento, independente de ter feito check-in ou respondido ao quiz, com um atalho direto para participar caso decida se engajar depois de assistir.
 
 ---
 
