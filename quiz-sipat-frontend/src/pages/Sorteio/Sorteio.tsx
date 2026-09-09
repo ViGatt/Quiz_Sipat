@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import {
-  Gift, Sparkles, Trophy, Undo2, Loader2, AlertCircle, Ticket, Users
+  Gift, Sparkles, Trophy, Undo2, Loader2, AlertCircle, Ticket, Users, X, Wand2, PartyPopper
 } from 'lucide-react';
 import { Sidebar } from '../../components/Sidebar/Sidebar';
 import styles from './Sorteio.module.css';
@@ -35,9 +35,49 @@ interface Vencedor {
   criado_em: string;
 }
 
+interface ConfetePeca {
+  id: number;
+  left: number;
+  delay: number;
+  duracao: number;
+  cor: string;
+  largura: number;
+  altura: number;
+  giro: number;
+}
+
+type FaseModal = 'misterio' | 'rolando' | 'revelacao';
+
 const OPCAO_TODOS = 'todos';
-const DURACAO_ANIMACAO_MS = 1400;
-const INTERVALO_ANIMACAO_MS = 90;
+const DURACAO_MISTERIO_MS = 1600;
+const DURACAO_ROLETA_MS = 2200;
+const CORES_CONFETE = [
+  'var(--color-primary)',
+  'var(--color-secondary)',
+  'var(--color-accent-blue)',
+  'var(--color-accent-purple)',
+  '#fbbf24',
+];
+const FRASES_MISTERIO = [
+  'Embaralhando os bilhetes...',
+  'A sorte está sendo decidida...',
+  'Quem será o sortudo?',
+];
+
+const sleep = (ms: number) => new Promise<void>((resolve) => window.setTimeout(resolve, ms));
+
+function gerarConfete(qtd = 34): ConfetePeca[] {
+  return Array.from({ length: qtd }, (_, i) => ({
+    id: i,
+    left: Math.random() * 100,
+    delay: Math.random() * 0.4,
+    duracao: 1.6 + Math.random() * 1.3,
+    cor: CORES_CONFETE[Math.floor(Math.random() * CORES_CONFETE.length)],
+    largura: 6 + Math.random() * 6,
+    altura: 10 + Math.random() * 8,
+    giro: Math.random() > 0.5 ? 1 : -1,
+  }));
+}
 
 export function Sorteio() {
   const { showSuccess, showError } = useToast();
@@ -53,10 +93,18 @@ export function Sorteio() {
   const [carregandoBase, setCarregandoBase] = useState(true);
 
   const [sorteando, setSorteando] = useState(false);
-  const [nomeRolando, setNomeRolando] = useState<string | null>(null);
   const [vencedorAtual, setVencedorAtual] = useState<Vencedor | null>(null);
 
-  const intervaloRef = useRef<number | null>(null);
+  // --- POP-UP DRAMÁTICO DO SORTEIO ---
+  const [modalAberto, setModalAberto] = useState(false);
+  const [faseModal, setFaseModal] = useState<FaseModal>('misterio');
+  const [fraseMisterio, setFraseMisterio] = useState(FRASES_MISTERIO[0]);
+  const [nomeRolando, setNomeRolando] = useState<string | null>(null);
+  const [tickRoleta, setTickRoleta] = useState(0);
+  const [vencedorModal, setVencedorModal] = useState<Vencedor | null>(null);
+  const [confete, setConfete] = useState<ConfetePeca[]>([]);
+
+  const pularRef = useRef(false);
 
   const diaSipatIdAtual = diaSelecionado === OPCAO_TODOS ? null : Number(diaSelecionado);
 
@@ -108,7 +156,7 @@ export function Sorteio() {
 
   useEffect(() => {
     return () => {
-      if (intervaloRef.current) window.clearInterval(intervaloRef.current);
+      pularRef.current = true;
     };
   }, []);
 
@@ -120,6 +168,39 @@ export function Sorteio() {
     ? 'Sorteio Geral (todos os dias)'
     : quizzes.find(q => q.id === Number(diaSelecionado))?.tema || `Dia ${diaSelecionado}`;
 
+  // Espera interrompível: some em pedaços curtos para que "Pular" consiga
+  // cortar a espera no meio, em vez de travar o admin numa animação longa
+  // durante um evento ao vivo com tempo curto.
+  const esperaInterruptivel = async (ms: number) => {
+    const passo = 80;
+    let restante = ms;
+    while (restante > 0 && !pularRef.current) {
+      await sleep(Math.min(passo, restante));
+      restante -= passo;
+    }
+  };
+
+  // Roleta com desaceleração: começa trocando de nome rapidamente e vai
+  // ficando mais lenta (easing quadrático) até "encaixar" no vencedor real,
+  // como uma roda da sorte parando.
+  const rodarRoleta = async (nomes: string[], nomeVencedor: string) => {
+    const inicio = Date.now();
+    let contador = 0;
+    while (Date.now() - inicio < DURACAO_ROLETA_MS && !pularRef.current) {
+      const aleatorio = nomes[Math.floor(Math.random() * nomes.length)];
+      contador += 1;
+      setNomeRolando(aleatorio);
+      setTickRoleta(contador);
+
+      const progresso = (Date.now() - inicio) / DURACAO_ROLETA_MS;
+      const atraso = 70 + progresso * progresso * 260;
+      await sleep(atraso);
+    }
+    setNomeRolando(nomeVencedor);
+    setTickRoleta((c) => c + 1);
+    await sleep(350);
+  };
+
   const handleSortear = async () => {
     if (totalElegiveis === 0) {
       showError('Não há participantes elegíveis nesse grupo para sortear.');
@@ -127,11 +208,10 @@ export function Sorteio() {
     }
 
     setSorteando(true);
-    setVencedorAtual(null);
 
     try {
-      // 1) Já garante o vencedor real no backend antes de qualquer animação,
-      // para a roleta na tela nunca poder "errar" ou divergir do que foi salvo.
+      // Já garante o vencedor real no backend antes de qualquer animação,
+      // para o pop-up nunca poder "errar" ou divergir do que foi salvo.
       const response = await api.post('/sorteio/realizar', {
         dia_sipat_id: diaSipatIdAtual,
         premio: premio.trim() || null,
@@ -139,34 +219,54 @@ export function Sorteio() {
       });
       const vencedor: Vencedor = response.data;
 
-      // 2) Roleta visual: alterna nomes do grupo elegível por um tempo curto
-      // e só então revela o vencedor real retornado pelo servidor.
+      pularRef.current = false;
+      setVencedorModal(vencedor);
+      setNomeRolando(null);
+      setFraseMisterio(FRASES_MISTERIO[0]);
+      setModalAberto(true);
+
+      // Fase 1: mistério (suspense antes de revelar quem concorre)
+      setFaseModal('misterio');
+      let indiceFrase = 0;
+      const trocaFrase = window.setInterval(() => {
+        indiceFrase = (indiceFrase + 1) % FRASES_MISTERIO.length;
+        setFraseMisterio(FRASES_MISTERIO[indiceFrase]);
+      }, 550);
+      await esperaInterruptivel(DURACAO_MISTERIO_MS);
+      window.clearInterval(trocaFrase);
+
+      // Fase 2: roleta desacelerando até o vencedor real
+      setFaseModal('rolando');
       const nomesParaRolar = elegiveis.length > 0
         ? elegiveis.map(p => p.colaborador_nome)
         : [vencedor.colaborador_nome];
+      await rodarRoleta(nomesParaRolar, vencedor.colaborador_nome);
 
-      const inicio = Date.now();
-      intervaloRef.current = window.setInterval(() => {
-        const aleatorio = nomesParaRolar[Math.floor(Math.random() * nomesParaRolar.length)];
-        setNomeRolando(aleatorio);
-
-        if (Date.now() - inicio >= DURACAO_ANIMACAO_MS) {
-          if (intervaloRef.current) window.clearInterval(intervaloRef.current);
-          setNomeRolando(null);
-          setVencedorAtual(vencedor);
-          setSorteando(false);
-          showSuccess(`🎉 Vencedor: ${vencedor.colaborador_nome} — Nº ${vencedor.numero_gerado}`);
-
-          setVencedores(prev => [vencedor, ...prev]);
-          fetchParticipantes(diaSipatIdAtual);
-        }
-      }, INTERVALO_ANIMACAO_MS);
+      // Fase 3: revelação com confete e efeitos no nome
+      setConfete(gerarConfete());
+      setFaseModal('revelacao');
+      setVencedorAtual(vencedor);
+      showSuccess(`🎉 Vencedor: ${vencedor.colaborador_nome} — Nº ${vencedor.numero_gerado}`);
+      setVencedores(prev => [vencedor, ...prev]);
+      fetchParticipantes(diaSipatIdAtual);
     } catch (error: any) {
       console.error(error);
       const msg = error.response?.data?.detail || 'Erro de conexão ao tentar realizar o sorteio.';
       showError(msg);
+    } finally {
       setSorteando(false);
     }
+  };
+
+  const pularAnimacao = () => {
+    pularRef.current = true;
+  };
+
+  const fecharModal = () => {
+    if (faseModal !== 'revelacao') return;
+    setModalAberto(false);
+    setVencedorModal(null);
+    setNomeRolando(null);
   };
 
   const handleDesfazer = async (vencedor: Vencedor) => {
@@ -279,10 +379,10 @@ export function Sorteio() {
             <h2 className={styles.panelTitle}>{nomeDoGrupoAtual}</h2>
 
             <div className={styles.resultadoBox}>
-              {sorteando && nomeRolando && (
-                <div className={styles.roleta}>
-                  <Gift size={40} className={styles.rolandoIcon} />
-                  <span className={styles.nomeRolando}>{nomeRolando}</span>
+              {sorteando && (
+                <div className={styles.placeholder}>
+                  <Loader2 size={40} className="spin" />
+                  <p>O sorteio está rolando no pop-up...</p>
                 </div>
               )}
 
@@ -366,6 +466,88 @@ export function Sorteio() {
           </table>
         </div>
       </main>
+
+      {modalAberto && vencedorModal && (
+        <div
+          className={styles.modalOverlay}
+          onClick={fecharModal}
+        >
+          <div className={styles.modalCard} onClick={(e) => e.stopPropagation()}>
+            {faseModal === 'revelacao' && (
+              <button className={styles.modalFechar} onClick={fecharModal} aria-label="Fechar">
+                <X size={20} />
+              </button>
+            )}
+
+            {faseModal === 'misterio' && (
+              <div className={styles.faseMisterio}>
+                <div className={styles.misterioAnel}>
+                  <Wand2 size={40} className={styles.misterioIcone} />
+                </div>
+                <p className={styles.misterioTexto}>{fraseMisterio}</p>
+                <p className={styles.misterioSub}>Preparando o sorteio de {nomeDoGrupoAtual}</p>
+              </div>
+            )}
+
+            {faseModal === 'rolando' && (
+              <div className={styles.faseRolando}>
+                <Sparkles size={28} className={styles.rolandoIcon} />
+                <div className={styles.rolandoJanela}>
+                  <span key={tickRoleta} className={styles.rolandoNome}>
+                    {nomeRolando || '...'}
+                  </span>
+                </div>
+                <p className={styles.misterioSub}>Girando os bilhetes...</p>
+              </div>
+            )}
+
+            {faseModal === 'revelacao' && (
+              <div className={styles.faseRevelacao}>
+                <div className={styles.confettiContainer}>
+                  {confete.map((c) => (
+                    <span
+                      key={c.id}
+                      className={styles.confettiPeca}
+                      style={{
+                        left: `${c.left}%`,
+                        backgroundColor: c.cor,
+                        width: c.largura,
+                        height: c.altura,
+                        animationDelay: `${c.delay}s`,
+                        animationDuration: `${c.duracao}s`,
+                        // @ts-expect-error custom property lida pela keyframe
+                        '--giro': c.giro,
+                      }}
+                    />
+                  ))}
+                </div>
+
+                <PartyPopper size={26} className={styles.popperIcone} />
+                <Trophy size={48} className={styles.revelacaoTrofeu} />
+                <span className={styles.revelacaoLabel}>Vencedor(a)</span>
+                <h3 className={styles.revelacaoNome}>{vencedorModal.colaborador_nome}</h3>
+                <p className={styles.vencedorCpf}>CPF: {vencedorModal.cpf}</p>
+                <p className={styles.vencedorNumero}>
+                  <Ticket size={16} /> {vencedorModal.numero_gerado}
+                </p>
+                {vencedorModal.premio && (
+                  <p className={styles.vencedorPremio}>🎁 {vencedorModal.premio}</p>
+                )}
+
+                <button className={styles.btnSortear} onClick={fecharModal}>
+                  Fechar
+                </button>
+              </div>
+            )}
+
+            {faseModal !== 'revelacao' && (
+              <button className={styles.modalPular} onClick={pularAnimacao}>
+                Pular animação →
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
