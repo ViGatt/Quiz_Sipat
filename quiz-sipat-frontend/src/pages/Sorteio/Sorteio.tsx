@@ -6,6 +6,7 @@ import { Sidebar } from '../../components/Sidebar/Sidebar';
 import styles from './Sorteio.module.css';
 import { api } from '../../services/api';
 import { useToast } from '../../context/ToastContext';
+import { formatarCpf } from '../../utils/formatters';
 
 interface Quiz {
   id: number;
@@ -390,7 +391,7 @@ export function Sorteio() {
                 <div className={styles.vencedorCard}>
                   <Trophy size={40} className={styles.trophyIcon} />
                   <h3>{vencedorAtual.colaborador_nome}</h3>
-                  <p className={styles.vencedorCpf}>CPF: {vencedorAtual.cpf}</p>
+                  <p className={styles.vencedorCpf}>CPF: {formatarCpf(vencedorAtual.cpf)}</p>
                   <p className={styles.vencedorNumero}>
                     <Ticket size={16} /> {vencedorAtual.numero_gerado}
                   </p>
@@ -433,7 +434,7 @@ export function Sorteio() {
                   <tr key={v.id}>
                     <td>
                       <div className={styles.colaboradorNome}>{v.colaborador_nome}</div>
-                      <div className={styles.colaboradorCpf}>{v.cpf}</div>
+                      <div className={styles.colaboradorCpf}>{formatarCpf(v.cpf)}</div>
                     </td>
                     <td>
                       <div className={styles.numeroSorte}>
@@ -526,7 +527,7 @@ export function Sorteio() {
                 <Trophy size={48} className={styles.revelacaoTrofeu} />
                 <span className={styles.revelacaoLabel}>Vencedor(a)</span>
                 <h3 className={styles.revelacaoNome}>{vencedorModal.colaborador_nome}</h3>
-                <p className={styles.vencedorCpf}>CPF: {vencedorModal.cpf}</p>
+                <p className={styles.vencedorCpf}>CPF: {formatarCpf(vencedorModal.cpf)}</p>
                 <p className={styles.vencedorNumero}>
                   <Ticket size={16} /> {vencedorModal.numero_gerado}
                 </p>

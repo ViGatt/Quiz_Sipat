@@ -7,7 +7,7 @@ import { Sidebar } from '../../components/Sidebar/Sidebar';
 import styles from './Participants.module.css';
 import { api } from '../../services/api';
 import { useToast } from '../../context/ToastContext';
-
+import { formatarCpf } from '../../utils/formatters';
 
 export function Participants() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -248,7 +248,7 @@ useEffect(() => {
                   <tr key={p.id}>
                     <td>
                       <div className={styles.colaboradorNome}>{p.nome}</div>
-                      <div className={styles.colaboradorCpf}>{p.cpf}</div>
+                      <div className={styles.colaboradorCpf}>{formatarCpf(p.cpf)}</div>
                     </td>
                     
                     <td>
