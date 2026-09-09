@@ -36,6 +36,7 @@ export function Navbar() {
         <Link to="/" className={styles.navLink}>Início</Link>
         <Link to="/meus-quizzes" className={styles.navLink}>Quizzes</Link>
         <Link to="/programacao" className={styles.navLink}>Programação</Link>
+        <Link to="/videos" className={styles.navLink}>Vídeos</Link>
         <Link to="/sobre" className={styles.navLink}>Sobre</Link>
       </nav>
 
@@ -89,6 +90,7 @@ export function Navbar() {
           <Link to="/" className={styles.navLink} onClick={() => setIsMobileMenuOpen(false)}>Início</Link>
           <Link to="/meus-quizzes" className={styles.navLink} onClick={() => setIsMobileMenuOpen(false)}>Quizzes</Link>
           <Link to="/programacao" className={styles.navLink} onClick={() => setIsMobileMenuOpen(false)}>Programação</Link>
+          <Link to="/videos" className={styles.navLink} onClick={() => setIsMobileMenuOpen(false)}>Vídeos</Link>
           <Link to="/sobre" className={styles.navLink} onClick={() => setIsMobileMenuOpen(false)}>Sobre</Link>
           
           <div className={styles.mobileAuthButtons}>

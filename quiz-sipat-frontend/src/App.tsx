@@ -18,6 +18,7 @@ import { RequireAuth } from './components/RequireAuth/RequireAuth';
 import { Participants } from './pages/Participants/Participants';
 import { Programacao } from './pages/Programacao/Programacao';
 import { Sobre } from './pages/Sobre/Sobre';
+import { Videos } from './pages/Videos/Videos';
 import { EventosAdmin } from './pages/EventosAdmin/EventosAdmin';
 import { MeuDesempenho } from './pages/MeuDesempenho/MeuDesempenho';
 import { Sorteio } from './pages/Sorteio/Sorteio';
@@ -44,6 +45,7 @@ function AppRoutes() {
           <Route path="/register" element={<Register />} />
           <Route path="/take-quiz/:id" element={<TakeQuiz />} />
           <Route path="/programacao" element={<Programacao />} />
+          <Route path="/videos" element={<Videos />} />
           <Route path="/sobre" element={<Sobre />} />
 
           <Route element={<RequireAuth />}>
