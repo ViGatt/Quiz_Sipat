@@ -107,15 +107,50 @@ export function ParticipantQuizDetails() {
     const videoId = getVideoId(videoUrl);
     if (!videoId || isEditing) return;
 
+    let player: any = null;
+    let progressInterval: ReturnType<typeof setInterval> | null = null;
+
+    const pararMonitoramentoProgresso = () => {
+      if (progressInterval) {
+        clearInterval(progressInterval);
+        progressInterval = null;
+      }
+    };
+
+    const marcarComoAssistido = () => {
+      setAssistiuVideoCompleto(true);
+      pararMonitoramentoProgresso();
+    };
+
     const criarPlayer = () => {
       const YT = (window as any).YT;
       if (!YT || !document.getElementById('yt-player-quiz')) return;
-      new YT.Player('yt-player-quiz', {
+      player = new YT.Player('yt-player-quiz', {
         videoId,
         events: {
           onStateChange: (event: any) => {
             if (event.data === YT.PlayerState.ENDED) {
-              setAssistiuVideoCompleto(true);
+              marcarComoAssistido();
+              return;
+            }
+
+            // YouTube Shorts não disparam o evento ENDED: o player reinicia
+            // o vídeo em loop automaticamente ao chegar no final. Por isso,
+            // enquanto o vídeo estiver tocando, monitoramos o progresso e
+            // consideramos "assistido" quando ele se aproxima do fim.
+            if (event.data === YT.PlayerState.PLAYING) {
+              if (!progressInterval) {
+                progressInterval = setInterval(() => {
+                  if (!player || typeof player.getDuration !== 'function') return;
+                  const duracao = player.getDuration();
+                  const tempoAtual = player.getCurrentTime();
+                  if (duracao > 0 && tempoAtual >= duracao - 0.5) {
+                    marcarComoAssistido();
+                  }
+                }, 250);
+              }
+            } else {
+              pararMonitoramentoProgresso();
             }
           }
         }
@@ -133,6 +168,10 @@ export function ParticipantQuizDetails() {
       }
       (window as any).onYouTubeIframeAPIReady = criarPlayer;
     }
+
+    return () => {
+      pararMonitoramentoProgresso();
+    };
   }, [videoUrl, isEditing]);
 
   const handleSaveEdit = async () => {
