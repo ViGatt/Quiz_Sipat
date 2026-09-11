@@ -75,7 +75,7 @@ class IniciarQuizOnlineUseCase:
             respostas_dadas = self.participacao_repo.contar_respostas_dadas(participacao_existente.id)
             acertos = self.participacao_repo.contar_acertos(participacao_existente.id)
             erros = respostas_dadas - acertos
-            vidas_restantes = max(0, 3 - erros)
+            vidas_restantes = max(0, 5 - erros)
 
             quiz_ja_encerrado = respostas_dadas >= total_questoes or vidas_restantes <= 0
 

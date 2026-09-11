@@ -45,7 +45,7 @@ export function TakeQuiz() {
   // Estados do Jogo
   const [points, setPoints] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
-  const [lives, setLives] = useState(3);
+  const [lives, setLives] = useState(5);
   const [timeLeft, setTimeLeft] = useState(60);
   const [quizFinished, setQuizFinished] = useState(false);
 
@@ -109,9 +109,9 @@ export function TakeQuiz() {
         if (data.retomando) {
           setPoints(data.pontos_acumulados ?? 0);
           setCorrectCount(data.acertos_acumulados ?? 0);
-          setLives(data.vidas_restantes ?? 3);
+          setLives(data.vidas_restantes ?? 5);
           showToast(
-            `Continuando sua tentativa de onde parou: ${data.pontos_acumulados ?? 0} pontos, ${data.vidas_restantes ?? 3} vidas restantes.`,
+            `Continuando sua tentativa de onde parou: ${data.pontos_acumulados ?? 0} pontos, ${data.vidas_restantes ?? 5} vidas restantes.`,
             'info'
           );
         }
@@ -289,7 +289,7 @@ export function TakeQuiz() {
             <h2 className={styles.instructionsTitle}>Como Jogar</h2>
             
             <div className={styles.instructionsList}>
-              <p><span>👉</span> <span>Você tem um total de <strong>3 vidas</strong> (corações). Se errar 3 vezes, o jogo acaba.</span></p>
+              <p><span>👉</span> <span>Você tem um total de <strong>5 vidas</strong> (corações). Se errar 5 vezes, o jogo acaba.</span></p>
               <p><span>👉</span> <span>Você tem <strong>{timePerQuestion} segundos</strong> para responder cada questão.</span></p>
               
               <div className={styles.instructionsWarning}>
@@ -498,7 +498,7 @@ export function TakeQuiz() {
             <div className={styles.statusItem}>
               <span className={styles.statusLabel}>Vidas</span>
               <div className={styles.livesContainer}>
-                {Array.from({ length: 3 }).map((_, i) => (
+                {Array.from({ length: 5 }).map((_, i) => (
                   <Heart 
                     key={i} 
                     size={20} 
