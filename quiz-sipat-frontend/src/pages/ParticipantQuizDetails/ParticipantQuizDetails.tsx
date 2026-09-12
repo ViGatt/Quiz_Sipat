@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ChevronLeft, PlayCircle, CheckCircle, Clock, BookOpen, Edit3, Save, X, Video } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ParticipantSidebar } from '../../components/ParticipantSidebar/ParticipantSidebar';
@@ -39,6 +39,12 @@ export function ParticipantQuizDetails() {
 
   // --- CONTROLE DE VÍDEO ASSISTIDO (libera o botão só após o vídeo terminar) ---
   const [assistiuVideoCompleto, setAssistiuVideoCompleto] = useState(false);
+
+  // Container gerenciado pelo React. O elemento que a API do YouTube substitui
+  // por um <iframe> é criado manualmente DENTRO dele (fora da árvore do React),
+  // para o React nunca tentar remover um nó que a API já trocou por baixo dos panos.
+  const playerContainerRef = useRef<HTMLDivElement>(null);
+  const playerRef = useRef<any>(null);
 
   // Busca os dados reais no FastAPI ao abrir a tela
   useEffect(() => {
@@ -104,10 +110,19 @@ export function ParticipantQuizDetails() {
   useEffect(() => {
     setAssistiuVideoCompleto(false);
 
+    // Destrói qualquer player anterior e limpa o container antes de criar um novo,
+    // evitando players duplicados ao trocar de vídeo/quiz.
+    if (playerRef.current) {
+      try { playerRef.current.destroy(); } catch { /* já destruído */ }
+      playerRef.current = null;
+    }
+    if (playerContainerRef.current) {
+      playerContainerRef.current.innerHTML = '';
+    }
+
     const videoId = getVideoId(videoUrl);
     if (!videoId || isEditing) return;
 
-    let player: any = null;
     let progressInterval: ReturnType<typeof setInterval> | null = null;
 
     const pararMonitoramentoProgresso = () => {
@@ -124,8 +139,15 @@ export function ParticipantQuizDetails() {
 
     const criarPlayer = () => {
       const YT = (window as any).YT;
-      if (!YT || !document.getElementById('yt-player-quiz')) return;
-      player = new YT.Player('yt-player-quiz', {
+      const container = playerContainerRef.current;
+      if (!YT || !container) return;
+
+      // Elemento criado manualmente (fora do JSX/React) para a API do YouTube
+      // poder substituí-lo por um <iframe> sem o React perder a referência dele.
+      const targetEl = document.createElement('div');
+      container.appendChild(targetEl);
+
+      playerRef.current = new YT.Player(targetEl, {
         videoId,
         events: {
           onStateChange: (event: any) => {
@@ -141,6 +163,7 @@ export function ParticipantQuizDetails() {
             if (event.data === YT.PlayerState.PLAYING) {
               if (!progressInterval) {
                 progressInterval = setInterval(() => {
+                  const player = playerRef.current;
                   if (!player || typeof player.getDuration !== 'function') return;
                   const duracao = player.getDuration();
                   const tempoAtual = player.getCurrentTime();
@@ -171,6 +194,10 @@ export function ParticipantQuizDetails() {
 
     return () => {
       pararMonitoramentoProgresso();
+      if (playerRef.current) {
+        try { playerRef.current.destroy(); } catch { /* já destruído */ }
+        playerRef.current = null;
+      }
     };
   }, [videoUrl, isEditing]);
 
@@ -316,7 +343,7 @@ export function ParticipantQuizDetails() {
               <>
                 <div className={styles.videoWrapper}>
                   {videoUrl ? (
-                    <div id="yt-player-quiz" className={styles.videoPlayerBox}></div>
+                    <div ref={playerContainerRef} className={styles.videoPlayerBox}></div>
                   ) : (
                     <div className={styles.videoPlaceholder}>
                       <PlayCircle size={48} />
