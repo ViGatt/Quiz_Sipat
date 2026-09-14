@@ -7,7 +7,11 @@
 
 /* SEÇÃO DE VÍDEO */
 .videoSection { display: flex; flex-direction: column; gap: 1.5rem; }
-.videoWrapper { width: 100%; aspect-ratio: 16 / 9; background-color: #000; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid var(--color-surface); }
+.videoWrapper { position: relative; width: 100%; aspect-ratio: 16 / 9; background-color: #000; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid var(--color-surface); }
+/* A API do YouTube substitui a div#yt-player-quiz por um <iframe> próprio, que
+   perde a classe .videoPlayerBox. Miramos o elemento pela tag para garantir
+   que ele preencha o wrapper mesmo assim. */
+.videoWrapper iframe { position: absolute; inset: 0; width: 100%; height: 100%; display: block; border: 0; }
 .lectureTitle { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; }
 .lectureText { color: var(--color-text-muted); line-height: 1.6; }
 
