@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { ChevronLeft, PlayCircle, CheckCircle, Clock, BookOpen, Edit3, Save, X, Video } from 'lucide-react';
+import { ChevronLeft, PlayCircle, PauseCircle, CheckCircle, Clock, BookOpen, Edit3, Save, X, Video } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ParticipantSidebar } from '../../components/ParticipantSidebar/ParticipantSidebar';
 import { useAuth } from '../../context/AuthContext';
@@ -39,12 +39,16 @@ export function ParticipantQuizDetails() {
 
   // --- CONTROLE DE VÍDEO ASSISTIDO (libera o botão só após o vídeo terminar) ---
   const [assistiuVideoCompleto, setAssistiuVideoCompleto] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   // Container gerenciado pelo React. O elemento que a API do YouTube substitui
   // por um <iframe> é criado manualmente DENTRO dele (fora da árvore do React),
   // para o React nunca tentar remover um nó que a API já trocou por baixo dos panos.
   const playerContainerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<any>(null);
+  // Maior ponto do vídeo já assistido de fato (sem pular). Usado para detectar
+  // e desfazer tentativas de avanço manual (barra de progresso, teclado, API).
+  const tempoMaximoAssistidoRef = useRef(0);
 
   // Busca os dados reais no FastAPI ao abrir a tela
   useEffect(() => {
@@ -109,6 +113,8 @@ export function ParticipantQuizDetails() {
   // conseguir detectar quando o vídeo chega ao fim e então liberar o quiz.
   useEffect(() => {
     setAssistiuVideoCompleto(false);
+    setIsPlaying(false);
+    tempoMaximoAssistidoRef.current = 0;
 
     // Destrói qualquer player anterior e limpa o container antes de criar um novo,
     // evitando players duplicados ao trocar de vídeo/quiz.
@@ -149,8 +155,21 @@ export function ParticipantQuizDetails() {
 
       playerRef.current = new YT.Player(targetEl, {
         videoId,
+        playerVars: {
+          // Sem barra de progresso/controles nativos (não dá pra arrastar pra frente),
+          // sem atalhos de teclado (seta/"L" também avançam o vídeo) e sem tela cheia
+          // (que reintroduz os controles nativos por cima do vídeo).
+          controls: 0,
+          disablekb: 1,
+          fs: 0,
+          modestbranding: 1,
+          rel: 0,
+          iv_load_policy: 3,
+        },
         events: {
           onStateChange: (event: any) => {
+            setIsPlaying(event.data === YT.PlayerState.PLAYING);
+
             if (event.data === YT.PlayerState.ENDED) {
               marcarComoAssistido();
               return;
@@ -167,6 +186,16 @@ export function ParticipantQuizDetails() {
                   if (!player || typeof player.getDuration !== 'function') return;
                   const duracao = player.getDuration();
                   const tempoAtual = player.getCurrentTime();
+
+                  // Detecta avanço manual (ex.: chamada direta à API do player pelo
+                  // console do navegador) e força o vídeo de volta ao ponto mais
+                  // longe que já foi realmente assistido, sem pular trechos.
+                  if (tempoAtual > tempoMaximoAssistidoRef.current + 1.5) {
+                    player.seekTo(tempoMaximoAssistidoRef.current, true);
+                    return;
+                  }
+                  tempoMaximoAssistidoRef.current = Math.max(tempoMaximoAssistidoRef.current, tempoAtual);
+
                   if (duracao > 0 && tempoAtual >= duracao - 0.5) {
                     marcarComoAssistido();
                   }
@@ -341,9 +370,24 @@ export function ParticipantQuizDetails() {
               </div>
             ) : (
               <>
-                <div className={styles.videoWrapper}>
+                <div className={styles.videoWrapper} onContextMenu={(e) => e.preventDefault()}>
                   {videoUrl ? (
-                    <div ref={playerContainerRef} className={styles.videoPlayerBox}></div>
+                    <div className={styles.videoPlayerShell}>
+                      <div ref={playerContainerRef} className={styles.videoPlayerBox}></div>
+                      <button
+                        type="button"
+                        className={styles.videoPlayPauseBtn}
+                        aria-label={isPlaying ? 'Pausar vídeo' : 'Reproduzir vídeo'}
+                        onClick={() => {
+                          const player = playerRef.current;
+                          if (!player) return;
+                          if (isPlaying) player.pauseVideo();
+                          else player.playVideo();
+                        }}
+                      >
+                        {isPlaying ? <PauseCircle size={56} /> : <PlayCircle size={56} />}
+                      </button>
+                    </div>
                   ) : (
                     <div className={styles.videoPlaceholder}>
                       <PlayCircle size={48} />
