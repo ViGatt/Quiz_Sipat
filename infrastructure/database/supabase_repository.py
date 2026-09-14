@@ -282,7 +282,7 @@ class SupabaseQuizRepository(QuizRepository):
         atreladas para contagem de métricas.
         """
         # O Supabase permite fazer subqueries passando o nome da tabela e as colunas desejadas entre parênteses
-        response = self.db.table('dias_sipat').select('*, questoes(id), participacoes(id)').order('id', desc=True).execute()
+        response = self.db.table('dias_sipat').select('*, questoes(id), participacoes(id)').order('id').execute()
         
         quizzes = []
         for row in response.data:
