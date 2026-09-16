@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { ChevronLeft, PlayCircle, CheckCircle, Clock, BookOpen, Edit3, Save, X, Video } from 'lucide-react';
+import { ChevronLeft, PlayCircle, CheckCircle, Clock, BookOpen, Edit3, Save, X, Video, AlertTriangle, UserCheck } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ParticipantSidebar } from '../../components/ParticipantSidebar/ParticipantSidebar';
 import { useAuth } from '../../context/AuthContext';
@@ -40,6 +40,10 @@ export function ParticipantQuizDetails() {
   // --- CONTROLE DE VÍDEO ASSISTIDO (libera o botão só após o vídeo terminar) ---
   const [assistiuVideoCompleto, setAssistiuVideoCompleto] = useState(false);
 
+  // --- LIBERAÇÃO PARA QUEM PARTICIPOU PRESENCIALMENTE (dispensa assistir o vídeo) ---
+  const [presencialConfirmado, setPresencialConfirmado] = useState(false);
+  const [mostrarConfirmacaoPresencial, setMostrarConfirmacaoPresencial] = useState(false);
+
   // Container gerenciado pelo React. O elemento que a API do YouTube substitui
   // por um <iframe> é criado manualmente DENTRO dele (fora da árvore do React),
   // para o React nunca tentar remover um nó que a API já trocou por baixo dos panos.
@@ -51,6 +55,7 @@ export function ParticipantQuizDetails() {
     const fetchQuizData = async () => {
       try {
         setLoading(true);
+        setPresencialConfirmado(false);
         const response = await api.get(`/quiz/${id}`);
         const data = response.data;
 
@@ -245,8 +250,14 @@ export function ParticipantQuizDetails() {
   }
 
   // Só exige "assistir até o fim" quando já existe vídeo e o quiz não está travado por outro motivo
-  const precisaAssistirVideo = !isLocked && !assistiuVideoCompleto;
+  // (quem confirmou participação presencial dispensa a exigência de assistir ao vídeo)
+  const precisaAssistirVideo = !isLocked && !assistiuVideoCompleto && !presencialConfirmado;
   const botaoDesabilitado = isLocked || precisaAssistirVideo;
+
+  const handleConfirmarPresencial = () => {
+    setPresencialConfirmado(true);
+    setMostrarConfirmacaoPresencial(false);
+  };
 
   // Telas de Feedback
   if (loading) {
@@ -430,12 +441,55 @@ export function ParticipantQuizDetails() {
                     </div>
                   )}
 
+                  {/* --- BOTÃO: JÁ PARTICIPEI PRESENCIALMENTE (dispensa assistir o vídeo) --- */}
+                  {!isLocked && !assistiuVideoCompleto && !presencialConfirmado && (
+                    <button
+                      type="button"
+                      className={styles.btnPresencial}
+                      onClick={() => setMostrarConfirmacaoPresencial(true)}
+                    >
+                      <UserCheck size={16} /> Já participei presencialmente
+                    </button>
+                  )}
+
+                  {presencialConfirmado && (
+                    <div className={`${styles.infoBanner} ${styles.infoBannerGreen}`}>
+                      <UserCheck size={22} className={styles.infoBannerIcon} />
+                      <span className={styles.infoBannerTitle}>Presença confirmada</span>
+                      <span className={styles.infoBannerSubtitle}>Liberado com base na sua participação presencial na palestra.</span>
+                    </div>
+                  )}
+
                 </div>
               )}
             </div>
           </div>
         </div>
       </main>
+
+      {mostrarConfirmacaoPresencial && (
+        <div className={styles.modalOverlay} onClick={() => setMostrarConfirmacaoPresencial(false)}>
+          <div className={styles.modalCard} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalIcon}>
+              <AlertTriangle size={28} />
+            </div>
+            <h3 className={styles.modalTitle}>Confirme sua participação presencial</h3>
+            <p className={styles.modalText}>
+              Este botão libera o quiz sem a necessidade de assistir ao vídeo e deve ser usado
+              <strong> somente por quem já participou presencialmente desta palestra no dia</strong>.
+              Se você não participou presencialmente, assista ao vídeo até o final para liberar o quiz.
+            </p>
+            <div className={styles.modalActions}>
+              <button className={styles.btnCancel} onClick={() => setMostrarConfirmacaoPresencial(false)}>
+                <X size={18} /> Cancelar
+              </button>
+              <button className={styles.btnSave} onClick={handleConfirmarPresencial}>
+                <CheckCircle size={18} /> De acordo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
