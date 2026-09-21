@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import {
-  Gift, Sparkles, Trophy, Undo2, Loader2, AlertCircle, Ticket, Users, X, Wand2, PartyPopper
+  Gift, Sparkles, Trophy, Undo2, Loader2, AlertCircle, Ticket, Users, X, Wand2, PartyPopper, Download
 } from 'lucide-react';
 import { Sidebar } from '../../components/Sidebar/Sidebar';
 import styles from './Sorteio.module.css';
@@ -34,6 +34,12 @@ interface Vencedor {
   escopo: string;
   premio: string | null;
   criado_em: string;
+  // Origem do número sorteado (dia/quiz que o gerou), usada na conferência
+  // com a lista de presença assinada.
+  origem_dia_sipat_id: number | null;
+  origem_quiz_tema: string | null;
+  origem_data: string | null;
+  origem_modalidade: 'PRESENCIAL' | 'ONLINE' | null;
 }
 
 interface ConfetePeca {
@@ -66,6 +72,41 @@ const FRASES_MISTERIO = [
 ];
 
 const sleep = (ms: number) => new Promise<void>((resolve) => window.setTimeout(resolve, ms));
+
+const ROTULO_MODALIDADE: Record<string, string> = {
+  PRESENCIAL: 'Presença física',
+  ONLINE: 'Quiz online',
+};
+
+// A coluna "data" do dia pode vir só como data (2026-09-21); new Date() a
+// interpretaria em UTC e, no Brasil, mostraria o dia anterior.
+function formatarDataOrigem(data: string | null): string {
+  if (!data) return '';
+  const iso = data.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) return `${iso[3]}/${iso[2]}/${iso[1]}`;
+  const d = new Date(data);
+  return Number.isNaN(d.getTime()) ? '' : d.toLocaleDateString('pt-BR');
+}
+
+function nomeQuizOrigem(v: Vencedor): string {
+  return v.origem_quiz_tema || (v.origem_dia_sipat_id !== null ? `Dia ${v.origem_dia_sipat_id}` : 'Origem não identificada');
+}
+
+// Ex.: "Quiz online — Dia 2: Ergonomia (22/09/2026)"
+function descreverOrigem(v: Vencedor): string {
+  const modalidade = v.origem_modalidade ? ROTULO_MODALIDADE[v.origem_modalidade] : null;
+  const data = formatarDataOrigem(v.origem_data);
+  const quiz = `${nomeQuizOrigem(v)}${data ? ` (${data})` : ''}`;
+  return modalidade ? `${modalidade} — ${quiz}` : quiz;
+}
+
+function escaparHtml(valor: string): string {
+  return valor
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
 
 function gerarConfete(qtd = 34): ConfetePeca[] {
   return Array.from({ length: qtd }, (_, i) => ({
@@ -270,6 +311,78 @@ export function Sorteio() {
     setNomeRolando(null);
   };
 
+  const nomeDoGrupoDoVencedor = (v: Vencedor) =>
+    v.escopo === 'GERAL'
+      ? 'Geral'
+      : (quizzes.find(q => q.id === v.dia_sipat_id)?.tema || `Dia ${v.dia_sipat_id}`);
+
+  // Mesmo formato (.xls em HTML) já usado nos relatórios do Dashboard.
+  const handleExportar = () => {
+    if (vencedores.length === 0) {
+      showError('Ainda não há vencedores sorteados para exportar.');
+      return;
+    }
+
+    const celula = (valor: string, texto = false) =>
+      `<td style="padding: 6px;${texto ? " mso-number-format:'\\@';" : ''}">${escaparHtml(valor)}</td>`;
+
+    // Ordem cronológica do sorteio (o histórico da tela vem do mais recente ao mais antigo).
+    const linhas = [...vencedores].reverse().map((v, i) => `
+      <tr>
+        <td style="padding: 6px; text-align: center;">${i + 1}</td>
+        ${celula(v.colaborador_nome)}
+        ${celula(formatarCpf(v.cpf), true)}
+        ${celula(v.numero_gerado, true)}
+        ${celula(v.origem_modalidade ? ROTULO_MODALIDADE[v.origem_modalidade] : 'Não identificada')}
+        ${celula(nomeQuizOrigem(v))}
+        ${celula(formatarDataOrigem(v.origem_data))}
+        ${celula(nomeDoGrupoDoVencedor(v))}
+        ${celula(v.premio || '—')}
+        ${celula(new Date(v.criado_em).toLocaleString('pt-BR'))}
+        <td style="padding: 6px;">&nbsp;</td>
+      </tr>
+    `).join('');
+
+    const htmlContent = `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+      <head><meta charset="UTF-8"></head>
+      <body>
+        <h2>Relatório de Ganhadores do Sorteio - SIPAT</h2>
+        <p>Emitido em ${escaparHtml(new Date().toLocaleString('pt-BR'))} — ${vencedores.length} ganhador(es)</p>
+        <table border="1" style="border-collapse: collapse;">
+          <tr style="background-color: #6366f1; color: white; font-weight: bold;">
+            <th style="padding: 8px;">Nº</th>
+            <th style="padding: 8px;">Colaborador</th>
+            <th style="padding: 8px;">CPF</th>
+            <th style="padding: 8px;">Nº da Sorte</th>
+            <th style="padding: 8px;">Origem do Número</th>
+            <th style="padding: 8px;">Quiz / Dia de Origem</th>
+            <th style="padding: 8px;">Data do Quiz</th>
+            <th style="padding: 8px;">Grupo do Sorteio</th>
+            <th style="padding: 8px;">Prêmio</th>
+            <th style="padding: 8px;">Data do Sorteio</th>
+            <th style="padding: 8px;">Conferido na Lista de Presença</th>
+          </tr>
+          ${linhas}
+        </table>
+      </body>
+      </html>
+    `;
+
+    const blob = new Blob([htmlContent], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+
+    const dataAtual = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
+    link.download = `Relatorio_Ganhadores_Sorteio_SIPAT_${dataAtual}.xls`;
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const handleDesfazer = async (vencedor: Vencedor) => {
     if (!window.confirm(`Desfazer a vitória de ${vencedor.colaborador_nome}? O bilhete dela volta a concorrer.`)) {
       return;
@@ -395,6 +508,9 @@ export function Sorteio() {
                   <p className={styles.vencedorNumero}>
                     <Ticket size={16} /> {vencedorAtual.numero_gerado}
                   </p>
+                  <p className={styles.vencedorOrigem}>
+                    Número gerado em: <strong>{descreverOrigem(vencedorAtual)}</strong>
+                  </p>
                   {vencedorAtual.premio && (
                     <p className={styles.vencedorPremio}>🎁 {vencedorAtual.premio}</p>
                   )}
@@ -415,6 +531,13 @@ export function Sorteio() {
         <div className={styles.tableWrapper}>
           <div className={styles.tableHeader}>
             <h2 className={styles.panelTitle}>Histórico de vencedores</h2>
+            <button
+              className={styles.btnExportar}
+              onClick={handleExportar}
+              disabled={vencedores.length === 0}
+            >
+              <Download size={16} /> Exportar relatório
+            </button>
           </div>
 
           <table className={styles.table}>
@@ -422,6 +545,7 @@ export function Sorteio() {
               <tr>
                 <th>Colaborador</th>
                 <th>Nº Sorte</th>
+                <th>Origem do número</th>
                 <th>Grupo</th>
                 <th>Prêmio</th>
                 <th>Data</th>
@@ -443,10 +567,15 @@ export function Sorteio() {
                       </div>
                     </td>
                     <td>
-                      {v.escopo === 'GERAL'
-                        ? 'Geral'
-                        : (quizzes.find(q => q.id === v.dia_sipat_id)?.tema || `Dia ${v.dia_sipat_id}`)}
+                      <div className={styles.origemModalidade}>
+                        {v.origem_modalidade ? ROTULO_MODALIDADE[v.origem_modalidade] : 'Não identificada'}
+                      </div>
+                      <div className={styles.colaboradorCpf}>
+                        {nomeQuizOrigem(v)}
+                        {v.origem_data && ` (${formatarDataOrigem(v.origem_data)})`}
+                      </div>
                     </td>
+                    <td>{nomeDoGrupoDoVencedor(v)}</td>
                     <td>{v.premio || '—'}</td>
                     <td>{new Date(v.criado_em).toLocaleString('pt-BR')}</td>
                     <td className={styles.actionsCell}>
@@ -458,7 +587,7 @@ export function Sorteio() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6} className={styles.emptyState}>
+                  <td colSpan={7} className={styles.emptyState}>
                     Nenhum sorteio realizado ainda.
                   </td>
                 </tr>
@@ -530,6 +659,9 @@ export function Sorteio() {
                 <p className={styles.vencedorCpf}>CPF: {formatarCpf(vencedorModal.cpf)}</p>
                 <p className={styles.vencedorNumero}>
                   <Ticket size={16} /> {vencedorModal.numero_gerado}
+                </p>
+                <p className={styles.vencedorOrigem}>
+                  Número gerado em: <strong>{descreverOrigem(vencedorModal)}</strong>
                 </p>
                 {vencedorModal.premio && (
                   <p className={styles.vencedorPremio}>🎁 {vencedorModal.premio}</p>

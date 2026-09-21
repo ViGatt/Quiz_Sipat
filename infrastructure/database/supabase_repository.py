@@ -792,12 +792,52 @@ class SupabaseSorteioRepository:
 
         return bilhetes
 
+    def _anexar_origem(self, vencedores: list[dict]) -> list[dict]:
+        """
+        Acrescenta a cada vencedor a origem do número sorteado: de qual dia/quiz
+        da SIPAT ele veio e se foi por presença física ou quiz online. Serve para
+        conferir o número contra a lista de presença assinada no dia — quem esteve
+        presencialmente não poderia ter gerado um número pelo quiz online.
+
+        A origem vem sempre do bilhete (numeros_sorte), e não de sorteios.dia_sipat_id,
+        que guarda apenas o grupo do sorteio (é nulo no sorteio geral).
+        """
+        if not vencedores:
+            return vencedores
+
+        bilhete_ids = [v["numero_sorte_id"] for v in vencedores]
+        colaborador_ids = list({v["colaborador_id"] for v in vencedores})
+
+        bilhetes = self.db.table("numeros_sorte").select("id, dia_sipat_id").in_("id", bilhete_ids).execute()
+        dia_do_bilhete = {b["id"]: b["dia_sipat_id"] for b in (bilhetes.data or [])}
+
+        dias = self.db.table("dias_sipat").select("id, tema, data").execute()
+        dias_por_id = {d["id"]: d for d in (dias.data or [])}
+
+        participacoes = self.db.table("participacoes").select(
+            "colaborador_id, dia_sipat_id, modalidade"
+        ).in_("colaborador_id", colaborador_ids).execute()
+        modalidade_por_chave = {
+            (p["colaborador_id"], p["dia_sipat_id"]): (p.get("modalidade") or "").upper()
+            for p in (participacoes.data or [])
+        }
+
+        for v in vencedores:
+            dia_origem = dia_do_bilhete.get(v["numero_sorte_id"])
+            dia = dias_por_id.get(dia_origem) or {}
+            v["origem_dia_sipat_id"] = dia_origem
+            v["origem_quiz_tema"] = dia.get("tema")
+            v["origem_data"] = dia.get("data")
+            v["origem_modalidade"] = modalidade_por_chave.get((v["colaborador_id"], dia_origem)) or None
+
+        return vencedores
+
     def listar_vencedores(self, dia_sipat_id: int | None = None) -> list[dict]:
         query = self.db.table("sorteios").select("*")
         if dia_sipat_id is not None:
             query = query.eq("dia_sipat_id", dia_sipat_id)
         response = query.order("criado_em", desc=True).execute()
-        return response.data or []
+        return self._anexar_origem(response.data or [])
 
     def realizar_sorteio(self, dia_sipat_id: int | None, premio: str | None, impedir_repeticao: bool = True) -> dict:
         """
@@ -849,7 +889,15 @@ class SupabaseSorteioRepository:
 
         # Usa a linha devolvida pelo Supabase (inclui o criado_em gerado pelo
         # banco via now()) em vez do dict local, que nunca teve esse campo.
-        return response.data[0] if response.data else registro
+        salvo = response.data[0] if response.data else registro
+
+        # O vencedor já está gravado: uma falha só ao buscar a origem não pode
+        # virar erro 500 (o admin acharia que o sorteio falhou e o bilhete já foi).
+        try:
+            return self._anexar_origem([salvo])[0]
+        except Exception as e:
+            print(f"Aviso: não foi possível anexar a origem do número sorteado: {e}")
+            return salvo
 
     def remover_vencedor(self, sorteio_id: str) -> bool:
         """

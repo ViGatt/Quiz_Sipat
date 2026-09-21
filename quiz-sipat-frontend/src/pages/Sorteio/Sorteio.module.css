@@ -289,6 +289,18 @@
   margin-top: 0.5rem;
 }
 
+.vencedorOrigem {
+  margin-top: 0.5rem;
+  max-width: 420px;
+  text-align: center;
+  color: var(--color-text-dark);
+  font-size: 0.9rem;
+}
+
+.vencedorOrigem strong {
+  color: var(--color-white);
+}
+
 .vencedorPremio {
   margin-top: 0.75rem;
   font-size: 1.05rem;
@@ -308,6 +320,45 @@
 
 .tableHeader {
   padding: 1.5rem 1.5rem 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.tableHeader .panelTitle {
+  margin-bottom: 0;
+}
+
+.btnExportar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.2rem;
+  background-color: transparent;
+  color: var(--color-white);
+  border: 1px solid var(--color-text-dark);
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btnExportar:hover:not(:disabled) {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+  background-color: rgba(0, 195, 255, 0.05);
+}
+
+.btnExportar:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.origemModalidade {
+  font-weight: 600;
+  color: var(--color-white);
 }
 
 .table {
