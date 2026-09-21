@@ -188,7 +188,7 @@
   font-size: 1.05rem;
   cursor: pointer;
   margin-top: 1.5rem;
-  transition: opacity 0.2s, transform 0.2s;
+  transition: opacity 0.2s, transform 0.21s;
 }
 
 .btnSortear:hover:not(:disabled) {
